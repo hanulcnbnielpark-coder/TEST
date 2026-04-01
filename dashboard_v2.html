@@ -481,11 +481,11 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 /* Table */
 .sc-tbl-wrap{overflow-x:auto;margin:0 -22px;padding:0 22px}
 .sc-tbl{width:100%;border-collapse:collapse;font-size:15px}
-.sc-tbl th{padding:14px 16px;font-size:13px;font-weight:700;color:var(--text-tertiary);text-align:left;border-bottom:1px solid var(--border-main);white-space:nowrap;letter-spacing:0.3px;text-transform:uppercase}
-.sc-tbl th.r{text-align:right}
-.sc-tbl td{padding:14px 16px;border-bottom:1px solid var(--border-light);color:var(--text-primary);font-variant-numeric:tabular-nums}
+.sc-tbl th{padding:14px 16px;font-size:13px;font-weight:700;color:var(--text-tertiary);text-align:center;border-bottom:1px solid var(--border-main);white-space:nowrap;letter-spacing:0.3px;text-transform:uppercase}
+.sc-tbl th.r{text-align:center}
+.sc-tbl td{padding:14px 16px;border-bottom:1px solid var(--border-light);color:var(--text-primary);font-variant-numeric:tabular-nums;text-align:center}
 .sc-tbl td.r{text-align:right;font-weight:600}
-.sc-tbl td.name{font-weight:700;color:var(--text-primary);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.sc-tbl td.name{font-weight:700;color:var(--text-primary);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;text-align:left}
 .sc-tbl td.sub{font-size:14px;color:var(--text-secondary)}
 .sc-tbl tbody tr:hover{background:var(--bg-card-hover)}
 .sc-tbl tfoot td{border-top:2px solid var(--border-main);font-weight:800;color:var(--text-primary);padding:14px 16px}
@@ -2939,6 +2939,7 @@ function scParsePlan(rows){
       team:r['담당팀']||'',project:r['프로젝트명']||'',item:r['공종']||'',
       invoiceDate:scParseDate(r['청구예정일']||''),dueDate:dueDate,
       taxDate:taxDate,paidDate:paidDate,
+      date:paidDate||dueDate||'',
       amount:amt,actual:actual,target:amt,
       status:status,reason:r['미수금사유']||'',note:r['비고사항']||r['비고']||'',
       dueMonth:scExtractMonth(r['입금예정일']),dueYear:scExtractYear(r['입금예정일'])
@@ -3000,11 +3001,11 @@ function scParseAnalysis(rows){
     const target=Number(String(r['목표수금액']||'').replace(/,/g,''))||0;
     if(!target) return null;
     return {
-      date:scParseDate(r['수금일자']),team:r['담당팀']||'',project:r['프로젝트명']||'',
+      date:scParseDate(r['수금일자']||r['입금완료일']||r['일자']||r['날짜']||r['입금일']||r['수금일']),team:r['담당팀']||'',project:r['프로젝트명']||'',
       target:target,actual:Number(String(r['수금실적']||'').replace(/,/g,''))||0,
       status:r['수금상태']||'',reason:r['미수금사유']||'',followup:r['후속조치']||'',
       note:r['비고사항']||r['비고']||'',
-      month:scExtractMonth(r['수금일자']),year:scExtractYear(r['수금일자'])
+      month:scExtractMonth(r['수금일자']||r['입금완료일']||r['일자']||r['날짜']||r['입금일']||r['수금일']),year:scExtractYear(r['수금일자']||r['입금완료일']||r['일자']||r['날짜']||r['입금일']||r['수금일'])
     };
   }).filter(Boolean);
   SC_LOADED.analysis=true;
@@ -4067,11 +4068,11 @@ function scRenderAnalysis(){
 
   // Detail with status + reason
   h+='<div class="sc-section"><div class="sc-section-title">상세 내역</div><div class="sc-tbl-wrap"><table class="sc-tbl"><thead><tr>';
-  h+='<th>수금일자</th><th>담당팀</th><th>프로젝트</th><th class="r">목표</th><th class="r">실적</th><th>상태</th><th>미수금사유</th></tr></thead><tbody>';
+  h+='<th>입금완료일</th><th>담당팀</th><th>프로젝트</th><th class="r">목표</th><th class="r">실적</th><th>상태</th><th>미수금사유</th></tr></thead><tbody>';
   data.forEach((r,i)=>{
     const origIdx=SC_ANALYSIS.indexOf(r);
     const sc=r.status==='수금완료'?'green':r.status==='부분수금'?'amber':r.status==='미수금'?'red':'gray';
-    h+=`<tr class="clickable" onclick="scOpenEdit('analysis',${origIdx})"><td class="sub">${scFmtDate(r.date)}</td><td class="sub">${r.team}</td><td class="name">${r.project}</td>
+    h+=`<tr class="clickable" onclick="scOpenEdit('analysis',${origIdx})"><td class="sub">${scFmtDate(r.date||r.paidDate||r.dueDate)}</td><td class="sub">${r.team}</td><td class="name">${r.project}</td>
       <td class="r">${r.target.toLocaleString()}</td><td class="r" style="color:${r.actual?'var(--sig)':'var(--text-muted)'}">${r.actual?r.actual.toLocaleString():'-'}</td>
       <td><span class="sc-badge ${sc}">${r.status||'-'}</span></td>
       <td class="sub" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${r.reason?'var(--kpi-red)':'var(--text-muted)'}" title="${r.reason||''}">${r.reason||'-'}</td></tr>`;
