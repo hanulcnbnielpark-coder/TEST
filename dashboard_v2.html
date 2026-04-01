@@ -6657,7 +6657,7 @@ function exRenderProject(){
     h+='</tbody></table></div>';
     // 기성금 내역
     if(sel.payEntries&&sel.payEntries.length){
-      h+='<div class="sc-section"><div class="sc-section-title">기성금 입금 내역</div><table class="sc-tbl"><thead><tr><th>#</th><th>입금월</th><th>금액</th><th>누적</th></tr></thead><tbody>';
+      h+='<div class="sc-section"><div class="sc-section-title">기성금 입금 내역</div><table class="sc-tbl"><thead><tr><th>#</th><th>입금일</th><th>금액</th><th>누적</th></tr></thead><tbody>';
       let cum=0;sel.payEntries.sort((a,b)=>(a.ym||'').localeCompare(b.ym||'')).forEach((e,i)=>{cum+=e.amt;
         h+=`<tr><td>${i+1}</td><td style="font-weight:600">${(e.ym||'미정').replace('-','/')}</td><td class="r" style="color:var(--sig)">${exN(e.amt)}</td><td class="r">${exN(cum)}</td></tr>`});
       h+=`</tbody><tfoot><tr><td colspan="2" style="text-align:left">합계 ${sel.payEntries.length}건</td><td class="r" style="color:var(--sig)">${exN(sel.pay)}</td><td></td></tr></tfoot></table><div style="text-align:center;margin-top:10px"><button onclick="exOpenPay(EX_SP)" style="padding:7px 16px;background:var(--bg-thead);border:1px dashed var(--border-main);border-radius:8px;font-size:13px;font-weight:600;color:var(--text-tertiary);cursor:pointer;font-family:inherit">+ 입금 내역 추가/수정</button></div></div>`;
@@ -6735,14 +6735,49 @@ function exRenderPay(){
   document.getElementById('exPayHead').innerHTML=`${EX_PE_PROJ.length>28?EX_PE_PROJ.slice(0,28)+'…':EX_PE_PROJ} <span onclick="exClosePay()" style="cursor:pointer;font-size:20px;color:var(--text-muted)">✕</span>`;
   const entries=EX_PAY_MAP[EX_PE_PROJ]||[];const total=entries.reduce((s,e)=>s+e.amt,0);
   let h=`<div style="display:flex;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border-light)"><div><div style="font-size:13px;color:var(--text-tertiary)">투입비</div><div style="font-size:18px;font-weight:800">${exF(p.tot)}</div></div><div style="text-align:center"><div style="font-size:13px;color:var(--text-tertiary)">기성금</div><div style="font-size:18px;font-weight:800;color:var(--sig)">${total?exF(total):'-'}</div></div><div style="text-align:right"><div style="font-size:13px;color:var(--text-tertiary)">실행율</div><div style="font-size:18px;font-weight:800;color:${total/p.tot>=1?'var(--kpi-green)':total?'var(--kpi-red)':'var(--text-muted)'}">${total?(total/p.tot*100).toFixed(0)+'%':'-'}</div></div></div>`;
-  entries.forEach((e,i)=>{h+=`<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center"><input type="month" value="${e.ym||''}" style="flex:0 0 150px;padding:9px 12px;border:1px solid var(--border-main);border-radius:8px;font-size:14px;color:var(--text-primary);background:var(--bg-input);font-family:inherit" onchange="exPeUpd(${i},'ym',this.value)"><input type="text" value="${e.amt?e.amt.toLocaleString():''}" placeholder="금액(원)" style="flex:1;padding:9px 12px;border:1px solid var(--border-main);border-radius:8px;font-size:14px;color:var(--sig);font-weight:600;background:var(--bg-input);font-family:inherit;text-align:right" onchange="exPeUpd(${i},'amt',this.value)"><button onclick="exPeRm(${i})" style="width:32px;height:32px;border:none;background:var(--card-red-bg);color:var(--kpi-red);border-radius:7px;cursor:pointer;font-size:15px">✕</button></div>`});
+  entries.forEach((e,i)=>{
+    const amtDisplay=e.amt?e.amt.toLocaleString():'';
+    h+=`<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center">
+      <input type="date" value="${e.ym||''}" style="flex:0 0 155px;padding:9px 12px;border:1px solid var(--border-main);border-radius:8px;font-size:14px;color:var(--text-primary);background:var(--bg-input);font-family:inherit" onchange="exPeUpd(${i},'ym',this.value)">
+      <input type="text" value="${amtDisplay}" placeholder="금액(원)" inputmode="numeric" style="flex:1;padding:9px 12px;border:1px solid var(--border-main);border-radius:8px;font-size:14px;color:var(--sig);font-weight:600;background:var(--bg-input);font-family:inherit;text-align:right;font-variant-numeric:tabular-nums" onchange="exPeUpd(${i},'amt',this.value)" onfocus="this.value=this.value.replace(/,/g,'')" onblur="const v=parseInt(this.value.replace(/[,\\s]/g,''))||0;this.value=v?v.toLocaleString():''">
+      <button onclick="exPeRm(${i})" style="width:32px;height:32px;border:none;background:var(--card-red-bg);color:var(--kpi-red);border-radius:7px;cursor:pointer;font-size:15px;flex-shrink:0">✕</button>
+    </div>`;
+  });
   h+=`<button onclick="exPeAdd()" style="width:100%;margin-top:8px;padding:9px;background:var(--bg-thead);border:1px dashed var(--border-main);border-radius:8px;font-size:14px;font-weight:600;color:var(--text-tertiary);cursor:pointer;font-family:inherit">+ 입금 내역 추가</button>`;
-  h+=`<button onclick="exClosePay();exAnRender()" style="width:100%;padding:14px;background:var(--sig);color:#FFF;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:14px">적용</button>`;
+  h+=`<div style="display:flex;gap:8px;margin-top:14px">
+    <button onclick="exSavePay()" style="flex:1;padding:14px;background:var(--sig);color:#FFF;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">💾 저장</button>
+    <button onclick="exClosePay();exAnRender()" style="flex:1;padding:14px;background:var(--bg-thead);color:var(--text-secondary);border:1px solid var(--border-main);border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">적용만</button>
+  </div>
+  <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px">저장 = Google Sheets에 반영 · 적용만 = 화면만 갱신</div>`;
   document.getElementById('exPayBody').innerHTML=h;
 }
-function exPeUpd(idx,key,val){if(!EX_PAY_MAP[EX_PE_PROJ])EX_PAY_MAP[EX_PE_PROJ]=[];if(key==='amt')EX_PAY_MAP[EX_PE_PROJ][idx].amt=parseInt(String(val).replace(/[,\s]/g,''))||0;else EX_PAY_MAP[EX_PE_PROJ][idx].ym=val}
+function exPeUpd(idx,key,val){
+  if(!EX_PAY_MAP[EX_PE_PROJ])EX_PAY_MAP[EX_PE_PROJ]=[];
+  if(key==='amt')EX_PAY_MAP[EX_PE_PROJ][idx].amt=parseInt(String(val).replace(/[,\s]/g,''))||0;
+  else EX_PAY_MAP[EX_PE_PROJ][idx].ym=val;
+}
 function exPeAdd(){if(!EX_PAY_MAP[EX_PE_PROJ])EX_PAY_MAP[EX_PE_PROJ]=[];EX_PAY_MAP[EX_PE_PROJ].push({ym:'',amt:0});exRenderPay()}
 function exPeRm(idx){if(EX_PAY_MAP[EX_PE_PROJ]){EX_PAY_MAP[EX_PE_PROJ].splice(idx,1);if(!EX_PAY_MAP[EX_PE_PROJ].length)delete EX_PAY_MAP[EX_PE_PROJ]};exRenderPay()}
+
+// GAS write-back: 기성금 시트에 저장
+async function exSavePay(){
+  if(!GAS_WEB_URL){showToast('⚠️ GAS 연결이 필요합니다');exClosePay();exAnRender();return}
+  const entries=EX_PAY_MAP[EX_PE_PROJ]||[];
+  if(!entries.length){showToast('⚠️ 저장할 내역이 없습니다');return}
+  showToast('⏳ 기성금 저장 중...');
+  try{
+    // 기존 과업 기성금 삭제 후 재입력 방식
+    const data=entries.map(e=>e.ym+'|'+e.amt).join(';;');
+    const url=GAS_WEB_URL+'?action=savePayment&project='+encodeURIComponent(EX_PE_PROJ)+'&entries='+encodeURIComponent(data)+'&_='+Date.now();
+    await fetch(url,{mode:'no-cors',redirect:'follow'});
+    showToast('✅ 기성금 저장 완료');
+    exClosePay();exAnRender();
+  }catch(e){
+    console.error('기성금 저장 실패:',e);
+    showToast('⚠️ 저장 실패 — 화면에만 반영됨');
+    exClosePay();exAnRender();
+  }
+}
 </script>
 
 <div id="eaUncModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:400;justify-content:center;align-items:center" onclick="if(event.target===this)this.style.display='none'">
