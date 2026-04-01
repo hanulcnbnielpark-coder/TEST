@@ -4135,7 +4135,7 @@ function scRenderCalendar(){
   h+='<div class="sc-section-title" style="margin:0">수금 일정 캘린더</div>';
   h+=`<div style="font-size:14px;color:var(--text-tertiary);font-weight:600">${filterYear}년</div></div>`;
   
-  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">';
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">';
   const calYr=filterYear;
   for(let mi=0;mi<12;mi++){
     const mk=calYr+'-'+String(mi+1).padStart(2,'0');
@@ -4147,39 +4147,39 @@ function scRenderCalendar(){
     const monthTotal=Object.values(md).flat();
     const monthAmt=monthTotal.reduce((s,x)=>s+x.amount,0);
     
-    h+=`<div onclick="scCalGoMonth(${mi})" style="background:var(--bg-card);border-radius:14px;padding:12px;border:${isCur?'2px solid var(--sig)':'1px solid var(--border-main)'};cursor:pointer;transition:all 0.15s;${isCur?'box-shadow:0 2px 8px rgba(58,76,168,0.12)':''}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">`; 
-    h+=`<div style="font-size:14px;font-weight:700;color:${isCur?'var(--sig)':'var(--text-primary)'};margin-bottom:8px;text-align:center">${mi+1}월</div>`;
-    h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;font-size:9px;text-align:center">';
+    h+=`<div onclick="scCalGoMonth(${mi})" style="background:var(--bg-card);border-radius:14px;padding:14px;border:${isCur?'2px solid var(--sig)':'1px solid var(--border-main)'};cursor:pointer;transition:all 0.15s;${isCur?'box-shadow:0 2px 8px rgba(58,76,168,0.12)':''}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">`; 
+    h+=`<div style="font-size:16px;font-weight:700;color:${isCur?'var(--sig)':'var(--text-primary)'};margin-bottom:10px;text-align:center">${mi+1}월</div>`;
+    h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;font-size:10px;text-align:center">';
     ['일','월','화','수','목','금','토'].forEach((d,di)=>{
-      h+=`<div style="color:${di===0?'var(--kpi-red)':di===6?'var(--sig)':'var(--text-muted)'};font-weight:600;padding:1px 0;font-size:8px">${d}</div>`;
+      h+=`<div style="color:${di===0?'var(--kpi-red)':di===6?'var(--sig)':'var(--text-muted)'};font-weight:600;padding:2px 0;font-size:9px">${d}</div>`;
     });
     for(let e=0;e<firstDay;e++)h+='<div></div>';
     for(let d=1;d<=daysInMonth;d++){
       const isToday=isCur&&d===today.getDate();
       const dd=md[d];
-      let bg='transparent',tc='#4E5968',dot='';
+      let bg='transparent',tc='var(--text-secondary)',dot='';
       if(dd){
         const hasC=dd.some(x=>x.status==='수금완료');
         const hasU=dd.some(x=>x.status==='미수금'||x.status==='부분수금');
         if(hasC){bg='var(--card-green-bg)';tc='var(--kpi-green)';dot='var(--kpi-green)'}
         else if(hasU){bg='var(--card-red-bg)';tc='var(--kpi-red)';dot='var(--kpi-red)'}
-        else{bg='var(--sig-pale)';tc='var(--sig)';dot='var(--sig)'}
+        else{bg='var(--sig-pale)';tc='var(--sig-light)';dot='var(--sig)'}
       }
-      h+=`<div style="padding:2px 0;border-radius:3px;background:${isToday?'var(--text-primary)':bg};color:${isToday?'#FFF':tc};font-weight:${isToday||dd?'700':'400'};position:relative;font-size:9px">${d}${dot?'<div style="width:3px;height:3px;border-radius:50%;background:'+dot+';position:absolute;bottom:0;left:50%;transform:translateX(-50%)"></div>':''}</div>`;
+      h+=`<div style="padding:2px 0;border-radius:3px;background:${isToday?'var(--sig)':bg};color:${isToday?'#FFF':tc};font-weight:${isToday||dd?'700':'400'};position:relative;font-size:10px">${d}${dot?'<div style="width:3px;height:3px;border-radius:50%;background:'+dot+';position:absolute;bottom:0;left:50%;transform:translateX(-50%)"></div>':''}</div>`;
     }
     h+='</div>';
     if(hasData){
-      h+=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-light);font-size:10px;color:var(--text-tertiary);display:flex;justify-content:space-between">
+      h+=`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-light);font-size:12px;color:var(--text-tertiary);display:flex;justify-content:space-between">
         <span>${monthTotal.length}건</span><span>${scFmtAmt(monthAmt)}</span></div>`;
     }
     h+='</div>';
   }
   h+='</div>';
-  h+=`<div style="display:flex;gap:16px;justify-content:center;margin-top:12px;font-size:11px;color:var(--text-tertiary)">
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--kpi-green)"></span>수금완료</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--kpi-red)"></span>미수금</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sig)"></span>수금예정</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--text-primary)"></span>오늘</span>
+  h+=`<div style="display:flex;gap:20px;justify-content:center;margin-top:16px;font-size:13px;color:var(--text-secondary)">
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--kpi-green)"></span>수금완료</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--kpi-red)"></span>미수금</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--sig)"></span>수금예정</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--sig)"></span>오늘</span>
   </div>`;
   root.innerHTML=h;
 }
@@ -4196,29 +4196,29 @@ function scRenderCalMonth(root){
   const isCur=yr===today.getFullYear()&&mi===today.getMonth();
   
   let h='<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px">';
-  h+=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-    <button onclick="scCalGoMonth(SC_CAL_MONTH<=0?11:SC_CAL_MONTH-1)" style="background:none;border:1px solid var(--border-main);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text-secondary)">◀</button>
-    <span style="font-size:22px;font-weight:800;color:var(--text-primary);min-width:160px;text-align:center">${yr}년 ${mi+1}월</span>
-    <button onclick="scCalGoMonth(SC_CAL_MONTH>=11?0:SC_CAL_MONTH+1)" style="background:none;border:1px solid var(--border-main);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text-secondary)">▶</button>
+  h+=`<div style="display:flex;align-items:center;gap:16px;margin-bottom:8px">
+    <button onclick="scCalGoMonth(SC_CAL_MONTH<=0?11:SC_CAL_MONTH-1)" style="background:var(--bg-card);border:1px solid var(--border-main);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:16px;color:var(--text-primary)">◀</button>
+    <span style="font-size:26px;font-weight:800;color:var(--text-primary);min-width:180px;text-align:center">${yr}년 ${mi+1}월</span>
+    <button onclick="scCalGoMonth(SC_CAL_MONTH>=11?0:SC_CAL_MONTH+1)" style="background:var(--bg-card);border:1px solid var(--border-main);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:16px;color:var(--text-primary)">▶</button>
   </div>`;
-  h+=`<button onclick="scCalGoYear()" style="display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-tertiary);padding:2px 0">
+  h+=`<button onclick="scCalGoYear()" style="display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-tertiary);padding:4px 0">
     ← ${yr}년 전체 보기</button>`;
   h+='</div>';
   
   // 요일 헤더
-  h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px">';
-  ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'].forEach((d,di)=>{
-    h+=`<div style="text-align:center;font-size:12px;font-weight:600;color:${di===0?'var(--kpi-red)':di===6?'var(--sig)':'var(--text-tertiary)'};padding:8px 0">${d}</div>`;
+  h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px">';
+  ['일','월','화','수','목','금','토'].forEach((d,di)=>{
+    h+=`<div style="text-align:center;font-size:14px;font-weight:700;color:${di===0?'var(--kpi-red)':di===6?'var(--sig)':'var(--text-secondary)'};padding:10px 0">${d}</div>`;
   });
   h+='</div>';
   
   // 날짜 그리드
-  h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">';
-  for(let e=0;e<firstDay;e++) h+='<div style="min-height:80px"></div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">';
+  for(let e=0;e<firstDay;e++) h+='<div style="min-height:90px"></div>';
   for(let d=1;d<=daysInMonth;d++){
     const isToday=isCur&&d===today.getDate();
     const dd=md[d];
-    let borderColor='var(--border-light)',bgColor='var(--bg-card)';
+    let borderColor='var(--border-main)',bgColor='var(--bg-card)';
     if(dd){
       const hasC=dd.some(x=>x.status==='수금완료');
       const hasU=dd.some(x=>x.status==='미수금'||x.status==='부분수금');
@@ -4230,24 +4230,28 @@ function scRenderCalMonth(root){
     const tcDay=dayOfWeek===0?'var(--kpi-red)':dayOfWeek===6?'var(--sig)':'var(--text-primary)';
     
     const clickAttr=dd?`onclick="scCalClickDate(${yr},${mi+1},${d})"`:'';
-    const hoverAttr=dd?'onmouseover="this.style.boxShadow=\'var(--shadow-md)\'" onmouseout="this.style.boxShadow=\'\'"':'';
-    h+=`<div ${clickAttr} style="min-height:80px;border-radius:12px;padding:8px;border:${isToday?'2px solid var(--text-primary)':'1px solid '+borderColor};background:${bgColor};cursor:${dd?'pointer':'default'};transition:all 0.15s" ${hoverAttr}>`; 
-    h+=`<div style="font-size:14px;font-weight:${isToday||dd?'800':'500'};margin-bottom:4px">${isToday?`<span style="background:var(--text-primary);color:var(--bg-card);border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center">${d}</span>`:`<span style="color:${tcDay}">${d}</span>`}</div>`;
+    const hoverAttr=dd?'onmouseover="this.style.boxShadow=\'var(--shadow-md)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'\';this.style.transform=\'\'"':'';
+    h+=`<div ${clickAttr} style="min-height:90px;border-radius:12px;padding:10px;border:${isToday?'2px solid var(--sig)':'1px solid '+borderColor};background:${bgColor};cursor:${dd?'pointer':'default'};transition:all 0.15s" ${hoverAttr}>`; 
+    h+=`<div style="font-size:16px;font-weight:${isToday||dd?'800':'500'};margin-bottom:6px">${isToday?`<span style="background:var(--sig);color:#FFF;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center">${d}</span>`:`<span style="color:${tcDay}">${d}</span>`}</div>`;
     if(dd){
       dd.slice(0,2).forEach(ev=>{
-        const ec=ev.status==='수금완료'?'var(--kpi-green)':ev.status==='미수금'||ev.status==='부분수금'?'var(--kpi-red)':'var(--sig)';
-        h+=`<div style="font-size:9px;padding:2px 4px;background:${ec}18;color:${ec};border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${ev.project}</div>`;
+        const isGreen=ev.status==='수금완료';
+        const isRed=ev.status==='미수금'||ev.status==='부분수금';
+        const ecBg=isGreen?'var(--card-green-bg)':isRed?'var(--card-red-bg)':'var(--sig-pale)';
+        const ecBorder=isGreen?'var(--card-green-border)':isRed?'var(--card-red-border)':'var(--sig-ring)';
+        const ecText=isGreen?'var(--kpi-green)':isRed?'var(--kpi-red)':'var(--sig-light)';
+        h+=`<div style="font-size:11px;padding:3px 6px;background:${ecBg};border:1px solid ${ecBorder};color:${ecText};border-radius:5px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${ev.project}</div>`;
       });
-      if(dd.length>2) h+=`<div style="font-size:9px;color:var(--text-tertiary)">+${dd.length-2}건</div>`;
+      if(dd.length>2) h+=`<div style="font-size:11px;color:var(--text-tertiary);font-weight:500">+${dd.length-2}건</div>`;
     }
     h+='</div>';
   }
   h+='</div>';
-  h+=`<div style="display:flex;gap:16px;justify-content:center;margin-top:16px;font-size:11px;color:var(--text-tertiary)">
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--kpi-green)"></span>수금완료</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--kpi-red)"></span>미수금</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sig)"></span>수금예정</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--text-primary)"></span>오늘</span>
+  h+=`<div style="display:flex;gap:20px;justify-content:center;margin-top:20px;font-size:13px;color:var(--text-secondary)">
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--kpi-green)"></span>수금완료</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--kpi-red)"></span>미수금</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--sig)"></span>수금예정</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--sig)"></span>오늘</span>
   </div>`;
   root.innerHTML=h;
 }
