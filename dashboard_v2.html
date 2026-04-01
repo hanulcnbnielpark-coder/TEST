@@ -677,6 +677,32 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 
 /* ═══ 인력분석 (EA) — Redesigned v2.0 ═══ */
 .nav-main.active.ea-blue{color:var(--text-on-nav-active);border-bottom-color:var(--sig-light)}
+
+/* ── 실행분석 탭 전용 CSS ── */
+.ex-g-side{display:grid;grid-template-columns:340px 1fr;gap:14px;align-items:start}
+.list-panel{display:flex;flex-direction:column;gap:4px;max-height:calc(100vh - 180px);overflow-y:auto;padding-right:4px}
+.list-panel::-webkit-scrollbar{width:3px}.list-panel::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:3px}
+.list-item{padding:12px 14px;border-radius:10px;border:1px solid var(--border-light);cursor:pointer;transition:all .12s;background:var(--bg-card)}
+.list-item:hover{border-color:var(--sig);box-shadow:var(--shadow-sm)}
+.list-item.active{border-color:var(--sig);background:var(--sig-pale);box-shadow:inset 0 0 0 1px rgba(58,76,168,.15)}
+.li-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-meta{font-size:11px;color:var(--text-tertiary);margin-top:2px}
+.hbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.hbar-label{width:160px;font-size:13px;font-weight:600;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-secondary);flex-shrink:0}
+.hbar-track{flex:1;height:26px;background:var(--bg-thead);border-radius:6px;overflow:hidden;position:relative}
+.hbar-fill{height:100%;border-radius:6px;transition:width .5s ease;display:flex;align-items:center;padding-left:8px}
+.hbar-fill span{font-size:10px;font-weight:700;color:#FFF;white-space:nowrap;opacity:.85}
+.hbar-base{position:absolute;top:0;bottom:0;width:1.5px;background:var(--text-muted);opacity:.35}
+.hbar-val{width:68px;font-size:14px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums;flex-shrink:0}
+.pill{display:inline-flex;padding:4px 12px;border-radius:14px;font-size:12px;font-weight:700}
+.pill.green{background:var(--card-green-bg);color:var(--kpi-green)}
+.pill.red{background:var(--card-red-bg);color:var(--kpi-red)}
+.pill.amber{background:var(--card-amber-bg);color:var(--kpi-amber)}
+.pill.muted{background:var(--bg-thead);color:var(--text-muted)}
+.sim-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--bg-card-hover);margin-bottom:5px;font-size:13px}
+.sim-row select{padding:5px 8px;border:1px solid var(--border-main);border-radius:6px;font-size:12px;background:var(--bg-input);color:var(--text-primary);font-family:inherit}
+.sim-summary{border-radius:12px;padding:16px 20px;border:1.5px solid var(--border-main);margin:14px 0;background:var(--bg-card)}
+@media(max-width:1024px){.ex-g-side{grid-template-columns:1fr}}
 /* EA Table — full theme support */
 .ea-t{width:100%;border-collapse:collapse;font-size:14px}
 .ea-t thead th{background:var(--bg-thead);color:var(--text-secondary);font-weight:700;font-size:14px;padding:12px 16px;text-align:center;border-bottom:2px solid var(--border-main);border-right:1px solid var(--border-main);position:sticky;top:0;z-index:2;white-space:nowrap;letter-spacing:.2px}
