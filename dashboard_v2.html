@@ -6428,6 +6428,7 @@ function ctDelProject(){
 // ═══════════════════════════════════════
 let EX_LOADED=false,EX_TAB='overview',EX_SP=null,EX_SS=null,EX_CM=false,EX_CL=[],EX_SIM={},EX_PE_PROJ=null;
 let EX_CLOSED_PROJECTS=[],EX_PAY_MAP={},EX_GRADE_COST={책임:29460,선임:21438,주임:18299};
+let EX_STAFF_GRADE={}; // {이름: 직급} 매핑
 let exCharts=[];
 
 // 과업명 정규화 (공백, 특수문자, 제/~/-_ 등 제거)
@@ -6467,7 +6468,17 @@ async function exAnFetchGS(){
         if(!row.c)return;
         const nm=row.c[0]?String(row.c[0].v||'').trim():'';
         if(!nm||nm.startsWith('■')||nm.startsWith('※')||nm==='과업명')return;
-        const ym=row.c[1]?String(row.c[1].v||'').trim():'';
+        let ym='';
+        if(row.c[1]){
+          const rv=row.c[1];
+          if(rv.f)ym=String(rv.f).trim(); // formatted value
+          else if(rv.v){
+            const vs=String(rv.v);
+            const dm=vs.match(/Date\((\d+),(\d+),(\d+)\)/);
+            if(dm)ym=dm[1]+'-'+String(Number(dm[2])+1).padStart(2,'0')+'-'+String(dm[3]).padStart(2,'0');
+            else ym=vs.trim();
+          }
+        }
         const amt=row.c[2]?parseFloat(row.c[2].v)||0:0;
         if(nm&&amt){if(!EX_PAY_MAP[nm])EX_PAY_MAP[nm]=[];EX_PAY_MAP[nm].push({ym,amt})}
       });
@@ -6487,6 +6498,21 @@ async function exAnFetchGS(){
       });
       console.log('📊 단가표:', JSON.stringify(EX_GRADE_COST));
     }catch(e){console.warn('단가표 시트 없음:',e)}
+    
+    // 5. 인력직급 시트 fetch
+    try{
+      const r4=await fetch(url+encodeURIComponent('인력직급'));
+      const t4=await r4.text();const j4=JSON.parse(t4.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+      EX_STAFF_GRADE={};
+      j4.table.rows.forEach(row=>{
+        if(!row.c)return;
+        const nm=row.c[0]?String(row.c[0].v||'').trim():'';
+        if(!nm||nm.startsWith('■')||nm.startsWith('※')||nm==='이름')return;
+        const grade=row.c[1]?String(row.c[1].v||'').trim():'';
+        if(nm&&grade)EX_STAFF_GRADE[nm]=grade;
+      });
+      console.log('📊 인력직급:', Object.keys(EX_STAFF_GRADE).length+'명', JSON.stringify(EX_STAFF_GRADE));
+    }catch(e){console.warn('인력직급 시트 없음:',e);EX_STAFF_GRADE={}}
     
     EX_LOADED=true;
     document.getElementById('exAnGuide').style.display='none';
@@ -6538,7 +6564,7 @@ function exGetData(){
       if(a.includes(b)||b.includes(a)){pName=cp;break}
     }
     const key=pName+'|'+r.worker;
-    if(!agg[key])agg[key]={p:pName,nm:r.worker,g:'주임',tm:r.team||'',h:0,md:0,vs:0,at:0,dc:0,pw:0,cm:0,months:new Set()};
+    if(!agg[key])agg[key]={p:pName,nm:r.worker,g:EX_STAFF_GRADE[r.worker]||'주임',tm:r.team||'',h:0,md:0,vs:0,at:0,dc:0,pw:0,cm:0,months:new Set()};
     const a=agg[key];
     a.h+=r.hours||0;
     a.md+=r.mo_hrs||0; a.vs+=r.vi_hrs||0; a.at+=r.au_hrs||0;
@@ -6632,6 +6658,14 @@ function exRenderOverview(){
   P.sort((a,b)=>b.tot-a.tot).forEach(p=>{const rc=p.rt>=1?'green':p.pay?'red':'muted';
     h+=`<tr style="cursor:pointer" onclick="EX_SP='${p.nm.replace(/'/g,"\\'")}';exAnTab('project',document.querySelectorAll('#subNavExecAn .nav-tab')[1])"><td class="name">${p.nm.length>26?p.nm.slice(0,26)+'…':p.nm}</td><td>${p.rw.length}</td><td style="font-weight:600">${p.h.toLocaleString()}</td><td class="r">${exF(p.tot)}</td><td class="r" style="color:${p.pay?'var(--sig)':'var(--text-muted)'}">${p.pay?exF(p.pay):'-'}</td><td><span class="pill ${rc}">${p.pay?(p.rt*100).toFixed(0)+'%':'미입금'}</span></td></tr>`});
   h+='</tbody></table></div></div></div>';
+
+  // 투입비 vs 기성금 비교
+  h+='<div class="sc-section"><div class="sc-section-title">투입비 vs 기성금</div><div class="sc-section-desc" style="margin-top:-8px;padding-left:12px"><span style="color:var(--kpi-red)">■</span> 투입비 &nbsp;<span style="color:var(--sig)">■</span> 기성금</div>';
+  const wf=P.filter(p=>p.tot>1e4).sort((a,b)=>b.tot-a.tot),mW=wf.length?Math.max(...wf.map(r=>Math.max(r.tot,r.pay))):1;
+  wf.forEach(p=>{const tP=p.tot/mW*100,pP=p.pay/mW*100;
+    h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="width:160px;text-align:right;font-size:13px;font-weight:600;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0">${p.nm}</div><div style="flex:1;height:22px;position:relative"><div style="position:absolute;height:100%;width:${tP}%;background:var(--kpi-red);opacity:.12;border-radius:4px"></div><div style="position:absolute;height:55%;top:22%;width:${tP}%;background:var(--kpi-red);opacity:.45;border-radius:3px"></div>${p.pay?`<div style="position:absolute;height:35%;bottom:0;width:${pP}%;background:var(--sig);opacity:.75;border-radius:0 0 3px 3px"></div>`:''}</div><div style="width:70px;text-align:right;font-size:12px;font-weight:700;color:${p.gap>=0?'var(--kpi-green)':p.pay?'var(--kpi-red)':'var(--text-muted)'};flex-shrink:0">${p.pay?(p.gap>=0?'+':'')+exF(p.gap):'미입금'}</div></div>`});
+  h+='</div>';
+
   document.getElementById('exAnTabOverview').innerHTML=h;
 }
 
@@ -6659,7 +6693,11 @@ function exRenderProject(){
     if(sel.payEntries&&sel.payEntries.length){
       h+='<div class="sc-section"><div class="sc-section-title">기성금 입금 내역</div><table class="sc-tbl"><thead><tr><th>#</th><th>입금일</th><th>금액</th><th>누적</th></tr></thead><tbody>';
       let cum=0;sel.payEntries.sort((a,b)=>(a.ym||'').localeCompare(b.ym||'')).forEach((e,i)=>{cum+=e.amt;
-        h+=`<tr><td>${i+1}</td><td style="font-weight:600">${(e.ym||'미정').replace('-','/')}</td><td class="r" style="color:var(--sig)">${exN(e.amt)}</td><td class="r">${exN(cum)}</td></tr>`});
+        let ymDisplay=e.ym||'미정';
+        const gm=String(ymDisplay).match(/Date\((\d+),(\d+),(\d+)\)/);
+        if(gm)ymDisplay=gm[1]+'/'+String(Number(gm[2])+1).padStart(2,'0')+'/'+gm[3].padStart(2,'0');
+        else ymDisplay=ymDisplay.replace(/-/g,'/');
+        h+=`<tr><td>${i+1}</td><td style="font-weight:600">${ymDisplay}</td><td class="r" style="color:var(--sig)">${exN(e.amt)}</td><td class="r">${exN(cum)}</td></tr>`});
       h+=`</tbody><tfoot><tr><td colspan="2" style="text-align:left">합계 ${sel.payEntries.length}건</td><td class="r" style="color:var(--sig)">${exN(sel.pay)}</td><td></td></tr></tfoot></table><div style="text-align:center;margin-top:10px"><button onclick="exOpenPay(EX_SP)" style="padding:7px 16px;background:var(--bg-thead);border:1px dashed var(--border-main);border-radius:8px;font-size:13px;font-weight:600;color:var(--text-tertiary);cursor:pointer;font-family:inherit">+ 입금 내역 추가/수정</button></div></div>`;
     } else {
       h+='<div class="sc-section" style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px">기성금 내역 없음 — <span onclick="exOpenPay(EX_SP)" style="color:var(--sig);cursor:pointer;font-weight:600">기성금 추가</span></div>';
