@@ -673,7 +673,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .ct-fm-input:focus{border-color:var(--sig);background:var(--bg-card);box-shadow:0 0 0 3px var(--sig-ring)}
 .ct-fm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ct-fm-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border-light)}
-.ct-fm-del{margin-right:auto;background:var(--bg-card);border:1px solid #FCA5A5;color:#F04452;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.ct-fm-del{margin-right:auto;background:var(--bg-card);border:1px solid var(--kpi-red);color:var(--kpi-red);padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
 
 /* ═══ 인력분석 (EA) — Redesigned v2.0 ═══ */
 .nav-main.active.ea-blue{color:var(--text-on-nav-active);border-bottom-color:var(--sig-light)}
@@ -778,7 +778,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .ki-dd-list{overflow-y:auto;flex:1}
 .ki-dd-item{padding:8px 12px;font-size:11px;cursor:pointer;transition:background 0.1s;display:flex;align-items:center;gap:6px}
 .ki-dd-item:hover{background:#F5F6F8}
-.ki-dd-item.sel{background:#EFF6FF;color:var(--accent-blue);font-weight:600}
+.ki-dd-item.sel{background:var(--sig-pale);color:var(--accent-blue);font-weight:600}
 .ki-dd-empty{padding:16px;text-align:center;color:var(--text-muted);font-size:11px}
 .ki-month-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .ki-month-btn{padding:7px;border:1.5px solid var(--border-main);border-radius:8px;background:var(--bg-card);color:var(--text-secondary);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;text-align:center;font-family:inherit}
@@ -1221,7 +1221,7 @@ function isDark(){return document.documentElement.getAttribute('data-theme')==='
 function chartColors(){return{bg:TC('bg-card'),text:TC('text-primary'),sub:TC('text-secondary'),muted:TC('text-tertiary'),border:TC('border-main'),grid:TC('chart-grid'),sig:TC('sig')}}
 
 const GC={A:{c:"#3A4CA8",bg:"rgba(58,76,168,0.15)",l:"최우선"},B:{c:"#D97706",bg:"rgba(217,119,6,0.15)",l:"유망"},C:{c:"#64748B",bg:"rgba(100,116,139,0.12)",l:"잠재"}};
-const SC={"정보수집":{c:"#94A3B8",bg:"#F1F5F9"},"접촉":{c:"#3B82F6",bg:"#DBEAFE"},"제안":{c:"#F59E0B",bg:"#FEF3C7"},"협상":{c:"#8B5CF6",bg:"#EDE9FE"},"계약":{c:"#10B981",bg:"#D1FAE5"}};
+const SC={"정보수집":{c:"#94A3B8",bg:"rgba(148,163,184,0.12)"},"접촉":{c:"#3B82F6",bg:"rgba(59,130,246,0.12)"},"제안":{c:"#F59E0B",bg:"rgba(245,158,11,0.12)"},"협상":{c:"#8B5CF6",bg:"rgba(139,92,246,0.12)"},"계약":{c:"#10B981",bg:"rgba(16,185,129,0.12)"}};
 const CC={"국가철도공단":"#2563EB","한국도로공사":"#16A34A","한수원":"#D97706","해수부":"#0891B2","LH":"#7C3AED"};
 const sn=c=>c.replace("국가철도공단","철도공단").replace("한국도로공사","도로공사");
 const bn=v=>(v/1e8).toFixed(1);const cm=v=>v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
@@ -3482,7 +3482,7 @@ function scRenderOverview(){
       h+=`<div onclick="SC_FILTER_STATUS='${s.key}';scRenderTab('overview')" style="background:${isActive?s.color:s.bg};border-radius:12px;padding:14px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.2s;${isActive?'box-shadow:0 4px 12px '+s.color+'40;transform:translateY(-1px)':''}">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="font-size:15px;font-weight:700;color:${isActive?'#FFF':s.color}">${s.key}</span>
-          <span style="font-size:14px;${isActive?'filter:brightness(10)':''}">${s.icon}</span>
+          <span style="font-size:14px;${isActive?'filter:brightness(10)':'filter:none'}">${s.icon}</span>
         </div>
         <div style="font-size:34px;font-weight:800;color:${isActive?'#FFF':s.color};font-variant-numeric:tabular-nums;margin-bottom:2px;letter-spacing:-1px">${d.cnt}<span style="font-size:16px;font-weight:600">건</span></div>${rowLabel}
         <div style="font-size:13px;color:${isActive?'rgba(255,255,255,0.7)':'var(--text-tertiary)'}">${scFmtAmt(d.amt)}</div>
@@ -3969,7 +3969,7 @@ function scRenderPlan(){
         <div style="display:flex;align-items:baseline;gap:12px">
           <span style="font-size:13px;color:var(--text-tertiary)">목표 <strong style="color:var(--text-primary)">${scFmtAmt(g.plan)}</strong></span>
           <span style="font-size:13px;color:var(--text-tertiary)">실적 <strong style="color:var(--sig)">${g.actual?scFmtAmt(g.actual):'-'}</strong></span>
-          <span style="font-size:12px;font-weight:700;color:${rateColor};background:${rateColor}15;padding:2px 8px;border-radius:6px">${achRate.toFixed(0)}%</span>
+          <span style="font-size:12px;font-weight:700;color:${rateColor};background:color-mix(in srgb,${rateColor} 10%,transparent);padding:2px 8px;border-radius:6px">${achRate.toFixed(0)}%</span>
         </div>
       </div>
       <div style="height:28px;background:var(--sig-pale);border-radius:8px;overflow:hidden;position:relative;width:${planPct}%;min-width:40px">
@@ -4222,15 +4222,15 @@ function scRenderCalMonth(root){
     if(dd){
       const hasC=dd.some(x=>x.status==='수금완료');
       const hasU=dd.some(x=>x.status==='미수금'||x.status==='부분수금');
-      if(hasC){borderColor='#86EFAC';bgColor='#F0FDF4'}
-      else if(hasU){borderColor='#FCA5A5';bgColor='#FFF5F5'}
-      else{borderColor='#93C5FD';bgColor='#EFF6FF'}
+      if(hasC){borderColor='var(--kpi-green)';bgColor='var(--card-green-bg)'}
+      else if(hasU){borderColor='var(--kpi-red)';bgColor='var(--card-red-bg)'}
+      else{borderColor='var(--sig-light)';bgColor='var(--sig-pale)'}
     }
     const dayOfWeek=(firstDay+d-1)%7;
     const tcDay=dayOfWeek===0?'var(--kpi-red)':dayOfWeek===6?'var(--sig)':'var(--text-primary)';
     
     const clickAttr=dd?`onclick="scCalClickDate(${yr},${mi+1},${d})"`:'';
-    const hoverAttr=dd?'onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,0.08)\'" onmouseout="this.style.boxShadow=\'\'"':'';
+    const hoverAttr=dd?'onmouseover="this.style.boxShadow=\'var(--shadow-md)\'" onmouseout="this.style.boxShadow=\'\'"':'';
     h+=`<div ${clickAttr} style="min-height:80px;border-radius:12px;padding:8px;border:${isToday?'2px solid var(--text-primary)':'1px solid '+borderColor};background:${bgColor};cursor:${dd?'pointer':'default'};transition:all 0.15s" ${hoverAttr}>`; 
     h+=`<div style="font-size:14px;font-weight:${isToday||dd?'800':'500'};margin-bottom:4px">${isToday?`<span style="background:var(--text-primary);color:var(--bg-card);border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center">${d}</span>`:`<span style="color:${tcDay}">${d}</span>`}</div>`;
     if(dd){
