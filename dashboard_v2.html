@@ -6466,17 +6466,43 @@ function exAnTab(tab,el){
 
 // ── Data from EA[] → 실행분석 포맷 ──
 function exGetData(){
-  // EA[] 배열에서 종료 과업만 필터하여 실행분석 데이터 생성
+  // EA[] 배열에서 종료 과업만 필터 → 과업+인력별 집계
   if(!EA.length)return[];
-  return EA.filter(r=>{
+  
+  // 1단계: 종료 과업에 해당하는 EA 행만 필터
+  const filtered=EA.filter(r=>{
     if(!r.project||!r.worker)return false;
-    // 종료 과업 필터 (이름 부분 매칭)
-    return EX_CLOSED_PROJECTS.some(cp=>r.project.includes(cp)||cp.includes(r.project));
-  }).map(r=>({
-    p:r.project, nm:r.worker, g:r.status||'주임', tm:r.team||'',
-    h:r.hours||0, md:r.mo_hrs||0, vs:r.vi_hrs||0, at:r.au_hrs||0, dc:r.doc_hrs||0, pw:r.pw_hrs||0, cm:r.co_hrs||0,
-    tot:(r.hours||0)*(EX_GRADE_COST[r.status]||EX_GRADE_COST['주임'])*2.75
-  }));
+    return EX_CLOSED_PROJECTS.some(cp=>{
+      const a=r.project.replace(/\s/g,''), b=cp.replace(/\s/g,'');
+      return a.includes(b)||b.includes(a)||a===b;
+    });
+  });
+  
+  // 2단계: 과업+인력별 집계
+  const agg={};
+  filtered.forEach(r=>{
+    // 종료과업 목록 기준으로 과업명 통일
+    let pName=r.project;
+    for(const cp of EX_CLOSED_PROJECTS){
+      const a=r.project.replace(/\s/g,''),b=cp.replace(/\s/g,'');
+      if(a.includes(b)||b.includes(a)){pName=cp;break}
+    }
+    const key=pName+'|'+r.worker;
+    if(!agg[key])agg[key]={p:pName,nm:r.worker,g:'주임',tm:r.team||'',h:0,md:0,vs:0,at:0,dc:0,pw:0,cm:0,months:new Set()};
+    const a=agg[key];
+    a.h+=r.hours||0;
+    a.md+=r.mo_hrs||0; a.vs+=r.vi_hrs||0; a.at+=r.au_hrs||0;
+    a.dc+=r.doc_hrs||0; a.pw+=r.pw_hrs||0; a.cm+=r.co_hrs||0;
+    if(r.date){const d=new Date(r.date);if(!isNaN(d))a.months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
+  });
+  
+  // 3단계: 투입비 계산 & 투입기간 생성
+  return Object.values(agg).map(r=>{
+    const rate=EX_GRADE_COST[r.g]||18299;
+    const months=r.months?[...r.months].sort():[];
+    const pd=months.length>1?months[0].split('-')[1]+'~'+months[months.length-1].split('-')[1]+'월':months.length===1?months[0].split('-')[1]+'월':'';
+    return{...r, tot:r.h*rate*2.75, pd, months:undefined};
+  });
 }
 
 function exPayTotal(proj){return(EX_PAY_MAP[proj]||[]).reduce((s,e)=>s+e.amt,0)}
@@ -6489,8 +6515,18 @@ function exGetProjects(){
     ['md','vs','at','dc','pw','cm'].forEach(k=>{p[k]+=(r[k]||0)});
     p.gr[r.g]=(p.gr[r.g]||0)+r.h;
   });
+  // 기성금 매칭 (부분 이름 매칭)
   Object.entries(m).forEach(([k,v])=>{
-    v.pay=exPayTotal(k);v.payEntries=EX_PAY_MAP[k]||[];
+    let pay=0,entries=[];
+    // 정확히 매칭 먼저
+    if(EX_PAY_MAP[k]){pay=exPayTotal(k);entries=EX_PAY_MAP[k]||[]}
+    else{// 부분 매칭
+      for(const pk of Object.keys(EX_PAY_MAP)){
+        const a=k.replace(/\s/g,''),b=pk.replace(/\s/g,'');
+        if(a.includes(b)||b.includes(a)){pay=exPayTotal(pk);entries=EX_PAY_MAP[pk]||[];break}
+      }
+    }
+    v.pay=pay;v.payEntries=entries;
     v.rt=v.tot>0?v.pay/v.tot:0;v.gap=v.pay-v.tot;v.hr=v.h>0&&v.pay>0?v.pay/v.h:0;
     v.sa=0;v.tx=0;v.pr=0;
     v.rw.forEach(r=>{const rate=EX_GRADE_COST[r.g]||18299;v.sa+=r.h*rate;v.tx+=r.h*rate*1.5;v.pr+=r.h*rate*0.25});
@@ -6565,9 +6601,9 @@ function exRenderProject(){
       <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">기성금</div><div class="kpi-num" style="font-size:26px;color:${sel.pay?'var(--sig)':'var(--text-muted)'}">${sel.pay?exF(sel.pay):'미입금'}</div><div class="kpi-sub">${sel.pay?'실행율 '+(sel.rt*100).toFixed(0)+'%':''}</div></div>
       <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">시간당 수익</div><div class="kpi-num" style="font-size:26px;color:${hr>20000?'var(--kpi-green)':'var(--kpi-amber)'}">${hr?Math.round(hr).toLocaleString()+'<span>원</span>':'-'}</div></div></div>`;
     // 인력 테이블
-    h+='<div class="sc-section"><div class="sc-section-title">인력별 투입</div><table class="sc-tbl"><thead><tr><th style="text-align:left">인력</th><th>팀</th><th>직급</th><th>시간</th><th>투입비</th><th>비중</th></tr></thead><tbody>';
+    h+='<div class="sc-section"><div class="sc-section-title">인력별 투입</div><table class="sc-tbl"><thead><tr><th style="text-align:left">인력</th><th>팀</th><th>직급</th><th>기간</th><th>시간</th><th>투입비</th><th>비중</th></tr></thead><tbody>';
     sel.rw.sort((a,b)=>b.h-a.h).forEach(r=>{const pct=sel.h>0?(r.h/sel.h*100).toFixed(0):0;
-      h+=`<tr style="cursor:pointer" onclick="EX_SS='${r.nm}';exAnTab('staff',document.querySelectorAll('#subNavExecAn .nav-tab')[2])"><td class="name">${r.nm}</td><td style="font-size:13px">${r.tm}</td><td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td><td style="font-weight:700">${r.h}h</td><td class="r">${exN(r.tot)}</td><td><div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:var(--bg-thead);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--sig)"></div></div><span style="font-size:11px;color:var(--text-tertiary)">${pct}%</span></div></td></tr>`});
+      h+=`<tr style="cursor:pointer" onclick="EX_SS='${r.nm}';exAnTab('staff',document.querySelectorAll('#subNavExecAn .nav-tab')[2])"><td class="name">${r.nm}</td><td style="font-size:13px">${r.tm}</td><td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td><td style="font-size:13px;color:var(--text-secondary)">${r.pd||'-'}</td><td style="font-weight:700">${r.h}h</td><td class="r">${exN(Math.round(r.tot))}</td><td><div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:var(--bg-thead);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--sig)"></div></div><span style="font-size:11px;color:var(--text-tertiary)">${pct}%</span></div></td></tr>`});
     h+='</tbody></table></div>';
     // 기성금 내역
     if(sel.payEntries&&sel.payEntries.length){
