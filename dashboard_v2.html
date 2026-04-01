@@ -6404,6 +6404,9 @@ let EX_LOADED=false,EX_TAB='overview',EX_SP=null,EX_SS=null,EX_CM=false,EX_CL=[]
 let EX_CLOSED_PROJECTS=[],EX_PAY_MAP={},EX_GRADE_COST={책임:29460,선임:21438,주임:18299};
 let exCharts=[];
 
+// 과업명 정규화 (공백, 특수문자, 제/~/-_ 등 제거)
+function exNorm(s){return String(s||'').replace(/[\s\-~_·()（）제]/g,'').toLowerCase()}
+
 // ── GAS Fetch ──
 async function exAnFetchGS(){
   if(!gsSheetId){showToast('⚠️ Google Sheets 연결이 필요합니다');return}
@@ -6489,7 +6492,7 @@ function exGetData(){
   const filtered=EA.filter(r=>{
     if(!r.project||!r.worker)return false;
     return EX_CLOSED_PROJECTS.some(cp=>{
-      const a=r.project.replace(/\s/g,''), b=cp.replace(/\s/g,'');
+      const a=exNorm(r.project), b=exNorm(cp);
       return a.includes(b)||b.includes(a)||a===b;
     });
   });
@@ -6505,7 +6508,7 @@ function exGetData(){
     // 종료과업 목록 기준으로 과업명 통일
     let pName=r.project;
     for(const cp of EX_CLOSED_PROJECTS){
-      const a=r.project.replace(/\s/g,''),b=cp.replace(/\s/g,'');
+      const a=exNorm(r.project),b=exNorm(cp);
       if(a.includes(b)||b.includes(a)){pName=cp;break}
     }
     const key=pName+'|'+r.worker;
@@ -6543,7 +6546,7 @@ function exGetProjects(){
     if(EX_PAY_MAP[k]){pay=exPayTotal(k);entries=EX_PAY_MAP[k]||[]}
     else{// 부분 매칭
       for(const pk of Object.keys(EX_PAY_MAP)){
-        const a=k.replace(/\s/g,''),b=pk.replace(/\s/g,'');
+        const a=exNorm(k),b=exNorm(pk);
         if(a.includes(b)||b.includes(a)){pay=exPayTotal(pk);entries=EX_PAY_MAP[pk]||[];break}
       }
     }
