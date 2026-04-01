@@ -196,7 +196,7 @@ button,select,input,textarea{font-family:inherit}
 /* ══════════════════════════════════
    DASHBOARD — Toss Light Cards
    ══════════════════════════════════ */
-.container{padding:24px 32px;max-width:100%;margin:0}
+.container{padding:24px 32px;max-width:1400px;margin:0 auto}
 .kpi-row{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:12px;margin-bottom:24px}
 .kpi{border-radius:14px;padding:20px 22px;cursor:pointer;border:none;background:var(--bg-card);transition:var(--transition-theme);position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
 .kpi:hover{background:var(--bg-card-hover)}
@@ -534,7 +534,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 /* ═══ 투찰분석 (BA) — Redesigned v2.0 ═══ */
 .nav-main.active.ba-purple{color:var(--text-on-nav-active);border-bottom-color:var(--sig-light)}
 .sub-nav.ba-purple .nav-tab.active{color:var(--sig);border-bottom-color:var(--sig)}
-.ba-wrap{display:flex;gap:0;min-height:calc(100vh - 110px);background:var(--bg-body)}
+.ba-wrap{display:flex;gap:0;min-height:calc(100vh - 110px);background:var(--bg-body);max-width:1400px;margin:0 auto}
 .ba-left{width:360px;flex-shrink:0;background:var(--bg-card);border-right:1px solid var(--border-light);padding:24px;overflow-y:auto;max-height:calc(100vh - 110px);transition:var(--transition-theme)}
 .ba-right{flex:1;padding:24px;overflow-y:auto;max-height:calc(100vh - 110px)}
 /* Section headers with accent bar */
@@ -5814,7 +5814,7 @@ function ctDelProject(){
 
 <!-- ═══ PAGE: 계약현황 ═══ -->
 <div class="page" id="pageContract">
-  <div style="padding:0">
+  <div style="padding:0;max-width:1400px;margin:0 auto">
     <div class="ct-kpi" id="ctKpi"></div>
     <div class="ct-toolbar">
       <div class="ct-dd"><button class="ct-dd-btn" id="ctYearBtn" onclick="ctToggleYearDD()">전체</button><div class="ct-dd-menu" id="ctYearMenu"></div></div>
@@ -5959,7 +5959,7 @@ function ctDelProject(){
       </div>
     </div>
   </div>
-  <div id="eaMain" style="display:none;padding:4px 24px 24px">
+  <div id="eaMain" style="display:none;padding:4px 24px 24px;max-width:1400px;margin:0 auto">
     <div class="ea-ws" id="eaWS"></div>
     <div class="kpi-row" id="eaKR" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))"></div>
     <div class="ea-vt" id="eaVT"></div>
