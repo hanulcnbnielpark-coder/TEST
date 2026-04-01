@@ -210,7 +210,7 @@ button,select,input,textarea{font-family:inherit}
 .kpi.grade{background:var(--bg-card);padding-right:84px}.kpi.grade.sel{background:var(--sig-pale);box-shadow:inset 0 0 0 1.5px var(--sig-ring)}
 .kpi-label{font-size:15px;color:var(--text-secondary);font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
 .kpi-sub{font-size:13px;color:var(--text-tertiary);margin-top:6px}
-.kpi-badge{width:52px;height:52px;border-radius:14px;font-size:26px;font-weight:900;display:flex;align-items:center;justify-content:center;letter-spacing:0;flex-shrink:0;position:absolute;top:50%;right:20px;transform:translateY(-50%)}
+.kpi-badge{width:64px;height:64px;border-radius:16px;font-size:32px;font-weight:900;display:flex;align-items:center;justify-content:center;letter-spacing:0;flex-shrink:0;position:absolute;top:50%;right:20px;transform:translateY(-50%)}
 .kpi-num{font-size:34px;font-weight:700;color:var(--text-primary);line-height:1;margin-bottom:4px;letter-spacing:-0.5px;font-variant-numeric:tabular-nums}.kpi-num.big{font-size:44px}.kpi-num span{font-size:16px;color:var(--text-tertiary);margin-left:2px;letter-spacing:0;font-weight:500}
 .kpi-amt{font-size:16px;font-weight:700;color:var(--accent-blue);font-variant-numeric:tabular-nums}.kpi-amt span{font-size:13px;color:var(--text-tertiary);font-weight:400}
 
@@ -1068,7 +1068,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
       </div>
     </div>
     <div class="row2b">
-      <div class="panel"><div class="panel-t">발주 시기별 현황</div><div id="periodPanel"></div></div>
+      <div class="panel"><div class="panel-t" style="display:flex;justify-content:space-between;align-items:center">발주 시기별 현황<label style="font-size:11px;font-weight:500;color:var(--text-tertiary);cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" id="hidePastPeriod" onchange="SM_HIDE_PAST=this.checked;render()" style="accent-color:var(--sig);cursor:pointer">지난 일정 숨기기</label></div><div id="periodPanel"></div></div>
       <div class="panel"><div class="panel-t">예상금액 TOP 8</div><div class="tg" id="topGrid"></div></div>
     </div>
     <div class="tw"><div class="th2"><div class="lb">전체 파이프라인 상세 <span class="fi" id="filterInfo"></span></div></div>
@@ -1225,7 +1225,7 @@ const SC={"정보수집":{c:"#94A3B8",bg:"#F1F5F9"},"접촉":{c:"#3B82F6",bg:"#D
 const CC={"국가철도공단":"#2563EB","한국도로공사":"#16A34A","한수원":"#D97706","해수부":"#0891B2","LH":"#7C3AED"};
 const sn=c=>c.replace("국가철도공단","철도공단").replace("한국도로공사","도로공사");
 const bn=v=>(v/1e8).toFixed(1);const cm=v=>v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
-let DATA=[],LOGS=[],BIDS=[],fG=null,fC=null,fS=null,fDs=null,fSt=null,fP=null,fBidCat=null,chart=null,chart2=null,logIdSeq=1,activeChart='client';
+let DATA=[],LOGS=[],BIDS=[],fG=null,fC=null,fS=null,fDs=null,fSt=null,fP=null,fBidCat=null,chart=null,chart2=null,logIdSeq=1,activeChart='client',SM_HIDE_PAST=false;
 
 // Comma format for inputs
 function fmtNum(el){
@@ -2351,9 +2351,11 @@ function render(){
   rContractorChart(activeChart==='designer'?byDs:byS,activeChart==='designer'?allDs:allS,activeChart==='designer'?'tDs':'tS');
 
   let ph='';
-  periodKeys.forEach(key=>{const s=byP[key];const pc=periodColor(s);const dim=fP&&fP!==key?' dim':'';const sel=fP===key?' sel':'';ph+=`<div class="pr${dim}${sel}" style="cursor:pointer;transition:opacity .2s" onclick="tP('${key}')"><div class="plx"><div class="pbar" style="background:${pc.cl}"></div><div><div class="pn">${key}</div><div class="ps">${pc.sub}</div></div></div><div><div class="pc">${s.n}<span>건</span></div>${s.e>0?`<div class="pa">${bn(s.e)}억</div>`:''}</div></div>`});
-  if(!periodKeys.length)ph='<div style="color:var(--text-tertiary);font-size:12px;padding:8px 0">발주시기 데이터 없음</div>';
+  const displayPeriods=SM_HIDE_PAST?periodKeys.filter(key=>byP[key].sort>=now):periodKeys;
+  displayPeriods.forEach(key=>{const s=byP[key];const pc=periodColor(s);const dim=fP&&fP!==key?' dim':'';const sel=fP===key?' sel':'';ph+=`<div class="pr${dim}${sel}" style="cursor:pointer;transition:opacity .2s" onclick="tP('${key}')"><div class="plx"><div class="pbar" style="background:${pc.cl}"></div><div><div class="pn">${key}</div><div class="ps">${pc.sub}</div></div></div><div><div class="pc">${s.n}<span>건</span></div>${s.e>0?`<div class="pa">${bn(s.e)}억</div>`:''}</div></div>`});
+  if(!displayPeriods.length)ph='<div style="color:var(--text-tertiary);font-size:12px;padding:8px 0">'+(SM_HIDE_PAST?'향후 예정된 발주가 없습니다':'발주시기 데이터 없음')+'</div>';
   document.getElementById('periodPanel').innerHTML=ph;
+  const hpCb=document.getElementById('hidePastPeriod');if(hpCb)hpCb.checked=SM_HIDE_PAST;
   renderTop8(activeChart||'client');
 
   const sorted=[...f].sort((a,b)=>({A:0,B:1,C:2}[a.g]||3)-({A:0,B:1,C:2}[b.g]||3));let tb='';
