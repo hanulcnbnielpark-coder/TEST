@@ -51,6 +51,15 @@
   --scrollbar-thumb: #D1D6DB;
   --chart-grid: #F2F3F5;
   --transition-theme: background 0.3s, color 0.25s, border-color 0.3s, box-shadow 0.3s;
+  /* Tinted card backgrounds */
+  --card-sig-bg: rgba(58,76,168,0.08);
+  --card-sig-border: rgba(58,76,168,0.15);
+  --card-red-bg: rgba(240,68,82,0.06);
+  --card-red-border: rgba(240,68,82,0.12);
+  --card-amber-bg: rgba(232,133,12,0.06);
+  --card-amber-border: rgba(232,133,12,0.12);
+  --card-green-bg: rgba(0,196,113,0.06);
+  --card-green-border: rgba(0,196,113,0.15);
 }
 html[data-theme="dark"] {
   --bg-body: #0F1117;
@@ -65,9 +74,9 @@ html[data-theme="dark"] {
   --border-light: #1F2230;
   --border-table: #2A2D3A;
   --text-primary: #E8EAF0;
-  --text-secondary: #9BA3B0;
-  --text-tertiary: #6B7280;
-  --text-muted: #4B5060;
+  --text-secondary: #A8B0BD;
+  --text-tertiary: #9BA3B3;
+  --text-muted: #626A78;
   --text-on-nav: rgba(255,255,255,0.35);
   --text-on-nav-active: #FFFFFF;
   --kpi-blue: #6B7FE0;
@@ -82,6 +91,15 @@ html[data-theme="dark"] {
   --overlay: rgba(0,0,0,0.55);
   --scrollbar-thumb: #3A3E4C;
   --chart-grid: #2A2D3A;
+  /* Tinted card backgrounds — dark */
+  --card-sig-bg: rgba(58,76,168,0.15);
+  --card-sig-border: rgba(107,127,224,0.2);
+  --card-red-bg: rgba(248,113,113,0.1);
+  --card-red-border: rgba(248,113,113,0.18);
+  --card-amber-bg: rgba(251,191,36,0.08);
+  --card-amber-border: rgba(251,191,36,0.15);
+  --card-green-bg: rgba(52,211,153,0.08);
+  --card-green-border: rgba(52,211,153,0.15);
 }
 html[data-theme="dark"] body { color-scheme: dark; }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -473,9 +491,9 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .sc-tbl tfoot td{border-top:2px solid var(--border-main);font-weight:800;color:var(--text-primary);padding:14px 16px}
 /* Badges — pill style */
 .sc-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
-.sc-badge.green{background:rgba(0,196,113,0.1);color:#00C471}
-.sc-badge.amber{background:rgba(245,158,11,0.1);color:#D97706}
-.sc-badge.red{background:rgba(240,68,82,0.1);color:#E03B48}
+.sc-badge.green{background:rgba(0,196,113,0.1);color:var(--kpi-green)}
+.sc-badge.amber{background:rgba(245,158,11,0.1);color:var(--kpi-amber)}
+.sc-badge.red{background:rgba(240,68,82,0.1);color:var(--kpi-red)}
 .sc-badge.gray{background:var(--bg-thead);color:var(--text-tertiary)}
 /* Progress bar */
 .sc-bar-bg{background:var(--bg-thead);border-radius:6px;height:6px;overflow:hidden}
@@ -2797,7 +2815,7 @@ function scRetryLoad(){
 async function scFetchFromGSheet(silent){
   if(!gsSheetId){document.getElementById('scLoadStatus').textContent='⚠️ Google Sheets 미연결';return}
   const st=document.getElementById('scLoadStatus');
-  if(st&&!silent)st.innerHTML='<span style="color:#D97706">⏳ 수금 데이터 불러오는 중...</span>';
+  if(st&&!silent)st.innerHTML='<span style="color:var(--kpi-amber)">⏳ 수금 데이터 불러오는 중...</span>';
 
   const sheetMap=[
     {names:['수금계획','_수금계획'], type:'plan'},
@@ -2853,7 +2871,7 @@ function scLoadFiles(event){
   if(!files.length) return;
   let loaded=0;
   const st=document.getElementById('scLoadStatus');
-  if(st) st.innerHTML='<span style="color:#D97706">⏳ '+files.length+'개 파일 처리 중...</span>';
+  if(st) st.innerHTML='<span style="color:var(--kpi-amber)">⏳ '+files.length+'개 파일 처리 중...</span>';
   files.forEach(file=>{
     const reader=new FileReader();
     reader.onload=function(e){
@@ -3157,7 +3175,7 @@ function scDrawC1(plan,byProject,unpaidMode,analysis){
   ctx.beginPath();ctx.moveTo(pL,pT);ctx.lineTo(pL,pT+ch);ctx.lineTo(W-pR,pT+ch);ctx.strokeStyle=TC('border-main');ctx.lineWidth=1;ctx.stroke();
   items.forEach((t,idx)=>{
     const[name,val]=t;const cx=pL+gw*idx+gw/2;const bh=ch*(val/mx);
-    const color=unpaidMode?'#F04452':byProject?SC_COLORS[idx%SC_COLORS.length]:scTC(name);
+    const color=unpaidMode?TC('kpi-red'):byProject?SC_COLORS[idx%SC_COLORS.length]:scTC(name);
     ctx.fillStyle=color;scRR(ctx,cx-bw/2,pT+ch-bh,bw,bh,3);ctx.fill();
     ctx.fillStyle=TC("text-primary");ctx.font='700 14px Pretendard';ctx.textAlign='center';ctx.textBaseline='bottom';
     const barLabel=val>=1e7?(val/1e8).toFixed(1)+'억':val>0?val.toLocaleString():'-';
@@ -3185,8 +3203,8 @@ function scDrawC2(plan,analysis){
     const bwP=cw*(d.p/maxP);const bwA=cw*(d.a/maxP);
     ctx.fillStyle=TC("text-primary");ctx.font='700 14px Pretendard';ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(name,pL-8,y+rH/2);
     ctx.fillStyle=TC("chart-grid");scRR(ctx,pL,y+3,bwP,rH-6,4);ctx.fill();
-    if(bwA>0){ctx.fillStyle=rate<50?'#F04452':rate>=80?'#00C471':'#F59E0B';scRR(ctx,pL,y+3,bwA,rH-6,4);ctx.fill()}
-    ctx.fillStyle=rate<50?'#F04452':rate>=80?'#00C471':'#F59E0B';ctx.font='800 16px Pretendard';ctx.textAlign='left';ctx.fillText(rate.toFixed(0)+'%',pL+bwP+8,y+rH/2);
+    if(bwA>0){ctx.fillStyle=rate<50?TC('kpi-red'):rate>=80?TC('kpi-green'):TC('kpi-amber');scRR(ctx,pL,y+3,bwA,rH-6,4);ctx.fill()}
+    ctx.fillStyle=rate<50?TC('kpi-red'):rate>=80?TC('kpi-green'):TC('kpi-amber');ctx.font='800 16px Pretendard';ctx.textAlign='left';ctx.fillText(rate.toFixed(0)+'%',pL+bwP+8,y+rH/2);
     if(i<teams.length-1){ctx.beginPath();ctx.moveTo(pL,y+rH+2);ctx.lineTo(W-8,y+rH+2);ctx.strokeStyle=TC('border-light');ctx.lineWidth=1;ctx.stroke()}
   });
 }
@@ -3210,17 +3228,17 @@ function scDrawC3(plan,analysis){
     if(!matched){if(!pu[r.project])pu[r.project]={name:r.project,team:r.team,gap:0};pu[r.project].gap+=r.amount}
   });
   const list=Object.values(pu).sort((a,b)=>b.gap-a.gap).slice(0,6);
-  if(!list.length){ctx.fillStyle='#00C471';ctx.font='600 14px Pretendard';ctx.textAlign='center';ctx.fillText('미수금 없음',W/2,H/2);return}
+  if(!list.length){ctx.fillStyle=TC('kpi-green');ctx.font='600 14px Pretendard';ctx.textAlign='center';ctx.fillText('미수금 없음',W/2,H/2);return}
   const maxG=Math.max(...list.map(r=>r.gap));
   const pT=6;const rH=Math.min(34,Math.floor((H-16)/list.length));const barX=W*0.46;
   list.forEach((r,i)=>{
     const y=pT+i*(rH+5);const bw=Math.max((W-barX-56)*(r.gap/maxG),2);
-    ctx.fillStyle=i<2?'#F04452':TC('text-tertiary');ctx.font='800 13px Pretendard';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('#'+(i+1),6,y+4);
+    ctx.fillStyle=i<2?TC('kpi-red'):TC('text-tertiary');ctx.font='800 13px Pretendard';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('#'+(i+1),6,y+4);
     ctx.fillStyle=TC("text-primary");ctx.font='700 14px Pretendard';
     ctx.fillText(r.name.length>14?r.name.slice(0,14)+'…':r.name,24,y+2);
     ctx.fillStyle=TC("text-secondary");ctx.font='500 12px Pretendard';ctx.fillText(r.team,24,y+18);
-    ctx.fillStyle='#F04452';scRR(ctx,barX,y+5,bw,rH-12,4);ctx.fill();
-    ctx.fillStyle='#F04452';ctx.font='700 14px Pretendard';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(r.gap.toLocaleString(),barX+bw+6,y+rH/2);
+    ctx.fillStyle=TC('kpi-red');scRR(ctx,barX,y+5,bw,rH-12,4);ctx.fill();
+    ctx.fillStyle=TC('kpi-red');ctx.font='700 14px Pretendard';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(r.gap.toLocaleString(),barX+bw+6,y+rH/2);
     if(i<list.length-1){ctx.beginPath();ctx.moveTo(6,y+rH+2);ctx.lineTo(W-6,y+rH+2);ctx.strokeStyle=TC('border-light');ctx.lineWidth=1;ctx.stroke()}
   });
 }
@@ -3360,13 +3378,13 @@ function scRenderOverview(){
     h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div class="sc-section-title" style="margin:0">수입 · 지출 현황</div><span style="font-size:11px;color:var(--text-tertiary)">경비내역 시트 기반</span></div>';
     // KPI cards — 4열 그리드
     h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px">';
-    h+=`<div style="background:var(--sig-pale);border-radius:12px;padding:16px;border:1px solid rgba(58,76,168,0.15)"><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px;font-weight:600">수금 실적</div><div style="font-size:22px;font-weight:800;color:var(--sig)">${scFmtAmt(totalIncome)}</div></div>`;
-    h+=`<div style="background:rgba(240,68,82,0.06);border-radius:12px;padding:16px;border:1px solid rgba(240,68,82,0.12)"><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px;font-weight:600">지출경비</div><div style="font-size:22px;font-weight:800;color:var(--kpi-red)">${totalExpense?'-'+scFmtAmt(totalExpense):'-'}</div></div>`;
-    if(totalOutsource>0)h+=`<div style="background:rgba(232,133,12,0.06);border-radius:12px;padding:16px;border:1px solid rgba(232,133,12,0.12)"><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px;font-weight:600">외주비</div><div style="font-size:22px;font-weight:800;color:var(--kpi-amber)">${scFmtAmt(totalOutsource)}</div></div>`;
+    h+=`<div style="background:var(--card-sig-bg);border-radius:12px;padding:16px;border:1px solid var(--card-sig-border)"><div style="font-size:12px;color:var(--text-primary);margin-bottom:4px;font-weight:600">수금 실적</div><div style="font-size:22px;font-weight:800;color:var(--sig)">${scFmtAmt(totalIncome)}</div></div>`;
+    h+=`<div style="background:var(--card-red-bg);border-radius:12px;padding:16px;border:1px solid var(--card-red-border)"><div style="font-size:12px;color:var(--text-primary);margin-bottom:4px;font-weight:600">지출경비</div><div style="font-size:22px;font-weight:800;color:var(--kpi-red)">${totalExpense?'-'+scFmtAmt(totalExpense):'-'}</div></div>`;
+    if(totalOutsource>0)h+=`<div style="background:var(--card-amber-bg);border-radius:12px;padding:16px;border:1px solid var(--card-amber-border)"><div style="font-size:12px;color:var(--text-primary);margin-bottom:4px;font-weight:600">외주비</div><div style="font-size:22px;font-weight:800;color:var(--kpi-amber)">${scFmtAmt(totalOutsource)}</div></div>`;
     const npColor=netProfit>=0?'var(--kpi-green)':'var(--kpi-red)';
-    const npBg=netProfit>=0?'rgba(0,196,113,0.06)':'rgba(240,68,82,0.06)';
-    const npBorder=netProfit>=0?'rgba(0,196,113,0.15)':'rgba(240,68,82,0.12)';
-    h+=`<div style="background:${npBg};border-radius:12px;padding:16px;border:1px solid ${npBorder}"><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px;font-weight:600">순이익</div><div style="font-size:22px;font-weight:800;color:${npColor}">${scFmtAmt(netProfit)}</div></div>`;
+    const npBg=netProfit>=0?'var(--card-green-bg)':'var(--card-red-bg)';
+    const npBorder=netProfit>=0?'var(--card-green-border)':'var(--card-red-border)';
+    h+=`<div style="background:${npBg};border-radius:12px;padding:16px;border:1px solid ${npBorder}"><div style="font-size:12px;color:var(--text-primary);margin-bottom:4px;font-weight:600">순이익</div><div style="font-size:22px;font-weight:800;color:${npColor}">${scFmtAmt(netProfit)}</div></div>`;
     h+='</div>';
 
     // Monthly table
@@ -3395,9 +3413,9 @@ function scRenderOverview(){
     // Expense detail table
     if(expFilt.length){
       h+='<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-main)"><div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px">경비 상세 내역 <span style="font-size:12px;font-weight:500;color:var(--text-tertiary)">'+expFilt.length+'건</span></div>';
-      h+='<div style="overflow-x:auto;border:1px solid var(--border-main);border-radius:10px;background:var(--bg-card)"><table class="sc-tbl"><thead><tr><th style="width:90px">연월</th><th style="width:180px">내역</th><th class="r" style="width:120px">금액</th><th>비고</th></tr></thead><tbody>';
+      h+='<div style="overflow-x:auto;border:1px solid var(--border-main);border-radius:10px;background:var(--bg-card)"><table class="sc-tbl"><thead><tr><th style="width:100px;white-space:nowrap">연월</th><th style="min-width:160px">내역</th><th class="r" style="width:140px">금액</th><th>비고</th></tr></thead><tbody>';
       expFilt.forEach(r=>{
-        h+=`<tr><td>${r.ym}</td><td>${r.desc}</td><td class="r" style="font-weight:600;font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}</td><td style="color:var(--text-tertiary)">${r.note||'-'}</td></tr>`;
+        h+=`<tr><td style="white-space:nowrap;font-weight:500">${r.ym}</td><td style="font-weight:500">${r.desc}</td><td class="r" style="font-weight:600;font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}</td><td style="color:var(--text-tertiary)" title="${r.note||''}">${r.note||'-'}</td></tr>`;
       });
       h+='</tbody></table></div></div>';
     }
@@ -3419,9 +3437,9 @@ function scRenderOverview(){
     const totalRows=plan.length;
     const sf=SC_FILTER_STATUS;
     const si=[
-      {key:'전체',color:'var(--sig)',bg:'var(--sig-pale)',icon:'📋'},
-      {key:'수금완료',color:'var(--kpi-green)',bg:'rgba(0,196,113,0.06)',icon:'✅'},
-      {key:'미수금',color:'var(--kpi-red)',bg:'rgba(240,68,82,0.06)',icon:'❌'}
+      {key:'전체',color:'var(--sig)',bg:'var(--card-sig-bg)',icon:'📋'},
+      {key:'수금완료',color:'var(--kpi-green)',bg:'var(--card-green-bg)',icon:'✅'},
+      {key:'미수금',color:'var(--kpi-red)',bg:'var(--card-red-bg)',icon:'❌'}
     ];
     h+='<div class="sc-section"><div class="sc-section-title">수금 상태 현황</div>';
     h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">';
@@ -3465,13 +3483,13 @@ function scRenderOverview(){
 
     // Row 1: 프로젝트별 미수금 (left) + 미수금 사유 분석 (right)
     h+=`<div class="sc-chart-grid2">`;
-    h+=`<div class="sc-section" style="max-height:420px;display:flex;flex-direction:column"><div class="sc-section-title" style="flex-shrink:0">프로젝트별 미수금 <span style="font-size:12px;font-weight:500;color:#8B95A1;margin-left:6px">큰 금액 순</span></div><div style="flex:1;overflow-y:auto;min-height:0"><canvas id="scCvC3" height="340" style="width:100%"></canvas></div></div>`;
+    h+=`<div class="sc-section" style="max-height:420px;display:flex;flex-direction:column"><div class="sc-section-title" style="flex-shrink:0">프로젝트별 미수금 <span style="font-size:12px;font-weight:500;color:var(--text-tertiary);margin-left:6px">큰 금액 순</span></div><div style="flex:1;overflow-y:auto;min-height:0"><canvas id="scCvC3" height="340" style="width:100%"></canvas></div></div>`;
 
     if(unpaidRows.length){
       h+=`<div class="sc-section" style="max-height:420px;display:flex;flex-direction:column">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;flex-shrink:0">
-          <div class="sc-section-title" style="margin:0;color:#F04452">미수금 사유 분석</div>
-          <div style="font-size:11px;color:var(--text-tertiary)"><strong style="color:#F04452">${scFmtAmt(totalUnpaidAmt)}</strong> (${unpaidRows.length}건)</div>
+          <div class="sc-section-title" style="margin:0;color:var(--kpi-red)">미수금 사유 분석</div>
+          <div style="font-size:11px;color:var(--text-tertiary)"><strong style="color:var(--kpi-red)">${scFmtAmt(totalUnpaidAmt)}</strong> (${unpaidRows.length}건)</div>
         </div><div style="flex:1;overflow-y:auto;min-height:0">`;
       const reasonMap2={};
       unpaidRows.forEach(r=>{
@@ -3488,21 +3506,21 @@ function scRenderOverview(){
         h+=`<div style="padding:10px 12px;background:var(--bg-card-hover);border-radius:8px;margin-bottom:6px;border-left:3px solid ${r.reason==='사유 미입력'?'var(--text-muted)':'var(--kpi-red)'}">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
             <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
-              <span style="background:#F04452;color:#FFF;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0">${i+1}</span>
+              <span style="background:var(--kpi-red);color:#FFF;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0">${i+1}</span>
               <span style="font-size:13px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.reason}</span>
             </div>
-            <span style="font-size:15px;font-weight:800;color:#F04452;font-variant-numeric:tabular-nums;flex-shrink:0;margin-left:8px">${scFmtAmt(r.amount)}</span>
+            <span style="font-size:15px;font-weight:800;color:var(--kpi-red);font-variant-numeric:tabular-nums;flex-shrink:0;margin-left:8px">${scFmtAmt(r.amount)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="font-size:10px;color:var(--text-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">${r.projects.join(', ')}</div>
             <div style="font-size:10px;color:var(--text-tertiary)">${r.count}건 · ${pct.toFixed(0)}%</div>
           </div>
-          <div style="height:3px;background:#FEE2E2;border-radius:2px;margin-top:4px"><div style="height:100%;width:${pct}%;background:#F04452;border-radius:2px"></div></div>
+          <div style="height:3px;background:var(--card-red-bg);border-radius:2px;margin-top:4px"><div style="height:100%;width:${pct}%;background:var(--kpi-red);border-radius:2px"></div></div>
         </div>`;
       });
       h+='</div></div>';
     } else {
-      h+=`<div class="sc-section" style="max-height:420px;display:flex;align-items:center;justify-content:center;color:#8B95A1">미수금 사유 데이터 없음</div>`;
+      h+=`<div class="sc-section" style="max-height:420px;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary)">미수금 사유 데이터 없음</div>`;
     }
     h+=`</div>`;
 
@@ -3521,10 +3539,10 @@ function scRenderOverview(){
     if(overdue2.length){
       const totalOD=overdue2.reduce((s,r)=>s+r.amount,0);
       const bands=[
-        {label:'30일 이내',min:1,max:30,color:'#F59E0B',bg:'#FFF8EB'},
-        {label:'31~60일',min:31,max:60,color:'#F97316',bg:'#FFF4ED'},
-        {label:'61~90일',min:61,max:90,color:'#EF4444',bg:'#FFF1F2'},
-        {label:'90일 초과',min:91,max:9999,color:'#991B1B',bg:'#FEE2E2'}
+        {label:'30일 이내',min:1,max:30,color:'var(--kpi-amber)',bg:'var(--card-amber-bg)'},
+        {label:'31~60일',min:31,max:60,color:'#F97316',bg:'rgba(249,115,22,0.08)'},
+        {label:'61~90일',min:61,max:90,color:'var(--kpi-red)',bg:'var(--card-red-bg)'},
+        {label:'90일 초과',min:91,max:9999,color:'#DC2626',bg:'var(--card-red-bg)'}
       ];
       const bandData=bands.map(b=>{
         const items=overdue2.filter(r=>r.overdueDays>=b.min&&r.overdueDays<=b.max);
@@ -3532,8 +3550,8 @@ function scRenderOverview(){
       });
       h+=`<div class="sc-section">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
-          <div class="sc-section-title" style="margin:0;color:#F04452">⏰ 미수금 경과 일자</div>
-          <div style="font-size:12px;color:var(--text-tertiary)">입금예정일 경과 <strong style="color:#F04452">${overdue2.length}건</strong> · <strong style="color:#F04452">${scFmtAmt(totalOD)}</strong></div>
+          <div class="sc-section-title" style="margin:0;color:var(--kpi-red)">⏰ 미수금 경과 일자</div>
+          <div style="font-size:12px;color:var(--text-tertiary)">입금예정일 경과 <strong style="color:var(--kpi-red)">${overdue2.length}건</strong> · <strong style="color:var(--kpi-red)">${scFmtAmt(totalOD)}</strong></div>
         </div>`;
       h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">';
       bandData.forEach(b=>{
@@ -3541,7 +3559,7 @@ function scRenderOverview(){
         h+=`<div style="background:${b.bg};border-radius:10px;padding:12px;border-left:3px solid ${b.color}">
           <div style="font-size:11px;font-weight:600;color:${b.color};margin-bottom:4px">${b.label}</div>
           <div style="font-size:20px;font-weight:800;color:${b.color};font-variant-numeric:tabular-nums">${b.count}<span style="font-size:12px">건</span></div>
-          <div style="font-size:11px;color:#8B95A1;margin-top:2px">${b.amount>0?scFmtAmt(b.amount):'없음'}${pct>0?' · '+pct.toFixed(0)+'%':''}</div>
+          <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">${b.amount>0?scFmtAmt(b.amount):'없음'}${pct>0?' · '+pct.toFixed(0)+'%':''}</div>
         </div>`;
       });
       h+='</div>';
@@ -3550,12 +3568,12 @@ function scRenderOverview(){
       h+='<th>프로젝트</th><th>담당팀</th><th class="r">수금목표액</th><th>입금예정일</th><th class="r">경과일</th><th>심각도</th>';
       h+='</tr></thead><tbody>';
       topOD.forEach(r=>{
-        const sev=r.overdueDays>90?{label:'심각',color:'#991B1B',bg:'#FEE2E2'}:r.overdueDays>60?{label:'위험',color:'#EF4444',bg:'#FFF1F2'}:r.overdueDays>30?{label:'주의',color:'#F97316',bg:'#FFF4ED'}:{label:'경미',color:'#F59E0B',bg:'#FFF8EB'};
+        const sev=r.overdueDays>90?{label:'심각',color:'#DC2626',bg:'var(--card-red-bg)'}:r.overdueDays>60?{label:'위험',color:'var(--kpi-red)',bg:'var(--card-red-bg)'}:r.overdueDays>30?{label:'주의',color:'#F97316',bg:'var(--card-amber-bg)'}:{label:'경미',color:'var(--kpi-amber)',bg:'var(--card-amber-bg)'};
         h+=`<tr>
           <td class="name">${r.project}</td>
           <td class="sub">${r.team}</td>
           <td class="r" style="font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}</td>
-          <td style="color:#F04452;font-weight:500">${r.dueDate}</td>
+          <td style="color:var(--kpi-red);font-weight:500">${r.dueDate}</td>
           <td class="r" style="font-weight:700;color:${sev.color}">${r.overdueDays}일</td>
           <td><span style="background:${sev.bg};color:${sev.color};padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600">${sev.label}</span></td>
         </tr>`;
@@ -3586,7 +3604,7 @@ function scRenderOverview(){
         <td class="r" style="font-variant-numeric:tabular-nums">${scFmtAmt(t.plan)}</td>
         <td class="r" style="color:${t.actual?'var(--sig)':'var(--text-muted)'};font-variant-numeric:tabular-nums">${t.actual?scFmtAmt(t.actual):'-'}</td>
         <td class="r"><span class="sc-badge ${r>=80?'green':r>0?'amber':'gray'}">${r.toFixed(0)}%</span></td>
-        <td><div style="height:8px;background:#F2F3F5;border-radius:4px"><div style="height:100%;width:${bw}%;background:${r>=80?'var(--sig)':r>0?'var(--kpi-amber)':'var(--border-main)'};border-radius:4px;transition:width 0.5s"></div></div></td>
+        <td><div style="height:8px;background:var(--bg-thead);border-radius:4px"><div style="height:100%;width:${bw}%;background:${r>=80?'var(--sig)':r>0?'var(--kpi-amber)':'var(--border-main)'};border-radius:4px;transition:width 0.5s"></div></div></td>
       </tr>`;
     });
     h+='</tbody></table></div></div>';
@@ -3608,7 +3626,7 @@ function scRenderOverview(){
         h+=`<tr>
           <td class="name">${r.project}</td><td class="sub">${r.team}</td><td class="sub">${r.item||'-'}</td>
           <td class="r" style="font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}</td>
-          <td class="r" style="color:#00C471;font-weight:700;font-variant-numeric:tabular-nums">${r.actual.toLocaleString()}</td>
+          <td class="r" style="color:var(--kpi-green);font-weight:700;font-variant-numeric:tabular-nums">${r.actual.toLocaleString()}</td>
           <td class="sub">${r.taxDate||'-'}</td>
           <td class="sub">${r.paidDate||'-'}</td>
         </tr>`;
@@ -3616,7 +3634,7 @@ function scRenderOverview(){
       h+='</tbody></table></div></div>';
     } else {
       h+='<div class="sc-section" style="text-align:center;padding:48px"><div style="font-size:48px;margin-bottom:16px">📭</div>';
-      h+='<div style="color:#8B95A1;font-size:15px">아직 수금 완료된 건이 없습니다.</div></div>';
+      h+='<div style="color:var(--text-tertiary);font-size:15px">아직 수금 완료된 건이 없습니다.</div></div>';
     }
   } else if(SC_FILTER_STATUS==='미수금'){
     // ── 미수금 모드: 미수금/부분수금만 ──
@@ -3638,7 +3656,7 @@ function scRenderOverview(){
           <span style="font-size:32px;font-weight:800;color:var(--kpi-red);font-variant-numeric:tabular-nums;letter-spacing:-1px">${scFmtAmt(totalGap)}</span>
           <span style="font-size:14px;color:var(--text-tertiary)">${unpaidRows.length}건 미수금</span>
         </div>
-        <div style="height:8px;background:rgba(240,68,82,0.12);border-radius:4px;margin-bottom:14px"><div style="height:100%;width:${barPct}%;background:var(--kpi-red);border-radius:4px;transition:width 0.6s"></div></div>
+        <div style="height:8px;background:var(--card-red-bg);border-radius:4px;margin-bottom:14px"><div style="height:100%;width:${barPct}%;background:var(--kpi-red);border-radius:4px;transition:width 0.6s"></div></div>
         <div style="display:flex;gap:24px;font-size:13px">
           <div><span style="color:var(--text-tertiary)">목표</span> <span style="font-weight:700;color:var(--text-primary);margin-left:4px">${scFmtAmt(totalTarget)}</span></div>
           <div><span style="color:var(--text-tertiary)">수금</span> <span style="font-weight:700;color:var(--sig);margin-left:4px">${scFmtAmt(totalActual)}</span></div>
@@ -3660,17 +3678,17 @@ function scRenderOverview(){
           <td class="name">${r.project}</td><td class="sub">${r.team}</td><td class="sub">${r.item||'-'}</td>
           <td class="r" style="font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}</td>
           <td class="r" style="color:${r.actual?'var(--sig)':'var(--text-muted)'};font-variant-numeric:tabular-nums">${r.actual?r.actual.toLocaleString():'-'}</td>
-          <td class="r" style="color:#F04452;font-weight:700;font-variant-numeric:tabular-nums">${gap.toLocaleString()}</td>
+          <td class="r" style="color:var(--kpi-red);font-weight:700;font-variant-numeric:tabular-nums">${gap.toLocaleString()}</td>
           <td><span class="sc-badge ${sc}">${r.status}</span></td>
-          <td class="sub" style="color:${overdue?'#F04452':'#6B7684'}">${r.dueDate||'-'}</td>
-          <td class="sub" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${r.reason?'#F04452':'var(--text-muted)'}" title="${r.reason||''}">${r.reason||'-'}</td>
+          <td class="sub" style="color:${overdue?'var(--kpi-red)':'var(--text-secondary)'}">${r.dueDate||'-'}</td>
+          <td class="sub" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${r.reason?'var(--kpi-red)':'var(--text-muted)'}" title="${r.reason||''}">${r.reason||'-'}</td>
         </tr>`;
       });
       const tP=sorted.reduce((s,r)=>s+r.amount,0),tA=sorted.reduce((s,r)=>s+r.actual,0);
       h+=`</tbody><tfoot><tr><td style="font-weight:700">합계</td><td></td><td></td>
         <td class="r" style="font-weight:700">${tP.toLocaleString()}</td>
         <td class="r" style="font-weight:700;color:var(--sig)">${tA.toLocaleString()}</td>
-        <td class="r" style="font-weight:700;color:#F04452">${(tP-tA).toLocaleString()}</td>
+        <td class="r" style="font-weight:700;color:var(--kpi-red)">${(tP-tA).toLocaleString()}</td>
         <td></td><td></td><td></td></tr></tfoot>`;
       h+='</table></div></div>';
       // 미수금 사유 분석
@@ -3684,13 +3702,13 @@ function scRenderOverview(){
       });
       const reasons=Object.values(reasonMap).sort((a,b)=>b.amount-a.amount);
       const totalReasonAmt=reasons.reduce((s,r)=>s+r.amount,0);
-      h+='<div class="sc-section"><div class="sc-section-title" style="color:#F04452">미수금 사유 분석</div>';
+      h+='<div class="sc-section"><div class="sc-section-title" style="color:var(--kpi-red)">미수금 사유 분석</div>';
       reasons.forEach((r,i)=>{
         const pct=totalReasonAmt>0?(r.amount/totalReasonAmt*100):0;
         h+=`<div style="padding:12px;background:var(--bg-card-hover);border-radius:10px;margin-bottom:8px;border-left:3px solid ${r.reason==='사유 미입력'?'var(--text-muted)':'var(--kpi-red)'}">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
             <div style="display:flex;align-items:center;gap:8px">
-              <span style="background:#F04452;color:#FFF;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px">${i+1}</span>
+              <span style="background:var(--kpi-red);color:#FFF;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px">${i+1}</span>
               <span style="font-size:14px;font-weight:600;color:var(--text-primary)">${r.reason}</span>
             </div>
             <span style="font-size:16px;font-weight:800;color:var(--kpi-red)">${scFmtAmt(r.amount)}</span>
@@ -3698,13 +3716,13 @@ function scRenderOverview(){
           <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-tertiary)">
             <span>${r.projects.join(', ')}</span><span>${r.count}건 · ${pct.toFixed(0)}%</span>
           </div>
-          <div style="height:3px;background:#FEE2E2;border-radius:2px;margin-top:6px"><div style="height:100%;width:${pct}%;background:#F04452;border-radius:2px"></div></div>
+          <div style="height:3px;background:var(--card-red-bg);border-radius:2px;margin-top:6px"><div style="height:100%;width:${pct}%;background:var(--kpi-red);border-radius:2px"></div></div>
         </div>`;
       });
       h+='</div>';
     } else {
       h+='<div class="sc-section" style="text-align:center;padding:48px"><div style="font-size:48px;margin-bottom:16px">✅</div>';
-      h+='<div style="color:#00C471;font-size:18px;font-weight:700">미수금 없음</div></div>';
+      h+='<div style="color:var(--kpi-green);font-size:18px;font-weight:700">미수금 없음</div></div>';
     }
   } else {
     // ── 전체 모드: 프로젝트별 종합 (미수금 제외) ──
@@ -3734,7 +3752,7 @@ function scRenderOverview(){
           <td class="sub">${[...p.teams].join(', ')}</td>
           <td class="r" style="font-variant-numeric:tabular-nums">${p.plan.toLocaleString()}</td>
           <td class="r" style="color:${p.actual?'var(--sig)':'var(--text-muted)'};font-variant-numeric:tabular-nums">${p.actual?p.actual.toLocaleString():'-'}</td>
-          <td class="r" style="color:${gapAmt>0?'#F04452':'var(--text-muted)'};font-variant-numeric:tabular-nums">${gapAmt>0?gapAmt.toLocaleString():'-'}</td>
+          <td class="r" style="color:${gapAmt>0?'var(--kpi-red)':'var(--text-muted)'};font-variant-numeric:tabular-nums">${gapAmt>0?gapAmt.toLocaleString():'-'}</td>
           <td class="r"><span class="sc-badge ${rt>=80?'green':rt>0?'amber':'gray'}">${rt>=0?rt.toFixed(0)+'%':'-'}</span></td>
           <td class="sub">${dueDate||'-'}</td>
         </tr>`;
@@ -3744,7 +3762,7 @@ function scRenderOverview(){
         <td style="font-weight:700">합계 (${projs.length}건)</td><td></td>
         <td class="r" style="font-weight:700">${tP.toLocaleString()}</td>
         <td class="r" style="font-weight:700;color:var(--sig)">${tA.toLocaleString()}</td>
-        <td class="r" style="font-weight:700;color:#F04452">${(tP-tA)>0?(tP-tA).toLocaleString():'-'}</td>
+        <td class="r" style="font-weight:700;color:var(--kpi-red)">${(tP-tA)>0?(tP-tA).toLocaleString():'-'}</td>
         <td class="r"><span class="sc-badge ${tP>0&&tA/tP>=0.8?'green':'amber'}">${tP>0?(tA/tP*100).toFixed(0):'0'}%</span></td>
         <td></td>
       </tr></tfoot>`;
@@ -3783,10 +3801,10 @@ function scRenderOverview(){
 
     if(overdue.length){
       const bands=[
-        {label:'30일 이내',min:1,max:30,color:'#F59E0B',bg:'#FFF8EB'},
-        {label:'31~60일',min:31,max:60,color:'#F97316',bg:'#FFF4ED'},
-        {label:'61~90일',min:61,max:90,color:'#EF4444',bg:'#FFF1F2'},
-        {label:'90일 초과',min:91,max:9999,color:'#991B1B',bg:'#FEE2E2'}
+        {label:'30일 이내',min:1,max:30,color:'var(--kpi-amber)',bg:'var(--card-amber-bg)'},
+        {label:'31~60일',min:31,max:60,color:'#F97316',bg:'rgba(249,115,22,0.08)'},
+        {label:'61~90일',min:61,max:90,color:'var(--kpi-red)',bg:'var(--card-red-bg)'},
+        {label:'90일 초과',min:91,max:9999,color:'#DC2626',bg:'var(--card-red-bg)'}
       ];
       const bandData=bands.map(b=>{
         const items=overdue.filter(r=>r.overdueDays>=b.min&&r.overdueDays<=b.max);
@@ -3797,8 +3815,8 @@ function scRenderOverview(){
 
       h+=`<div class="sc-section">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px">
-          <div class="sc-section-title" style="margin:0;color:#F04452">⏰ 미수금 경과 일자</div>
-          <div style="font-size:13px;color:var(--text-tertiary)">입금예정일 경과 <strong style="color:#F04452">${totalCnt}건</strong> · <strong style="color:#F04452">${scFmtAmt(totalOverdue)}</strong></div>
+          <div class="sc-section-title" style="margin:0;color:var(--kpi-red)">⏰ 미수금 경과 일자</div>
+          <div style="font-size:13px;color:var(--text-tertiary)">입금예정일 경과 <strong style="color:var(--kpi-red)">${totalCnt}건</strong> · <strong style="color:var(--kpi-red)">${scFmtAmt(totalOverdue)}</strong></div>
         </div>`;
 
       // Band cards
@@ -3819,12 +3837,12 @@ function scRenderOverview(){
       h+='<th>프로젝트</th><th>담당팀</th><th class="r">수금목표액</th><th>입금예정일</th><th class="r">경과일</th><th>심각도</th>';
       h+='</tr></thead><tbody>';
       topOverdue.forEach(r=>{
-        const sev=r.overdueDays>90?{label:'심각',color:'#991B1B',bg:'#FEE2E2'}:r.overdueDays>60?{label:'위험',color:'#EF4444',bg:'#FFF1F2'}:r.overdueDays>30?{label:'주의',color:'#F97316',bg:'#FFF4ED'}:{label:'경미',color:'#F59E0B',bg:'#FFF8EB'};
+        const sev=r.overdueDays>90?{label:'심각',color:'#DC2626',bg:'var(--card-red-bg)'}:r.overdueDays>60?{label:'위험',color:'var(--kpi-red)',bg:'var(--card-red-bg)'}:r.overdueDays>30?{label:'주의',color:'#F97316',bg:'var(--card-amber-bg)'}:{label:'경미',color:'var(--kpi-amber)',bg:'var(--card-amber-bg)'};
         h+=`<tr>
           <td class="name">${r.project}</td>
           <td class="sub">${r.team}</td>
           <td class="r" style="font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}</td>
-          <td style="color:#F04452;font-weight:500">${r.dueDate}</td>
+          <td style="color:var(--kpi-red);font-weight:500">${r.dueDate}</td>
           <td class="r" style="font-weight:700;color:${sev.color}">${r.overdueDays}일</td>
           <td><span style="background:${sev.bg};color:${sev.color};padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600">${sev.label}</span></td>
         </tr>`;
@@ -3858,8 +3876,8 @@ function scRenderPlan(){
     let emptyH=SC_PLAN.length>0?scTeamFilter('<button onclick="scOpenNew(\'plan\')" style="background:var(--sig);color:#FFF;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">+ 수금계획 추가</button>'):'';
     emptyH+='<div class="sc-section" style="text-align:center;padding:48px">';
     emptyH+='<div style="font-size:48px;margin-bottom:16px">📊</div>';
-    emptyH+='<div style="color:#8B95A1;font-size:15px;margin-bottom:8px">'+(SC_LOADED.plan?'선택한 필터 조건에 맞는 데이터가 없습니다.':'수금계획 시트를 불러와 주세요.')+'</div>';
-    emptyH+='<div style="color:#AEB5BC;font-size:13px;margin-bottom:16px">다른 조건을 선택하거나 새 데이터를 추가하세요.</div>';
+    emptyH+='<div style="color:var(--text-tertiary);font-size:15px;margin-bottom:8px">'+(SC_LOADED.plan?'선택한 필터 조건에 맞는 데이터가 없습니다.':'수금계획 시트를 불러와 주세요.')+'</div>';
+    emptyH+='<div style="color:var(--text-muted);font-size:13px;margin-bottom:16px">다른 조건을 선택하거나 새 데이터를 추가하세요.</div>';
     emptyH+='<button onclick="scOpenNew(\'plan\')" style="background:var(--sig);color:#FFF;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">+ 수금계획 추가</button>';
     emptyH+='</div>';
     document.getElementById('scTabPlan').innerHTML=emptyH;return}
@@ -3898,8 +3916,8 @@ function scRenderPlan(){
       <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">${isAll?'팀 필터를 선택하면 해당 팀의 과업별 상세를 볼 수 있습니다':'위 필터에서 전체 팀을 선택하면 팀 비교로 돌아갑니다'}</div>
     </div>
     <div style="text-align:right">
-      <div style="font-size:14px;color:#8B95A1">목표 <strong style="color:var(--text-primary);font-size:16px">${scFmtAmt(grandPlan)}</strong></div>
-      <div style="font-size:13px;color:#8B95A1;margin-top:2px">실적 <strong style="color:var(--sig);font-size:15px">${scFmtAmt(grandActual)}</strong> <span style="font-size:12px;color:${grandPlan>0&&grandActual/grandPlan>=0.5?'#00C471':'#F04452'}">(${grandPlan>0?(grandActual/grandPlan*100).toFixed(1):0}%)</span></div>
+      <div style="font-size:14px;color:var(--text-tertiary)">목표 <strong style="color:var(--text-primary);font-size:16px">${scFmtAmt(grandPlan)}</strong></div>
+      <div style="font-size:13px;color:var(--text-tertiary);margin-top:2px">실적 <strong style="color:var(--sig);font-size:15px">${scFmtAmt(grandActual)}</strong> <span style="font-size:12px;color:${grandPlan>0&&grandActual/grandPlan>=0.5?'var(--kpi-green)':'var(--kpi-red)'}">(${grandPlan>0?(grandActual/grandPlan*100).toFixed(1):0}%)</span></div>
     </div>
   </div>`;
 
@@ -3913,7 +3931,7 @@ function scRenderPlan(){
     const planPct=maxVal>0?(g.plan/maxVal*100):0;
     const actualPct=g.plan>0?(g.actual/g.plan*100):0;
     const achRate=g.plan>0?(g.actual/g.plan*100):0;
-    const rateColor=achRate>=80?'#00C471':achRate>=30?'#F59E0B':'#F04452';
+    const rateColor=achRate>=80?'var(--kpi-green)':achRate>=30?'var(--kpi-amber)':'var(--kpi-red)';
     h+=`<div style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
         <div style="font-size:14px;font-weight:600;color:var(--text-primary)">${g.label}</div>
@@ -3973,8 +3991,8 @@ function scRenderAnalysis(){
     let emptyH=SC_PLAN.length>0?scTeamFilter(''):'';
     emptyH+='<div class="sc-section" style="text-align:center;padding:48px">';
     emptyH+='<div style="font-size:48px;margin-bottom:16px">📋</div>';
-    emptyH+='<div style="color:#8B95A1;font-size:15px;margin-bottom:8px">'+(SC_LOADED.analysis?'선택한 필터 조건에 맞는 데이터가 없습니다.':'전월분석 시트를 불러와 주세요.')+'</div>';
-    emptyH+='<div style="color:#AEB5BC;font-size:13px">다른 조건을 선택해 보세요.</div>';
+    emptyH+='<div style="color:var(--text-tertiary);font-size:15px;margin-bottom:8px">'+(SC_LOADED.analysis?'선택한 필터 조건에 맞는 데이터가 없습니다.':'전월분석 시트를 불러와 주세요.')+'</div>';
+    emptyH+='<div style="color:var(--text-muted);font-size:13px">다른 조건을 선택해 보세요.</div>';
     emptyH+='</div>';
     document.getElementById('scTabAnalysis').innerHTML=emptyH;return}
   let h=scTeamFilter('<button onclick="scOpenNew(\'analysis\')" style="background:var(--sig);color:#FFF;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.15s" onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">+ 전월분석 추가</button>');
@@ -3988,10 +4006,10 @@ function scRenderAnalysis(){
     else{statCnt['미수금']++;statAmt['미수금']+=r.target-r.actual}
   });
   h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:14px;border:1px solid var(--border-main);border-radius:14px;overflow:hidden;background:var(--bg-card)">
-    <div style="padding:18px 20px;border-right:1px solid var(--border-main)"><div style="font-size:13px;color:var(--text-tertiary);margin-bottom:6px">수금완료</div><div style="font-size:22px;font-weight:700;color:#00C471;font-variant-numeric:tabular-nums">${statCnt['수금완료']}건</div></div>
-    <div style="padding:18px 20px;border-right:1px solid var(--border-main);background:rgba(245,158,11,0.04)"><div style="font-size:13px;color:var(--text-tertiary);margin-bottom:6px">부분수금</div><div style="font-size:22px;font-weight:700;color:#F59E0B;font-variant-numeric:tabular-nums">${statCnt['부분수금']}건</div><div style="font-size:12px;color:var(--kpi-amber);margin-top:4px">${scFmtAmt(statAmt['부분수금'])}</div></div>
-    <div style="padding:18px 20px;border-right:1px solid var(--border-main);background:rgba(240,68,82,0.04)"><div style="font-size:13px;color:var(--text-tertiary);margin-bottom:6px">미수금</div><div style="font-size:22px;font-weight:700;color:#F04452;font-variant-numeric:tabular-nums">${statCnt['미수금']}건</div><div style="font-size:12px;color:var(--kpi-red);margin-top:4px">${scFmtAmt(statAmt['미수금'])}</div></div>
-    <div style="padding:18px 20px"><div style="font-size:13px;color:var(--text-tertiary);margin-bottom:6px">보류</div><div style="font-size:22px;font-weight:700;color:#8B95A1;font-variant-numeric:tabular-nums">${statCnt['보류']}건</div><div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">${scFmtAmt(statAmt['보류'])}</div></div>
+    <div style="padding:18px 20px;border-right:1px solid var(--border-main)"><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">수금완료</div><div style="font-size:22px;font-weight:700;color:var(--kpi-green);font-variant-numeric:tabular-nums">${statCnt['수금완료']}건</div></div>
+    <div style="padding:18px 20px;border-right:1px solid var(--border-main);background:var(--card-amber-bg)"><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">부분수금</div><div style="font-size:22px;font-weight:700;color:var(--kpi-amber);font-variant-numeric:tabular-nums">${statCnt['부분수금']}건</div><div style="font-size:12px;color:var(--kpi-amber);margin-top:4px">${scFmtAmt(statAmt['부분수금'])}</div></div>
+    <div style="padding:18px 20px;border-right:1px solid var(--border-main);background:var(--card-red-bg)"><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">미수금</div><div style="font-size:22px;font-weight:700;color:var(--kpi-red);font-variant-numeric:tabular-nums">${statCnt['미수금']}건</div><div style="font-size:12px;color:var(--kpi-red);margin-top:4px">${scFmtAmt(statAmt['미수금'])}</div></div>
+    <div style="padding:18px 20px"><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">보류</div><div style="font-size:22px;font-weight:700;color:var(--text-tertiary);font-variant-numeric:tabular-nums">${statCnt['보류']}건</div><div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">${scFmtAmt(statAmt['보류'])}</div></div>
   </div>`;
 
   // Project summary — 목표는 수금계획(SC_PLAN)에서, 실적은 전월분석에서
@@ -4010,12 +4028,12 @@ function scRenderAnalysis(){
     h+=`<tr><td class="name">${p.name}</td><td class="sub">${p.team}</td>
       <td class="r">${p.target.toLocaleString()}</td>
       <td class="r" style="color:${p.actual?'var(--sig)':'var(--text-muted)'}">${p.actual?p.actual.toLocaleString():'-'}</td>
-      <td class="r" style="color:${gap>0?'#F04452':'var(--text-muted)'}">${gap>0?gap.toLocaleString():'-'}</td>
+      <td class="r" style="color:${gap>0?'var(--kpi-red)':'var(--text-muted)'}">${gap>0?gap.toLocaleString():'-'}</td>
       <td class="r"><span class="sc-badge ${rate>=100?'green':rate>0?'amber':'gray'}">${rate.toFixed(0)}%</span></td></tr>`;
   });
   const tT=projs.reduce((s,p)=>s+p.target,0),tA=projs.reduce((s,p)=>s+p.actual,0);
   h+=`</tbody><tfoot><tr><td>합계</td><td></td><td class="r">${tT.toLocaleString()}</td><td class="r" style="color:var(--sig)">${tA.toLocaleString()}</td>
-    <td class="r" style="color:#F04452">${(tT-tA)>0?(tT-tA).toLocaleString():'-'}</td>
+    <td class="r" style="color:var(--kpi-red)">${(tT-tA)>0?(tT-tA).toLocaleString():'-'}</td>
     <td class="r"><span class="sc-badge ${tT>0&&tA/tT>=0.8?'green':'amber'}">${tT>0?(tA/tT*100).toFixed(0):0}%</span></td></tr></tfoot>`;
   h+='</table></div></div>';
 
@@ -4028,7 +4046,7 @@ function scRenderAnalysis(){
     h+=`<tr class="clickable" onclick="scOpenEdit('analysis',${origIdx})"><td class="sub">${scFmtDate(r.date)}</td><td class="sub">${r.team}</td><td class="name">${r.project}</td>
       <td class="r">${r.target.toLocaleString()}</td><td class="r" style="color:${r.actual?'var(--sig)':'var(--text-muted)'}">${r.actual?r.actual.toLocaleString():'-'}</td>
       <td><span class="sc-badge ${sc}">${r.status||'-'}</span></td>
-      <td class="sub" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${r.reason?'#F04452':'var(--text-muted)'}" title="${r.reason||''}">${r.reason||'-'}</td></tr>`;
+      <td class="sub" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${r.reason?'var(--kpi-red)':'var(--text-muted)'}" title="${r.reason||''}">${r.reason||'-'}</td></tr>`;
   });
   h+='</tbody></table></div></div>';
   document.getElementById('scTabAnalysis').innerHTML=h;
@@ -4084,7 +4102,7 @@ function scRenderCalendar(){
   const filterYear=SC_FILTER_YEAR!=='전체'?Number(SC_FILTER_YEAR):yr;
   let h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">';
   h+='<div class="sc-section-title" style="margin:0">수금 일정 캘린더</div>';
-  h+=`<div style="font-size:14px;color:#8B95A1;font-weight:600">${filterYear}년</div></div>`;
+  h+=`<div style="font-size:14px;color:var(--text-tertiary);font-weight:600">${filterYear}년</div></div>`;
   
   h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">';
   const calYr=filterYear;
@@ -4112,23 +4130,23 @@ function scRenderCalendar(){
       if(dd){
         const hasC=dd.some(x=>x.status==='수금완료');
         const hasU=dd.some(x=>x.status==='미수금'||x.status==='부분수금');
-        if(hasC){bg='#D1FAE5';tc='#065F46';dot='#00C471'}
-        else if(hasU){bg='#FEE2E2';tc='#991B1B';dot='#F04452'}
+        if(hasC){bg='var(--card-green-bg)';tc='var(--kpi-green)';dot='var(--kpi-green)'}
+        else if(hasU){bg='var(--card-red-bg)';tc='var(--kpi-red)';dot='var(--kpi-red)'}
         else{bg='var(--sig-pale)';tc='var(--sig)';dot='var(--sig)'}
       }
       h+=`<div style="padding:2px 0;border-radius:3px;background:${isToday?'var(--text-primary)':bg};color:${isToday?'#FFF':tc};font-weight:${isToday||dd?'700':'400'};position:relative;font-size:9px">${d}${dot?'<div style="width:3px;height:3px;border-radius:50%;background:'+dot+';position:absolute;bottom:0;left:50%;transform:translateX(-50%)"></div>':''}</div>`;
     }
     h+='</div>';
     if(hasData){
-      h+=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid #F2F3F5;font-size:10px;color:#8B95A1;display:flex;justify-content:space-between">
+      h+=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-light);font-size:10px;color:var(--text-tertiary);display:flex;justify-content:space-between">
         <span>${monthTotal.length}건</span><span>${scFmtAmt(monthAmt)}</span></div>`;
     }
     h+='</div>';
   }
   h+='</div>';
   h+=`<div style="display:flex;gap:16px;justify-content:center;margin-top:12px;font-size:11px;color:var(--text-tertiary)">
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#00C471"></span>수금완료</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#F04452"></span>미수금</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--kpi-green)"></span>수금완료</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--kpi-red)"></span>미수금</span>
     <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sig)"></span>수금예정</span>
     <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--text-primary)"></span>오늘</span>
   </div>`;
@@ -4148,11 +4166,11 @@ function scRenderCalMonth(root){
   
   let h='<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px">';
   h+=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-    <button onclick="scCalGoMonth(SC_CAL_MONTH<=0?11:SC_CAL_MONTH-1)" style="background:none;border:1px solid #E5E8EB;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:#6B7684">◀</button>
+    <button onclick="scCalGoMonth(SC_CAL_MONTH<=0?11:SC_CAL_MONTH-1)" style="background:none;border:1px solid var(--border-main);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text-secondary)">◀</button>
     <span style="font-size:22px;font-weight:800;color:var(--text-primary);min-width:160px;text-align:center">${yr}년 ${mi+1}월</span>
-    <button onclick="scCalGoMonth(SC_CAL_MONTH>=11?0:SC_CAL_MONTH+1)" style="background:none;border:1px solid #E5E8EB;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:#6B7684">▶</button>
+    <button onclick="scCalGoMonth(SC_CAL_MONTH>=11?0:SC_CAL_MONTH+1)" style="background:none;border:1px solid var(--border-main);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text-secondary)">▶</button>
   </div>`;
-  h+=`<button onclick="scCalGoYear()" style="display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;font-size:13px;color:#8B95A1;padding:2px 0">
+  h+=`<button onclick="scCalGoYear()" style="display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-tertiary);padding:2px 0">
     ← ${yr}년 전체 보기</button>`;
   h+='</div>';
   
@@ -4169,7 +4187,7 @@ function scRenderCalMonth(root){
   for(let d=1;d<=daysInMonth;d++){
     const isToday=isCur&&d===today.getDate();
     const dd=md[d];
-    let borderColor='#F2F3F5',bgColor='#FFF';
+    let borderColor='var(--border-light)',bgColor='var(--bg-card)';
     if(dd){
       const hasC=dd.some(x=>x.status==='수금완료');
       const hasU=dd.some(x=>x.status==='미수금'||x.status==='부분수금');
@@ -4189,14 +4207,14 @@ function scRenderCalMonth(root){
         const ec=ev.status==='수금완료'?'var(--kpi-green)':ev.status==='미수금'||ev.status==='부분수금'?'var(--kpi-red)':'var(--sig)';
         h+=`<div style="font-size:9px;padding:2px 4px;background:${ec}18;color:${ec};border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${ev.project}</div>`;
       });
-      if(dd.length>2) h+=`<div style="font-size:9px;color:#8B95A1">+${dd.length-2}건</div>`;
+      if(dd.length>2) h+=`<div style="font-size:9px;color:var(--text-tertiary)">+${dd.length-2}건</div>`;
     }
     h+='</div>';
   }
   h+='</div>';
   h+=`<div style="display:flex;gap:16px;justify-content:center;margin-top:16px;font-size:11px;color:var(--text-tertiary)">
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#00C471"></span>수금완료</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#F04452"></span>미수금</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--kpi-green)"></span>수금완료</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--kpi-red)"></span>미수금</span>
     <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sig)"></span>수금예정</span>
     <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--text-primary)"></span>오늘</span>
   </div>`;
@@ -4224,28 +4242,28 @@ function scCalClickDate(yr,mo,day){
     const gap=ev.amount-(ev.actual||0);
     const typeLabel={due:'입금예정',paid:'입금완료',overdue:'미수금',tax:'세금계산서',invoice:'청구예정'}[ev.eventType]||'';
     
-    h+=`<div style="background:#FAFBFC;border-radius:14px;padding:18px;margin-bottom:10px;border-left:4px solid ${ec};cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('plan',${ev.idx})" onmouseover="this.style.background='#F2F3F5'" onmouseout="this.style.background='#FAFBFC'">
+    h+=`<div style="background:var(--bg-card-hover);border-radius:14px;padding:18px;margin-bottom:10px;border-left:4px solid ${ec};cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('plan',${ev.idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div>
-          <span style="font-size:15px;font-weight:700;color:#191F28">${ev.project}</span>
-          <span style="font-size:12px;color:#8B95A1;margin-left:8px">${ev.team}</span>
+          <span style="font-size:15px;font-weight:700;color:var(--text-primary)">${ev.project}</span>
+          <span style="font-size:12px;color:var(--text-tertiary);margin-left:8px">${ev.team}</span>
         </div>
         <span class="sc-badge ${ev.status==='수금완료'?'green':ev.status==='미수금'?'red':ev.status==='부분수금'?'amber':'blue'}">${ev.status}</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
-        <div><span style="color:#8B95A1">일정 유형</span><div style="font-weight:600;color:${ec};margin-top:2px">${typeLabel}</div></div>
-        <div><span style="color:#8B95A1">공종</span><div style="font-weight:600;color:#191F28;margin-top:2px">${ev.item||'-'}</div></div>
-        <div><span style="color:#8B95A1">목표액</span><div style="font-weight:700;color:#191F28;margin-top:2px;font-variant-numeric:tabular-nums">${ev.amount.toLocaleString()}</div></div>
-        <div><span style="color:#8B95A1">실적/미수금</span><div style="font-weight:700;color:${ev.actual?'#3182F6':'#F04452'};margin-top:2px;font-variant-numeric:tabular-nums">${ev.actual?ev.actual.toLocaleString()+' 수금':gap.toLocaleString()+' 미수금'}</div></div>
+        <div><span style="color:var(--text-tertiary)">일정 유형</span><div style="font-weight:600;color:${ec};margin-top:2px">${typeLabel}</div></div>
+        <div><span style="color:var(--text-tertiary)">공종</span><div style="font-weight:600;color:var(--text-primary);margin-top:2px">${ev.item||'-'}</div></div>
+        <div><span style="color:var(--text-tertiary)">목표액</span><div style="font-weight:700;color:var(--text-primary);margin-top:2px;font-variant-numeric:tabular-nums">${ev.amount.toLocaleString()}</div></div>
+        <div><span style="color:var(--text-tertiary)">실적/미수금</span><div style="font-weight:700;color:${ev.actual?'var(--sig)':'var(--kpi-red)'};margin-top:2px;font-variant-numeric:tabular-nums">${ev.actual?ev.actual.toLocaleString()+' 수금':gap.toLocaleString()+' 미수금'}</div></div>
       </div>
-      ${ev.reason?'<div style="margin-top:10px;padding-top:10px;border-top:1px solid #E5E8EB;font-size:12px"><span style="color:#F04452;font-weight:600">사유:</span> <span style="color:#6B7684">'+ev.reason+'</span></div>':''}
-      <div style="margin-top:8px;display:flex;gap:12px;font-size:11px;color:#AEB5BC">
+      ${ev.reason?'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-main);font-size:12px"><span style="color:var(--kpi-red);font-weight:600">사유:</span> <span style="color:var(--text-secondary)">'+ev.reason+'</span></div>':''}
+      <div style="margin-top:8px;display:flex;gap:12px;font-size:11px;color:var(--text-muted)">
         ${ev.invoiceDate?'<span>청구: '+ev.invoiceDate+'</span>':''}
         ${ev.dueDate?'<span>입금예정: '+ev.dueDate+'</span>':''}
         ${ev.taxDate?'<span>세금계산서: '+ev.taxDate+'</span>':''}
         ${ev.paidDate?'<span>입금완료: '+ev.paidDate+'</span>':''}
       </div>
-      <div style="margin-top:8px;font-size:11px;color:#3182F6;font-weight:600">클릭하여 수정 →</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--sig);font-weight:600">클릭하여 수정 →</div>
     </div>`;
   });
   
@@ -4280,20 +4298,20 @@ function scOpenProjectDetail(projName){
   let h='';
   // Summary
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">
-    <div style="background:#F4F5F7;border-radius:10px;padding:14px"><div style="font-size:10px;color:#8B95A1;margin-bottom:4px">수금목표</div><div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums">${scFmtAmt(totalPlan)}</div></div>
-    <div style="background:#F4F5F7;border-radius:10px;padding:14px"><div style="font-size:10px;color:#8B95A1;margin-bottom:4px">수금실적</div><div style="font-size:18px;font-weight:700;color:#3182F6;font-variant-numeric:tabular-nums">${scFmtAmt(totalActual)}</div></div>
-    <div style="background:#F4F5F7;border-radius:10px;padding:14px"><div style="font-size:10px;color:#8B95A1;margin-bottom:4px">달성률</div><div style="font-size:18px;font-weight:700;color:${rate>=80?'#3182F6':'#F04452'};font-variant-numeric:tabular-nums">${rate.toFixed(1)}%</div></div>
+    <div style="background:var(--bg-thead);border-radius:10px;padding:14px"><div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px">수금목표</div><div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums">${scFmtAmt(totalPlan)}</div></div>
+    <div style="background:var(--bg-thead);border-radius:10px;padding:14px"><div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px">수금실적</div><div style="font-size:18px;font-weight:700;color:var(--sig);font-variant-numeric:tabular-nums">${scFmtAmt(totalActual)}</div></div>
+    <div style="background:var(--bg-thead);border-radius:10px;padding:14px"><div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px">달성률</div><div style="font-size:18px;font-weight:700;color:${rate>=80?'var(--sig)':'var(--kpi-red)'};font-variant-numeric:tabular-nums">${rate.toFixed(1)}%</div></div>
   </div>`;
 
   // Plan records
   if(plans.length){
-    h+='<div style="font-size:12px;font-weight:700;color:#191F28;margin-bottom:10px">수금계획 ('+plans.length+'건)</div>';
+    h+='<div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:10px">수금계획 ('+plans.length+'건)</div>';
     plans.forEach((r,i)=>{
       const idx=SC_PLAN.indexOf(r);
-      h+=`<div style="background:#FAFBFC;border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('plan',${idx})" onmouseover="this.style.background='#F2F3F5'" onmouseout="this.style.background='#FAFBFC'">
+      h+=`<div style="background:var(--bg-card-hover);border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('plan',${idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:12px;font-weight:600;color:#191F28">${r.item||'항목 없음'}</span>
-          <span style="font-size:14px;font-weight:700;color:#191F28;font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}원</span>
+          <span style="font-size:12px;font-weight:600;color:var(--text-primary)">${r.item||'항목 없음'}</span>
+          <span style="font-size:14px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}원</span>
         </div>
         <div style="display:flex;gap:12px;font-size:10px;color:var(--text-tertiary)">
           <span>담당: ${r.team}</span>
@@ -4306,33 +4324,33 @@ function scOpenProjectDetail(projName){
 
   // Analysis records
   if(analyses.length){
-    h+='<div style="font-size:12px;font-weight:700;color:#191F28;margin:16px 0 10px">전월분석 ('+analyses.length+'건)</div>';
+    h+='<div style="font-size:12px;font-weight:700;color:var(--text-primary);margin:16px 0 10px">전월분석 ('+analyses.length+'건)</div>';
     analyses.forEach((r,i)=>{
       const idx=SC_ANALYSIS.indexOf(r);
       const gap=r.target-r.actual;
-      const sc=r.status==='수금완료'?'#00C471':r.status==='부분수금'?'#F59E0B':r.status==='미수금'?'#F04452':'#8B95A1';
-      h+=`<div style="background:#FAFBFC;border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('analysis',${idx})" onmouseover="this.style.background='#F2F3F5'" onmouseout="this.style.background='#FAFBFC'">
+      const sc=r.status==='수금완료'?'var(--kpi-green)':r.status==='부분수금'?'var(--kpi-amber)':r.status==='미수금'?'var(--kpi-red)':'var(--text-tertiary)';
+      h+=`<div style="background:var(--bg-card-hover);border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('analysis',${idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:12px;font-weight:600;color:#191F28">${scFmtDate(r.date)}</span>
+            <span style="font-size:12px;font-weight:600;color:var(--text-primary)">${scFmtDate(r.date)}</span>
             ${r.status?`<span style="font-size:10px;font-weight:600;color:${sc};background:${sc}15;padding:2px 8px;border-radius:4px">${r.status}</span>`:''}
           </div>
           <div style="text-align:right">
-            <span style="font-size:13px;font-weight:700;color:#3182F6;font-variant-numeric:tabular-nums">${r.actual.toLocaleString()}원</span>
-            <span style="font-size:11px;color:#AEB5BC"> / ${r.target.toLocaleString()}</span>
+            <span style="font-size:13px;font-weight:700;color:var(--sig);font-variant-numeric:tabular-nums">${r.actual.toLocaleString()}원</span>
+            <span style="font-size:11px;color:var(--text-muted)"> / ${r.target.toLocaleString()}</span>
           </div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-tertiary)">
           <span>담당: ${r.team}</span>
-          <span style="color:${gap>0?'#F04452':'#3182F6'}">${gap>0?'미달 '+scFmtAmt(gap):'달성'}</span>
+          <span style="color:${gap>0?'var(--kpi-red)':'var(--sig)'}">${gap>0?'미달 '+scFmtAmt(gap):'달성'}</span>
         </div>
-        ${r.reason?'<div style="font-size:10px;color:#F04452;margin-top:6px;padding:6px 8px;background:#FFF0F1;border-radius:6px">사유: '+r.reason+'</div>':''}
-        ${r.note&&!r.reason?'<div style="font-size:10px;color:#8B95A1;margin-top:4px;border-top:1px solid #F2F3F5;padding-top:4px">'+r.note+'</div>':''}
+        ${r.reason?'<div style="font-size:10px;color:var(--kpi-red);margin-top:6px;padding:6px 8px;background:var(--card-red-bg);border-radius:6px">사유: '+r.reason+'</div>':''}
+        ${r.note&&!r.reason?'<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;border-top:1px solid var(--border-light);padding-top:4px">'+r.note+'</div>':''}
       </div>`;
     });
   }
 
-  if(!plans.length&&!analyses.length) h='<div style="text-align:center;padding:40px;color:#AEB5BC">데이터가 없습니다.</div>';
+  if(!plans.length&&!analyses.length) h='<div style="text-align:center;padding:40px;color:var(--text-muted)">데이터가 없습니다.</div>';
 
   body.innerHTML=h;
   overlay.classList.add('open');
@@ -4380,7 +4398,7 @@ function scOpenNew(type){
   fields.forEach(f=>{
     h+=`<div class="sc-edit-field"><label>${f.label}</label>`;
     if(f.type==='readonly'){
-      h+=`<div style="padding:12px 14px;background:#F7F8FA;border-radius:10px;font-size:14px;color:#3182F6;font-weight:600">${f.val||'-'}</div>`;
+      h+=`<div style="padding:12px 14px;background:var(--bg-thead);border-radius:10px;font-size:14px;color:var(--sig);font-weight:600">${f.val||'-'}</div>`;
     } else if(f.type==='select'){
       h+=`<select id="scE_${f.key}">${f.opts.map(o=>`<option value="${o}">${o||'선택'}</option>`).join('')}</select>`;
     } else if(f.type==='number'){
@@ -4458,7 +4476,7 @@ function scOpenEdit(type, idx){
     if(f.type==='number'&&typeof val==='number') val=val;
     h+=`<div class="sc-edit-field"><label>${f.label}</label>`;
     if(f.type==='readonly'){
-      h+=`<div style="padding:12px 14px;background:#F7F8FA;border-radius:10px;font-size:14px;color:#3182F6;font-weight:600">${f.val||'-'}</div>`;
+      h+=`<div style="padding:12px 14px;background:var(--bg-thead);border-radius:10px;font-size:14px;color:var(--sig);font-weight:600">${f.val||'-'}</div>`;
     } else if(f.type==='select'){
       h+=`<select id="scE_${f.key}">${f.opts.map(o=>`<option value="${o}"${val===o?' selected':''}>${o||'선택'}</option>`).join('')}</select>`;
     } else if(f.type==='number'){
@@ -5175,7 +5193,7 @@ function eaDrillRender(proj,projData,allData){
   h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:14px 0">';
   h+='<div style="background:#F0F4FF;border-radius:10px;padding:12px;text-align:center"><div style="font-size:12px;color:#3182F6;margin-bottom:2px">총 투입시간</div><div style="font-size:22px;font-weight:800;color:#3182F6">'+grandH+'<span style="font-size:12px">h</span></div></div>';
   h+='<div style="background:var(--bg-thead);border-radius:10px;padding:12px;text-align:center"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:2px">투입인원</div><div style="font-size:22px;font-weight:800;color:var(--text-primary)">'+wks.length+'<span style="font-size:12px">명</span></div></div>';
-  if(nightH>0)h+='<div style="background:#FFF0F1;border-radius:10px;padding:12px;text-align:center"><div style="font-size:12px;color:#F04452;margin-bottom:2px">연장근무</div><div style="font-size:22px;font-weight:800;color:#F04452">'+nightH+'<span style="font-size:12px">h</span></div></div>';
+  if(nightH>0)h+='<div style="background:var(--card-red-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-size:12px;color:#F04452;margin-bottom:2px">연장근무</div><div style="font-size:22px;font-weight:800;color:#F04452">'+nightH+'<span style="font-size:12px">h</span></div></div>';
   h+='</div>';
 
   // ── 업무유형별 breakdown ──
