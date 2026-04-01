@@ -3438,7 +3438,7 @@ function scRenderOverview(){
         expFilt.forEach(r=>{
           h+=`<tr style="border-bottom:1px solid var(--border-light)">`;
           h+=`<td style="padding:14px 16px;text-align:center;font-weight:500;white-space:nowrap;color:var(--text-primary)">${r.ym}</td>`;
-          h+=`<td style="padding:14px 16px;font-weight:500;color:var(--text-primary)">${r.desc}${r.note?'<div style="font-size:12px;color:var(--text-tertiary);margin-top:2px">'+r.note+'</div>':''}</td>`;
+          h+=`<td style="padding:14px 16px;font-weight:500;color:var(--text-primary);text-align:center">${r.desc}${r.note?'<div style="font-size:12px;color:var(--text-tertiary);margin-top:2px">'+r.note+'</div>':''}</td>`;
           h+=`<td style="padding:14px 16px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text-primary)">${r.amount.toLocaleString()}</td>`;
           h+=`</tr>`;
         });
