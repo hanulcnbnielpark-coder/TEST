@@ -6409,8 +6409,10 @@ async function exAnFetchGS(){
   if(!gsSheetId){showToast('⚠️ Google Sheets 연결이 필요합니다');return}
   showToast('⏳ 실행분석 데이터 로딩 중...');
   try{
-    // 1. 타임시트DB 데이터: EA[] 배열 공유 (인력분석 탭과 동일)
+    // 1. 타임시트DB 데이터: EA[] 배열 공유
     if(!EA.length) await eaFetchGS();
+    console.log('📊 실행분석: EA='+EA.length+'건');
+    if(EA.length)console.log('📊 EA 과업 목록:', [...new Set(EA.map(r=>r.project))].sort());
     
     // 2. 종료과업 시트 fetch
     const url='https://docs.google.com/spreadsheets/d/'+gsSheetId+'/gviz/tq?tqx=out:json&sheet=';
@@ -6418,7 +6420,13 @@ async function exAnFetchGS(){
       const r1=await fetch(url+encodeURIComponent('종료과업'));
       const t1=await r1.text();const j1=JSON.parse(t1.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
       EX_CLOSED_PROJECTS=[];
-      j1.table.rows.forEach((row,i)=>{if(i<1)return;const nm=row.c&&row.c[0]?String(row.c[0].v||'').trim():'';if(nm&&nm!=='과업명')EX_CLOSED_PROJECTS.push(nm)});
+      j1.table.rows.forEach(row=>{
+        const nm=row.c&&row.c[0]?String(row.c[0].v||'').trim():'';
+        // 제목행·설명행·헤더행 건너뛰기
+        if(!nm||nm.startsWith('■')||nm.startsWith('※')||nm==='과업명')return;
+        EX_CLOSED_PROJECTS.push(nm);
+      });
+      console.log('📊 종료과업:', EX_CLOSED_PROJECTS);
     }catch(e){console.warn('종료과업 시트 없음:',e);EX_CLOSED_PROJECTS=[]}
     
     // 3. 기성금 시트 fetch
@@ -6426,23 +6434,29 @@ async function exAnFetchGS(){
       const r2=await fetch(url+encodeURIComponent('기성금'));
       const t2=await r2.text();const j2=JSON.parse(t2.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
       EX_PAY_MAP={};
-      j2.table.rows.forEach((row,i)=>{if(i<1)return;if(!row.c)return;
+      j2.table.rows.forEach(row=>{
+        if(!row.c)return;
         const nm=row.c[0]?String(row.c[0].v||'').trim():'';
+        if(!nm||nm.startsWith('■')||nm.startsWith('※')||nm==='과업명')return;
         const ym=row.c[1]?String(row.c[1].v||'').trim():'';
         const amt=row.c[2]?parseFloat(row.c[2].v)||0:0;
         if(nm&&amt){if(!EX_PAY_MAP[nm])EX_PAY_MAP[nm]=[];EX_PAY_MAP[nm].push({ym,amt})}
       });
+      console.log('📊 기성금:', Object.keys(EX_PAY_MAP).length+'개 과업');
     }catch(e){console.warn('기성금 시트 없음:',e);EX_PAY_MAP={}}
     
     // 4. 단가표 시트 fetch
     try{
       const r3=await fetch(url+encodeURIComponent('단가표'));
       const t3=await r3.text();const j3=JSON.parse(t3.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
-      j3.table.rows.forEach((row,i)=>{if(i<1||!row.c)return;
+      j3.table.rows.forEach(row=>{
+        if(!row.c)return;
         const grade=row.c[0]?String(row.c[0].v||'').trim():'';
+        if(!grade||grade.startsWith('■')||grade.startsWith('※')||grade==='직급')return;
         const hourly=row.c[1]?parseFloat(row.c[1].v)||0:0;
         if(grade&&hourly)EX_GRADE_COST[grade]=hourly;
       });
+      console.log('📊 단가표:', JSON.stringify(EX_GRADE_COST));
     }catch(e){console.warn('단가표 시트 없음:',e)}
     
     EX_LOADED=true;
@@ -6467,7 +6481,9 @@ function exAnTab(tab,el){
 // ── Data from EA[] → 실행분석 포맷 ──
 function exGetData(){
   // EA[] 배열에서 종료 과업만 필터 → 과업+인력별 집계
-  if(!EA.length)return[];
+  if(!EA.length){console.warn('⚠️ exGetData: EA[] empty');return[]}
+  console.log('📊 exGetData: EA='+EA.length+'건, 종료과업='+EX_CLOSED_PROJECTS.length+'개');
+  if(EA.length)console.log('📊 EA[0] sample:', JSON.stringify({project:EA[0].project,worker:EA[0].worker,team:EA[0].team,hours:EA[0].hours,status:EA[0].status,gubun:EA[0].gubun,mo_hrs:EA[0].mo_hrs}));
   
   // 1단계: 종료 과업에 해당하는 EA 행만 필터
   const filtered=EA.filter(r=>{
@@ -6477,6 +6493,11 @@ function exGetData(){
       return a.includes(b)||b.includes(a)||a===b;
     });
   });
+  console.log('📊 종료과업 필터 후:', filtered.length+'건');
+  if(filtered.length){
+    const matchedProjects=[...new Set(filtered.map(r=>r.project))];
+    console.log('📊 매칭된 과업:', matchedProjects);
+  }
   
   // 2단계: 과업+인력별 집계
   const agg={};
