@@ -751,7 +751,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .ea-nd .mg{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text-secondary)}
 .ea-nd .sb{font-size:12px;line-height:1.6}
 
-@media(max-width:900px){.sc-kpi-row{grid-template-columns:repeat(2,1fr)}.sc-edit-panel{width:100%;right:-100%}.sc-edit-panel.open{right:0!important}.sc-chart-grid2{grid-template-columns:1fr}}
+@media(max-width:900px){.sc-kpi-row{grid-template-columns:repeat(2,1fr)}.sc-edit-panel{width:100%;right:-100%}.sc-edit-panel.open{right:0!important}.sc-chart-grid2{grid-template-columns:1fr}.sc-section [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}}
 @media(max-width:480px){.sc-kpi-row{grid-template-columns:1fr 1fr;gap:8px}.sc-kpi{padding:14px}.sc-kpi-value{font-size:18px}}
 /* ═══ 기성금 입력 사이드바 ═══ */
 .ki-layout{display:flex;gap:16px;align-items:flex-start}
@@ -3375,49 +3375,63 @@ function scRenderOverview(){
     const netProfit=totalIncome-totalSpend;
 
     h+='<div class="sc-section" style="padding:22px">';
-    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div class="sc-section-title" style="margin:0">수입 · 지출 현황</div><span style="font-size:11px;color:var(--text-tertiary)">경비내역 시트 기반</span></div>';
-    // KPI cards — 4열 그리드
-    h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px">';
-    h+=`<div style="background:var(--card-sig-bg);border-radius:12px;padding:16px;border:1px solid var(--card-sig-border)"><div style="font-size:12px;color:var(--text-primary);margin-bottom:4px;font-weight:600">수금 실적</div><div style="font-size:22px;font-weight:800;color:var(--sig)">${scFmtAmt(totalIncome)}</div></div>`;
-    h+=`<div style="background:var(--card-red-bg);border-radius:12px;padding:16px;border:1px solid var(--card-red-border)"><div style="font-size:12px;color:var(--text-primary);margin-bottom:4px;font-weight:600">지출경비</div><div style="font-size:22px;font-weight:800;color:var(--kpi-red)">${totalExpense?'-'+scFmtAmt(totalExpense):'-'}</div></div>`;
-    if(totalOutsource>0)h+=`<div style="background:var(--card-amber-bg);border-radius:12px;padding:16px;border:1px solid var(--card-amber-border)"><div style="font-size:12px;color:var(--text-primary);margin-bottom:4px;font-weight:600">외주비</div><div style="font-size:22px;font-weight:800;color:var(--kpi-amber)">${scFmtAmt(totalOutsource)}</div></div>`;
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><div class="sc-section-title" style="margin:0">수입 · 지출 현황</div><span style="font-size:11px;color:var(--text-tertiary)">경비내역 시트 기반</span></div>';
+
+    // ── KPI inline summary (compact horizontal) ──
     const npColor=netProfit>=0?'var(--kpi-green)':'var(--kpi-red)';
-    const npBg=netProfit>=0?'var(--card-green-bg)':'var(--card-red-bg)';
-    const npBorder=netProfit>=0?'var(--card-green-border)':'var(--card-red-border)';
-    h+=`<div style="background:${npBg};border-radius:12px;padding:16px;border:1px solid ${npBorder}"><div style="font-size:12px;color:var(--text-primary);margin-bottom:4px;font-weight:600">순이익</div><div style="font-size:22px;font-weight:800;color:${npColor}">${scFmtAmt(netProfit)}</div></div>`;
-    h+='</div>';
+    const npSign=netProfit>=0?'+':'-';
+    h+=`<div style="display:flex;gap:24px;align-items:baseline;flex-wrap:wrap;margin-bottom:18px;padding:16px 20px;background:var(--bg-thead);border-radius:12px">
+      <div><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px;font-weight:600;letter-spacing:.3px">수금 실적</div><div style="font-size:24px;font-weight:800;color:var(--sig);font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${scFmtAmt(totalIncome)}</div></div>
+      <div style="width:1px;height:32px;background:var(--border-main);flex-shrink:0"></div>
+      <div><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px;font-weight:600;letter-spacing:.3px">지출경비</div><div style="font-size:24px;font-weight:800;color:var(--kpi-red);font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${totalExpense?'-'+scFmtAmt(totalExpense):'-'}</div></div>`;
+    if(totalOutsource>0) h+=`
+      <div style="width:1px;height:32px;background:var(--border-main);flex-shrink:0"></div>
+      <div><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px;font-weight:600;letter-spacing:.3px">외주비</div><div style="font-size:24px;font-weight:800;color:var(--kpi-amber);font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${scFmtAmt(totalOutsource)}</div></div>`;
+    h+=`
+      <div style="margin-left:auto;text-align:right"><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px;font-weight:600;letter-spacing:.3px">순이익</div><div style="font-size:28px;font-weight:900;color:${npColor};font-variant-numeric:tabular-nums;letter-spacing:-1px">${scFmtAmt(netProfit)}</div></div>
+    </div>`;
 
-    // Monthly table
-    if(months.length>1){
-      h+='<div style="overflow-x:auto;border:1px solid var(--border-main);border-radius:10px;background:var(--bg-card)"><table class="sc-tbl"><thead><tr><th style="width:60px">월</th><th class="r">수금실적</th><th class="r">지출경비</th>';
-      if(totalOutsource>0)h+='<th class="r">외주비</th>';
-      h+='<th class="r">순이익</th></tr></thead><tbody>';
-      months.forEach(ym=>{
-        const md=monthMap[ym];
-        const spend=md.expense+md.outsource;
-        const np=md.income-spend;
-        h+=`<tr><td style="font-weight:600">${ym.split('-')[1]}월</td>`;
-        h+=`<td class="r" style="color:${md.income?'var(--kpi-green)':'var(--text-muted)'};font-weight:600">${md.income?scFmtAmt(md.income):'-'}</td>`;
-        h+=`<td class="r" style="color:${md.expense?'var(--kpi-red)':'var(--text-muted)'}">${md.expense?'-'+scFmtAmt(md.expense):'-'}</td>`;
-        if(totalOutsource>0)h+=`<td class="r" style="color:${md.outsource?'var(--kpi-amber)':'var(--text-muted)'}">${md.outsource?'-'+scFmtAmt(md.outsource):'-'}</td>`;
-        h+=`<td class="r" style="font-weight:700;color:${np>=0?'var(--kpi-green)':'var(--kpi-red)'}">${scFmtAmt(np)}</td></tr>`;
-      });
-      h+=`<tr style="background:var(--bg-thead);font-weight:700"><td>합계</td>`;
-      h+=`<td class="r" style="color:var(--kpi-green)">${scFmtAmt(totalIncome)}</td>`;
-      h+=`<td class="r" style="color:var(--kpi-red)">-${scFmtAmt(totalExpense)}</td>`;
-      if(totalOutsource>0)h+=`<td class="r" style="color:var(--kpi-amber)">-${scFmtAmt(totalOutsource)}</td>`;
-      h+=`<td class="r" style="color:${netProfit>=0?'var(--kpi-green)':'var(--kpi-red)'}">${scFmtAmt(netProfit)}</td></tr>`;
-      h+='</tbody></table></div>';
-    }
+    // ── 2-column: Monthly table (left) + Expense detail (right) ──
+    const hasMonths=months.length>1;
+    const hasExpenses=expFilt.length>0;
+    if(hasMonths||hasExpenses){
+      h+='<div style="display:grid;grid-template-columns:'+(hasMonths&&hasExpenses?'1fr 1fr':'1fr')+';gap:14px;align-items:start">';
 
-    // Expense detail table
-    if(expFilt.length){
-      h+='<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-main)"><div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px">경비 상세 내역 <span style="font-size:12px;font-weight:500;color:var(--text-tertiary)">'+expFilt.length+'건</span></div>';
-      h+='<div style="overflow-x:auto;border:1px solid var(--border-main);border-radius:10px;background:var(--bg-card)"><table class="sc-tbl"><thead><tr><th style="width:100px;white-space:nowrap">연월</th><th style="min-width:160px">내역</th><th class="r" style="width:140px">금액</th><th>비고</th></tr></thead><tbody>';
-      expFilt.forEach(r=>{
-        h+=`<tr><td style="white-space:nowrap;font-weight:500">${r.ym}</td><td style="font-weight:500">${r.desc}</td><td class="r" style="font-weight:600;font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}</td><td style="color:var(--text-tertiary)" title="${r.note||''}">${r.note||'-'}</td></tr>`;
-      });
-      h+='</tbody></table></div></div>';
+      // Left: Monthly table
+      if(hasMonths){
+        h+='<div style="border:1px solid var(--border-main);border-radius:10px;background:var(--bg-card);overflow:hidden"><table class="sc-tbl"><thead><tr><th style="width:50px">월</th><th class="r">수금실적</th><th class="r">지출경비</th>';
+        if(totalOutsource>0)h+='<th class="r">외주비</th>';
+        h+='<th class="r">순이익</th></tr></thead><tbody>';
+        months.forEach(ym=>{
+          const md=monthMap[ym];
+          const spend=md.expense+md.outsource;
+          const np=md.income-spend;
+          h+=`<tr><td style="font-weight:600">${ym.split('-')[1]}월</td>`;
+          h+=`<td class="r" style="color:${md.income?'var(--kpi-green)':'var(--text-muted)'};font-weight:600">${md.income?scFmtAmt(md.income):'-'}</td>`;
+          h+=`<td class="r" style="color:${md.expense?'var(--kpi-red)':'var(--text-muted)'}">${md.expense?'-'+scFmtAmt(md.expense):'-'}</td>`;
+          if(totalOutsource>0)h+=`<td class="r" style="color:${md.outsource?'var(--kpi-amber)':'var(--text-muted)'}">${md.outsource?'-'+scFmtAmt(md.outsource):'-'}</td>`;
+          h+=`<td class="r" style="font-weight:700;color:${np>=0?'var(--kpi-green)':'var(--kpi-red)'}">${scFmtAmt(np)}</td></tr>`;
+        });
+        h+=`<tr style="background:var(--bg-thead);font-weight:700"><td>합계</td>`;
+        h+=`<td class="r" style="color:var(--kpi-green)">${scFmtAmt(totalIncome)}</td>`;
+        h+=`<td class="r" style="color:var(--kpi-red)">-${scFmtAmt(totalExpense)}</td>`;
+        if(totalOutsource>0)h+=`<td class="r" style="color:var(--kpi-amber)">-${scFmtAmt(totalOutsource)}</td>`;
+        h+=`<td class="r" style="color:${netProfit>=0?'var(--kpi-green)':'var(--kpi-red)'}">${scFmtAmt(netProfit)}</td></tr>`;
+        h+='</tbody></table></div>';
+      }
+
+      // Right: Expense detail
+      if(hasExpenses){
+        h+='<div style="border:1px solid var(--border-main);border-radius:10px;background:var(--bg-card);overflow:hidden">';
+        h+='<div style="padding:12px 16px;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:700;color:var(--text-primary)">경비 상세 내역</span><span style="font-size:12px;color:var(--text-tertiary)">'+expFilt.length+'건</span></div>';
+        h+='<table class="sc-tbl"><thead><tr><th style="width:80px;white-space:nowrap">연월</th><th>내역</th><th class="r" style="width:110px">금액</th></tr></thead><tbody>';
+        expFilt.forEach(r=>{
+          h+=`<tr><td style="white-space:nowrap;font-weight:500;font-size:13px">${r.ym}</td><td style="font-weight:500;font-size:13px">${r.desc}${r.note?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">'+r.note+'</div>':''}</td><td class="r" style="font-weight:600;font-variant-numeric:tabular-nums;font-size:13px">${r.amount.toLocaleString()}</td></tr>`;
+        });
+        h+='</tbody></table></div>';
+      }
+
+      h+='</div>';
     }
     h+='</div>';
   }
