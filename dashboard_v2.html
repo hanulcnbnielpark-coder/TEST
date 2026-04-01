@@ -6804,34 +6804,93 @@ function exRenderProfit(){
   const P=exGetProjects(),pp=P.filter(p=>p.pay>0).sort((a,b)=>(b.hr||0)-(a.hr||0));
   const profitP=P.filter(p=>p.rt>=1),lossP=pp.filter(p=>p.rt<1),unp=P.filter(p=>!p.pay);
   const avgHr=pp.length?pp.reduce((s,p)=>s+p.hr,0)/pp.length:0;
+  const totalTot=P.reduce((s,p)=>s+p.tot,0),totalPay=P.reduce((s,p)=>s+p.pay,0);
+
+  // KPI — 색상띠 제거
   let h=`<div class="kpi-row">
-    <div class="kpi" style="border-left:3px solid var(--kpi-green)"><div class="kpi-label">수익 과업</div><div class="kpi-num" style="color:var(--kpi-green)">${profitP.length}<span>개</span></div></div>
-    <div class="kpi" style="border-left:3px solid var(--kpi-red)"><div class="kpi-label">적자 과업</div><div class="kpi-num" style="color:var(--kpi-red)">${lossP.length}<span>개</span></div></div>
-    <div class="kpi" style="border-left:3px solid var(--kpi-amber)"><div class="kpi-label">미입금 과업</div><div class="kpi-num" style="color:var(--kpi-amber)">${unp.length}<span>개</span></div><div class="kpi-sub">비용 ${exF(unp.reduce((s,p)=>s+p.tot,0))} 누적</div></div>
-    <div class="kpi"><div class="kpi-label">평균 시간당 수익</div><div class="kpi-num" style="color:var(--sig)">${avgHr>0?Math.round(avgHr).toLocaleString():0}<span>원/h</span></div></div></div>`;
+    <div class="kpi"><div class="kpi-label">수익 과업</div><div class="kpi-num" style="color:var(--kpi-green)">${profitP.length}<span>개</span></div><div class="kpi-sub">실행율 100% 이상</div></div>
+    <div class="kpi"><div class="kpi-label">적자 과업</div><div class="kpi-num" style="color:var(--kpi-red)">${lossP.length}<span>개</span></div><div class="kpi-sub">기성금 수취했지만 적자</div></div>
+    <div class="kpi"><div class="kpi-label">미입금 과업</div><div class="kpi-num" style="color:var(--kpi-amber)">${unp.length}<span>개</span></div><div class="kpi-sub">비용 ${exF(unp.reduce((s,p)=>s+p.tot,0))} 누적</div></div>
+    <div class="kpi"><div class="kpi-label">평균 시간당 수익</div><div class="kpi-num" style="color:var(--sig)">${avgHr>0?Math.round(avgHr).toLocaleString():0}<span>원/h</span></div><div class="kpi-sub">기성금 수취 과업 기준</div></div></div>`;
 
-  h+='<div class="sc-chart-grid2">';
-  // 좌: 손익 요약
-  h+='<div class="sc-section" style="display:flex;flex-direction:column"><div class="sc-section-title">과업별 손익 요약</div><div style="max-height:500px;overflow-y:auto"><table class="sc-tbl"><thead><tr><th style="text-align:left">과업명</th><th>시간</th><th>투입비</th><th>기성금</th><th>손익</th><th>시간당</th></tr></thead><tbody>';
-  P.sort((a,b)=>(b.hr||0)-(a.hr||0)).forEach(p=>{const rc=p.rt>=1?'var(--kpi-green)':p.pay?'var(--kpi-red)':'var(--text-muted)';
-    h+=`<tr><td class="name">${p.nm.length>20?p.nm.slice(0,20)+'…':p.nm}</td><td>${p.h.toLocaleString()}</td><td class="r">${exF(p.tot)}</td><td class="r" style="color:${p.pay?'var(--sig)':'var(--text-muted)'}">${p.pay?exF(p.pay):'-'}</td><td style="font-weight:700;color:${rc}">${p.pay?(p.gap>=0?'+':'')+exF(p.gap):'-'}</td><td style="font-weight:700;color:${rc}">${p.hr?Math.round(p.hr).toLocaleString():'-'}</td></tr>`});
-  h+='</tbody></table></div></div>';
+  // 과업별 손익 테이블 (전체 폭)
+  h+='<div class="sc-section"><div class="sc-section-title">과업별 손익 요약</div><div style="overflow-x:auto"><table class="sc-tbl"><thead><tr><th style="text-align:left">과업명</th><th>인원</th><th>시간</th><th>투입비</th><th>기성금</th><th>손익</th><th>시간당수익</th><th>실행율</th></tr></thead><tbody>';
+  P.sort((a,b)=>(b.hr||0)-(a.hr||0)).forEach(p=>{const rc=p.rt>=1?'green':p.pay?'red':'muted';
+    h+=`<tr style="cursor:pointer" onclick="EX_SP='${p.nm.replace(/'/g,"\\'")}';exAnTab('project',document.querySelectorAll('#subNavExecAn .nav-tab')[1])"><td class="name">${p.nm.length>26?p.nm.slice(0,26)+'…':p.nm}</td><td>${p.rw.length}</td><td style="font-weight:600">${p.h.toLocaleString()}</td><td class="r">${exF(p.tot)}</td><td class="r" style="color:${p.pay?'var(--sig)':'var(--text-muted)'}">${p.pay?exF(p.pay):'-'}</td><td style="font-weight:700;color:${p.rt>=1?'var(--kpi-green)':p.pay?'var(--kpi-red)':'var(--text-muted)'}">${p.pay?(p.gap>=0?'+':'')+exF(p.gap):'-'}</td><td>${p.hr?Math.round(p.hr).toLocaleString()+'원':'-'}</td><td><span class="pill ${rc}">${p.pay?(p.rt*100).toFixed(0)+'%':'미입금'}</span></td></tr>`});
+  h+=`</tbody><tfoot><tr><td style="text-align:left" colspan="2">합계 ${P.length}개</td><td style="font-weight:800">${P.reduce((s,p)=>s+p.h,0).toLocaleString()}</td><td class="r">${exF(totalTot)}</td><td class="r" style="color:var(--sig)">${exF(totalPay)}</td><td style="font-weight:800;color:${totalPay-totalTot>=0?'var(--kpi-green)':'var(--kpi-red)'}">${(totalPay-totalTot>=0?'+':'')+exF(totalPay-totalTot)}</td><td></td><td></td></tr></tfoot></table></div></div>`;
 
-  // 우: 시뮬레이션
-  h+='<div class="sc-section" style="display:flex;flex-direction:column"><div class="sc-section-title">💡 직급 교체 시뮬레이션</div>';
-  const simT=exCalcSim(P);
-  h+=`<div class="sim-summary" id="exSimSum" style="border-radius:12px;padding:16px 20px;border:1.5px solid var(--border-main);margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;color:var(--text-tertiary)">비용 변동</div><div style="font-size:13px;color:var(--text-secondary)"><b style="color:var(--text-primary)">${exN(simT.orig)}</b> → <b style="color:var(--text-primary)">${exN(simT.sim)}</b></div></div><div style="text-align:right"><div style="font-size:24px;font-weight:900;color:${simT.diff<=0?'var(--kpi-green)':'var(--kpi-red)'}">${simT.diff!==0?(simT.diff>0?'+':'')+exN(simT.diff):'변경 없음'}</div></div></div></div>`;
-  h+='<div style="max-height:380px;overflow-y:auto">';
-  P.sort((a,b)=>b.tot-a.tot).slice(0,6).forEach(p=>{
-    h+=`<div style="margin-top:8px;margin-bottom:3px;font-size:13px;font-weight:700;color:var(--text-secondary)">${p.nm.length>22?p.nm.slice(0,22)+'…':p.nm}</div>`;
-    p.rw.slice(0,5).forEach(r=>{const key=p.nm+'|'+r.nm;const cur=EX_SIM[key]||r.g;const oC=r.h*(EX_GRADE_COST[r.g]||18299);const nC=r.h*(EX_GRADE_COST[cur]||18299);const df=nC-oC;
-      h+=`<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;background:var(--bg-card-hover);margin-bottom:4px;font-size:13px"><span style="font-weight:600;width:55px">${r.nm}</span><span style="color:var(--text-tertiary);width:32px">${r.h}h</span><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span><span style="color:var(--text-muted)">→</span><select onchange="EX_SIM['${key}']=this.value;exUpdSim()" style="padding:5px 8px;border:1px solid var(--border-main);border-radius:6px;font-size:12px;background:var(--bg-input);color:var(--text-primary);font-family:inherit">${['책임','선임','주임'].map(g=>`<option value="${g}" ${cur===g?'selected':''}>${g}${g===r.g?' (현재)':''}</option>`).join('')}</select><span style="font-weight:700;margin-left:auto">${exN(nC)}</span><span style="font-weight:700;width:65px;text-align:right;color:${df>0?'var(--kpi-red)':df<0?'var(--kpi-green)':'var(--text-muted)'}">${df!==0?(df>0?'+':'')+exN(df):'-'}</span></div>`});
-  });
-  h+=`</div><div style="text-align:center;margin-top:8px"><button onclick="EX_SIM={};exRenderProfit()" style="background:var(--bg-thead);border:1px solid var(--border-main);padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;font-family:inherit">↩ 초기화</button></div></div></div>`;
+  // ── 원가 최적화 시뮬레이션 (프로젝트 선택형) ──
+  if(!EX_SIM._proj&&P.length)EX_SIM._proj=P.sort((a,b)=>b.tot-a.tot)[0].nm;
+  const simProj=P.find(p=>p.nm===EX_SIM._proj);
+  h+='<div class="sc-section"><div class="sc-section-title">💡 원가 최적화 시뮬레이터</div>';
+  h+='<div class="sc-section-desc">과업을 선택하고 인력 직급을 변경하면 투입비·마진 변화를 실시간 확인</div>';
+  // 과업 선택
+  h+='<div style="margin-bottom:14px"><select id="exSimProjSel" onchange="EX_SIM._proj=this.value;exRenderProfit()" style="width:100%;padding:11px 14px;border:1px solid var(--border-main);border-radius:10px;font-size:14px;font-weight:600;color:var(--text-primary);background:var(--bg-input);font-family:inherit">';
+  P.sort((a,b)=>b.tot-a.tot).forEach(p=>{h+=`<option value="${p.nm}" ${p.nm===EX_SIM._proj?'selected':''}>${p.nm} (${exF(p.tot)})</option>`});
+  h+='</select></div>';
+
+  if(simProj){
+    // 현재 vs 시뮬레이션 비교 카드
+    const simData=exCalcSimProj(simProj);
+    const diffTot=simData.simTot-simData.origTot;
+    const origMargin=simProj.pay?(simProj.pay-simData.origTot)/simProj.pay:null;
+    const simMargin=simProj.pay?(simProj.pay-simData.simTot)/simProj.pay:null;
+
+    h+=`<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin-bottom:16px;align-items:stretch">
+      <div style="padding:16px;background:var(--bg-thead);border-radius:12px 0 0 12px;border:1px solid var(--border-light);border-right:none">
+        <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:6px">현재 투입비</div>
+        <div style="font-size:22px;font-weight:900">${exN(Math.round(simData.origTot))}</div>
+        ${simProj.pay?`<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">마진율 <b style="color:${origMargin>=0?'var(--kpi-green)':'var(--kpi-red)'}">${(origMargin*100).toFixed(1)}%</b></div>`:''}
+      </div>
+      <div style="display:flex;align-items:center;padding:0 16px;background:${diffTot<=0?'var(--card-green-bg)':'var(--card-red-bg)'};border-top:1px solid var(--border-light);border-bottom:1px solid var(--border-light)">
+        <div style="text-align:center">
+          <div style="font-size:11px;color:var(--text-tertiary)">변동</div>
+          <div style="font-size:20px;font-weight:900;color:${diffTot<0?'var(--kpi-green)':diffTot>0?'var(--kpi-red)':'var(--text-muted)'}">${diffTot!==0?(diffTot>0?'+':'')+exN(Math.round(diffTot)):'0'}</div>
+          <div style="font-size:10px;color:var(--text-tertiary)">${simData.changes}건 변경</div>
+        </div>
+      </div>
+      <div style="padding:16px;background:var(--bg-thead);border-radius:0 12px 12px 0;border:1px solid var(--border-light);border-left:none">
+        <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:6px">시뮬 투입비</div>
+        <div style="font-size:22px;font-weight:900;color:${diffTot<=0?'var(--kpi-green)':'var(--kpi-red)'}">${exN(Math.round(simData.simTot))}</div>
+        ${simProj.pay&&simMargin!==null?`<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">마진율 <b style="color:${simMargin>=0?'var(--kpi-green)':'var(--kpi-red)'}">${(simMargin*100).toFixed(1)}%</b></div>`:''}
+      </div>
+    </div>`;
+
+    // 인력별 직급 변경
+    h+='<div style="max-height:400px;overflow-y:auto;padding-right:4px">';
+    h+='<table class="sc-tbl" style="font-size:13px"><thead><tr><th style="text-align:left">인력</th><th>시간</th><th>현재 직급</th><th></th><th>변경</th><th style="text-align:right">현재 비용</th><th style="text-align:right">변경 비용</th><th style="text-align:right">차이</th></tr></thead><tbody>';
+    simProj.rw.sort((a,b)=>b.h-a.h).forEach(r=>{
+      const key=simProj.nm+'|'+r.nm;const cur=EX_SIM[key]||r.g;
+      const oC=r.h*(EX_GRADE_COST[r.g]||18299)*2.75;const nC=r.h*(EX_GRADE_COST[cur]||18299)*2.75;const df=nC-oC;
+      h+=`<tr${cur!==r.g?' style="background:var(--sig-pale)"':''}>
+        <td class="name" style="font-size:13px">${r.nm}</td>
+        <td style="font-weight:600">${r.h}h</td>
+        <td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td>
+        <td style="color:var(--text-muted);font-size:11px">→</td>
+        <td><select onchange="EX_SIM['${key}']=this.value;exRenderProfit()" style="padding:5px 8px;border:1px solid ${cur!==r.g?'var(--sig)':'var(--border-main)'};border-radius:6px;font-size:12px;background:var(--bg-input);color:${cur!==r.g?'var(--sig)':'var(--text-primary)'};font-weight:${cur!==r.g?'700':'400'};font-family:inherit">${['책임','선임','주임'].map(g=>`<option value="${g}" ${cur===g?'selected':''}>${g}</option>`).join('')}</select></td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${exN(Math.round(oC))}</td>
+        <td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:${df<0?'var(--kpi-green)':df>0?'var(--kpi-red)':'var(--text-primary)'}">${exN(Math.round(nC))}</td>
+        <td style="text-align:right;font-weight:700;color:${df<0?'var(--kpi-green)':df>0?'var(--kpi-red)':'var(--text-muted)'}">${df!==0?(df>0?'+':'')+exN(Math.round(df)):'-'}</td>
+      </tr>`;
+    });
+    h+='</tbody></table></div>';
+    h+=`<div style="text-align:center;margin-top:10px"><button onclick="Object.keys(EX_SIM).filter(k=>k!=='_proj').forEach(k=>delete EX_SIM[k]);exRenderProfit()" style="background:var(--bg-thead);border:1px solid var(--border-main);padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;font-family:inherit">↩ 시뮬레이션 초기화</button></div>`;
+  }
+  h+='</div>';
   document.getElementById('exAnTabProfit').innerHTML=h;
 }
-function exCalcSim(P){let orig=0,sim=0,changes=0;P.forEach(p=>p.rw.forEach(r=>{const key=p.nm+'|'+r.nm;const oC=r.h*(EX_GRADE_COST[r.g]||18299);const nG=EX_SIM[key]||r.g;const nC=r.h*(EX_GRADE_COST[nG]||18299);orig+=oC;sim+=nC;if(nG!==r.g)changes++}));return{orig,sim,diff:sim-orig,changes}}
-function exUpdSim(){const P=exGetProjects();const st=exCalcSim(P);const el=document.getElementById('exSimSum');if(el)el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;color:var(--text-tertiary)">비용 변동</div><div style="font-size:13px;color:var(--text-secondary)"><b style="color:var(--text-primary)">${exN(st.orig)}</b> → <b style="color:var(--text-primary)">${exN(st.sim)}</b></div></div><div style="text-align:right"><div style="font-size:24px;font-weight:900;color:${st.diff<=0?'var(--kpi-green)':'var(--kpi-red)'}">${st.diff!==0?(st.diff>0?'+':'')+exN(st.diff):'변경 없음'}</div></div></div>`}
+function exCalcSimProj(p){
+  let origTot=0,simTot=0,changes=0;
+  p.rw.forEach(r=>{
+    const key=p.nm+'|'+r.nm;
+    const oC=r.h*(EX_GRADE_COST[r.g]||18299)*2.75;
+    const nG=EX_SIM[key]||r.g;
+    const nC=r.h*(EX_GRADE_COST[nG]||18299)*2.75;
+    origTot+=oC;simTot+=nC;
+    if(nG!==r.g)changes++;
+  });
+  return{origTot,simTot,changes};
+}
 
 // ═══ 기성금 패널 ═══
 function exOpenPay(proj){EX_PE_PROJ=proj||EX_SP;document.getElementById('exPayOverlay').style.opacity='1';document.getElementById('exPayOverlay').style.pointerEvents='auto';document.getElementById('exPayPanel').style.right='0';exRenderPay()}
