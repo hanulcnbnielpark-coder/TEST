@@ -6449,7 +6449,7 @@ function ctDelProject(){
         <div class="ic">📊</div>
         <div class="mg">실행분석</div>
         <div class="sb" style="line-height:2">
-          종료된 과업의 투입비·기성금·수익성을 분석합니다.<br>
+          종료된 과업의 인건비·기타경비·기성금·수익성을 분석합니다.<br>
           Google Sheets에 <strong>단가표</strong>, <strong>종료과업</strong>, <strong>기성금</strong> 시트를 추가하세요.<br><br>
           <button class="nav-btn green" onclick="exAnFetchGS()" style="padding:10px 28px;font-size:13px;border-radius:8px">🔗 실행분석 데이터 불러오기</button>
         </div>
@@ -6476,6 +6476,7 @@ function ctDelProject(){
 // ═══════════════════════════════════════
 let EX_LOADED=false,EX_TAB='overview',EX_SP=null,EX_SS=null,EX_CM=false,EX_CL=[],EX_SIM={},EX_PE_PROJ=null;
 let EX_CLOSED_PROJECTS=[],EX_PAY_MAP={},EX_GRADE_COST={책임:29460,선임:21438,주임:18299};
+let EX_MISC_COST={}; // {과업명: 기타경비 금액} — 종료과업 시트 B열에서 fetch
 let EX_STAFF_GRADE={}; // {이름: 직급} 매핑
 let exCharts=[];
 
@@ -6506,14 +6507,17 @@ async function exAnFetchGS(){
     try{
       const r1=await fetch(url+encodeURIComponent('종료과업'));
       const t1=await r1.text();const j1=JSON.parse(t1.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
-      EX_CLOSED_PROJECTS=[];
+      EX_CLOSED_PROJECTS=[];EX_MISC_COST={};
       j1.table.rows.forEach(row=>{
         const nm=row.c&&row.c[0]?String(row.c[0].v||'').trim():'';
         // 제목행·설명행·헤더행 건너뛰기
         if(!nm||nm.startsWith('■')||nm.startsWith('※')||nm==='과업명')return;
         EX_CLOSED_PROJECTS.push(nm);
+        // B열: 기타경비
+        const misc=row.c&&row.c[1]?parseFloat(row.c[1].v)||0:0;
+        if(misc)EX_MISC_COST[nm]=misc;
       });
-      console.log('📊 종료과업:', EX_CLOSED_PROJECTS);
+      console.log('📊 종료과업:', EX_CLOSED_PROJECTS, '기타경비:', EX_MISC_COST);
     }catch(e){console.warn('종료과업 시트 없음:',e);EX_CLOSED_PROJECTS=[]}
     
     // 3. 기성금 시트 fetch
@@ -6653,10 +6657,19 @@ function exPayTotal(proj){return(EX_PAY_MAP[proj]||[]).reduce((s,e)=>s+e.amt,0)}
 function exGetProjects(){
   const data=exGetData(),m={};
   data.forEach(r=>{
-    if(!m[r.p])m[r.p]={rw:[],h:0,tot:0,md:0,vs:0,at:0,dc:0,pw:0,cm:0,gr:{}};
+    if(!m[r.p])m[r.p]={rw:[],h:0,tot:0,md:0,vs:0,at:0,dc:0,pw:0,cm:0,gr:{},misc:0};
     const p=m[r.p];p.rw.push(r);p.h+=r.h;p.tot+=r.tot;
     ['md','vs','at','dc','pw','cm'].forEach(k=>{p[k]+=(r[k]||0)});
     p.gr[r.g]=(p.gr[r.g]||0)+r.h;
+  });
+  // 기타경비 매칭
+  Object.entries(m).forEach(([k,v])=>{
+    // 정확히 매칭 먼저
+    if(EX_MISC_COST[k])v.misc=EX_MISC_COST[k];
+    else{for(const mk of Object.keys(EX_MISC_COST)){
+      const a=exNorm(k),b=exNorm(mk);
+      if(a.includes(b)||b.includes(a)){v.misc=EX_MISC_COST[mk];break}
+    }}
   });
   // 기성금 매칭 (부분 이름 매칭)
   Object.entries(m).forEach(([k,v])=>{
@@ -6670,7 +6683,8 @@ function exGetProjects(){
       }
     }
     v.pay=pay;v.payEntries=entries;
-    v.rt=v.tot>0?v.pay/v.tot:0;v.gap=v.pay-v.tot;v.hr=v.h>0&&v.pay>0?v.pay/v.h:0;
+    v.totalCost=v.tot+v.misc; // 인건비 + 기타경비
+    v.rt=v.totalCost>0?v.pay/v.totalCost:0;v.gap=v.pay-v.totalCost;v.hr=v.h>0&&v.pay>0?v.pay/v.h:0;
     v.sa=0;v.tx=0;v.pr=0;
     v.rw.forEach(r=>{const rate=EX_GRADE_COST[r.g]||18299;v.sa+=r.h*rate;v.tx+=r.h*rate*1.5;v.pr+=r.h*rate*0.25});
   });
@@ -6704,13 +6718,13 @@ function exAnRender(){
 
 // ═══ 종합 현황 ═══
 function exRenderOverview(){
-  const P=exGetProjects(),gt={h:0,tot:0,pay:0,sa:0,tx:0,pr:0};
-  P.forEach(p=>{gt.h+=p.h;gt.tot+=p.tot;gt.pay+=p.pay;gt.sa+=p.sa;gt.tx+=p.tx;gt.pr+=p.pr});
-  const gR=gt.tot>0?gt.pay/gt.tot:0,gG=gt.pay-gt.tot,gH=gt.h>0?gt.pay/gt.h:0;
+  const P=exGetProjects(),gt={h:0,tot:0,misc:0,totalCost:0,pay:0,sa:0,tx:0,pr:0};
+  P.forEach(p=>{gt.h+=p.h;gt.tot+=p.tot;gt.misc+=p.misc;gt.totalCost+=p.totalCost;gt.pay+=p.pay;gt.sa+=p.sa;gt.tx+=p.tx;gt.pr+=p.pr});
+  const gR=gt.totalCost>0?gt.pay/gt.totalCost:0,gG=gt.pay-gt.totalCost,gH=gt.h>0?gt.pay/gt.h:0;
   const pp=P.filter(p=>p.pay>0);
 
   // KPI
-  let h=`<div class="kpi-row"><div class="kpi total"><div class="kpi-label">총 투입비</div><div class="kpi-num">${exF(gt.tot)}</div><div class="kpi-sub">${P.length}개 과업 · ${exGetData().length}건</div></div>
+  let h=`<div class="kpi-row"><div class="kpi total"><div class="kpi-label">총 원가</div><div class="kpi-num">${exF(gt.totalCost)}</div><div class="kpi-sub">인건비 ${exF(gt.tot)}${gt.misc?' + 기타 '+exF(gt.misc):''}</div></div>
     <div class="kpi"><div class="kpi-label">총 기성금</div><div class="kpi-num" style="color:var(--sig)">${exF(gt.pay)}</div><div class="kpi-sub">${pp.length}개 과업 입금</div></div>
     <div class="kpi"><div class="kpi-label">손익</div><div class="kpi-num" style="color:${gG>=0?'var(--kpi-green)':'var(--kpi-red)'}">${gG>=0?'+':''}${exF(gG)}</div><div class="kpi-sub">실행율 ${gR>0?(gR*100).toFixed(0)+'%':'-'}</div></div>
     <div class="kpi"><div class="kpi-label">시간당 수익</div><div class="kpi-num" style="color:${gH>20000?'var(--kpi-green)':'var(--kpi-amber)'}">${gH>0?Math.round(gH).toLocaleString():0}<span>원/h</span></div><div class="kpi-sub">총 ${gt.h.toLocaleString()}h</div></div></div>`;
@@ -6724,23 +6738,23 @@ function exRenderOverview(){
   if(!pp.length)h+='<div style="padding:30px;text-align:center;color:var(--text-muted)">기성금 수취 과업 없음</div>';
   h+='</div></div>';
   // 캐시플로우 갭 차트
-  h+='<div class="sc-section"><div class="sc-section-title">캐시플로우 갭</div><div class="sc-section-desc" style="margin-top:-8px;padding-left:12px">누적 투입비 vs 누적 기성금 — <span style="color:var(--kpi-red)">빨간선</span> 위 = 자금 부족</div><div style="height:260px"><canvas id="exChCF"></canvas></div></div>';
+  h+='<div class="sc-section"><div class="sc-section-title">캐시플로우 갭</div><div class="sc-section-desc" style="margin-top:-8px;padding-left:12px">누적 원가 vs 누적 기성금 — <span style="color:var(--kpi-red)">빨간선</span> 위 = 자금 부족</div><div style="height:260px"><canvas id="exChCF"></canvas></div></div>';
   h+='</div>';
 
   // ── ROW2: 원가구조 + 워터폴 ──
   h+='<div class="sc-chart-grid2">';
   h+='<div class="sc-section"><div class="sc-section-title">원가구조 비교</div><div style="height:260px"><canvas id="exChCS"></canvas></div></div>';
-  h+='<div class="sc-section"><div class="sc-section-title">투입비 vs 기성금</div><div class="sc-section-desc" style="margin-top:-8px;padding-left:12px"><span style="color:var(--kpi-red)">■</span> 투입비 &nbsp;<span style="color:var(--sig)">■</span> 기성금</div>';
-  const wf=P.filter(p=>p.tot>1e4).sort((a,b)=>b.tot-a.tot).slice(0,10),mW=wf.length?Math.max(...wf.map(r=>Math.max(r.tot,r.pay))):1;
-  wf.forEach(p=>{const tP=p.tot/mW*100,pP=p.pay/mW*100;
+  h+='<div class="sc-section"><div class="sc-section-title">원가 vs 기성금</div><div class="sc-section-desc" style="margin-top:-8px;padding-left:12px"><span style="color:var(--kpi-red)">■</span> 원가 &nbsp;<span style="color:var(--sig)">■</span> 기성금</div>';
+  const wf=P.filter(p=>p.totalCost>1e4).sort((a,b)=>b.totalCost-a.totalCost).slice(0,10),mW=wf.length?Math.max(...wf.map(r=>Math.max(r.totalCost,r.pay))):1;
+  wf.forEach(p=>{const tP=p.totalCost/mW*100,pP=p.pay/mW*100;
     h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><div style="width:140px;text-align:right;font-size:13px;font-weight:600;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0">${p.nm}</div><div style="flex:1;height:20px;position:relative"><div style="position:absolute;height:100%;width:${tP}%;background:var(--kpi-red);opacity:.12;border-radius:4px"></div><div style="position:absolute;height:55%;top:22%;width:${tP}%;background:var(--kpi-red);opacity:.45;border-radius:3px"></div>${p.pay?`<div style="position:absolute;height:35%;bottom:0;width:${pP}%;background:var(--sig);opacity:.75;border-radius:0 0 3px 3px"></div>`:''}</div><div style="width:70px;text-align:right;font-size:12px;font-weight:700;color:${p.gap>=0?'var(--kpi-green)':p.pay?'var(--kpi-red)':'var(--text-muted)'};flex-shrink:0">${p.pay?(p.gap>=0?'+':'')+exF(p.gap):'미입금'}</div></div>`});
   h+='</div></div>';
 
   // ── 전체 과업 테이블 ──
-  h+='<div class="sc-section"><div class="sc-section-title">전체 과업 현황</div><div style="overflow-x:auto"><table class="sc-tbl"><thead><tr><th style="text-align:left">과업명</th><th>인원</th><th>시간</th><th>투입비</th><th>기성금</th><th>손익</th><th>시간당수익</th><th>실행율</th></tr></thead><tbody>';
-  P.sort((a,b)=>b.tot-a.tot).forEach(p=>{const rc=p.rt>=1?'green':p.pay?'red':'muted';
-    h+=`<tr style="cursor:pointer" onclick="EX_SP='${p.nm.replace(/'/g,"\\'")}';exAnTab('project',document.querySelectorAll('#subNavExecAn .nav-tab')[1])"><td class="name">${p.nm.length>28?p.nm.slice(0,28)+'…':p.nm}</td><td>${p.rw.length}</td><td style="font-weight:600">${p.h.toLocaleString()}</td><td class="r">${exF(p.tot)}</td><td class="r" style="color:${p.pay?'var(--sig)':'var(--text-muted)'}">${p.pay?exF(p.pay):'-'}</td><td style="font-weight:700;color:${p.gap>=0?'var(--kpi-green)':p.pay?'var(--kpi-red)':'var(--text-muted)'}">${p.pay?(p.gap>=0?'+':'')+exF(p.gap):'-'}</td><td>${p.hr?Math.round(p.hr).toLocaleString()+'원':'-'}</td><td><span class="pill ${rc}">${p.pay?(p.rt*100).toFixed(0)+'%':'미입금'}</span></td></tr>`});
-  h+=`</tbody><tfoot><tr><td style="text-align:left" colspan="2">합계 ${P.length}개</td><td style="font-weight:800">${gt.h.toLocaleString()}</td><td class="r">${exF(gt.tot)}</td><td class="r" style="color:var(--sig)">${exF(gt.pay)}</td><td style="font-weight:800;color:${gG>=0?'var(--kpi-green)':'var(--kpi-red)'}">${gG>=0?'+':''}${exF(gG)}</td><td></td><td><span class="pill ${gR>=1?'green':'red'}">${gR>0?(gR*100).toFixed(0)+'%':'-'}</span></td></tr></tfoot></table></div></div>`;
+  h+='<div class="sc-section"><div class="sc-section-title">전체 과업 현황</div><div style="overflow-x:auto"><table class="sc-tbl"><thead><tr><th style="text-align:left">과업명</th><th>인원</th><th>시간</th><th>인건비</th><th>기타경비</th><th>기성금</th><th>손익</th><th>실행율</th></tr></thead><tbody>';
+  P.sort((a,b)=>b.totalCost-a.totalCost).forEach(p=>{const rc=p.rt>=1?'green':p.pay?'red':'muted';
+    h+=`<tr style="cursor:pointer" onclick="EX_SP='${p.nm.replace(/'/g,"\\'")}';exAnTab('project',document.querySelectorAll('#subNavExecAn .nav-tab')[1])"><td class="name">${p.nm.length>28?p.nm.slice(0,28)+'…':p.nm}</td><td>${p.rw.length}</td><td style="font-weight:600">${p.h.toLocaleString()}</td><td class="r">${exF(p.tot)}</td><td class="r" style="color:${p.misc?'var(--kpi-amber)':'var(--text-muted)'}">${p.misc?exF(p.misc):'-'}</td><td class="r" style="color:${p.pay?'var(--sig)':'var(--text-muted)'}">${p.pay?exF(p.pay):'-'}</td><td style="font-weight:700;color:${p.gap>=0?'var(--kpi-green)':p.pay?'var(--kpi-red)':'var(--text-muted)'}">${p.pay?(p.gap>=0?'+':'')+exF(p.gap):'-'}</td><td><span class="pill ${rc}">${p.pay?(p.rt*100).toFixed(0)+'%':'미입금'}</span></td></tr>`});
+  h+=`</tbody><tfoot><tr><td style="text-align:left" colspan="2">합계 ${P.length}개</td><td style="font-weight:800">${gt.h.toLocaleString()}</td><td class="r">${exF(gt.tot)}</td><td class="r" style="color:${gt.misc?'var(--kpi-amber)':'var(--text-muted)'}">${gt.misc?exF(gt.misc):'-'}</td><td class="r" style="color:var(--sig)">${exF(gt.pay)}</td><td style="font-weight:800;color:${gG>=0?'var(--kpi-green)':'var(--kpi-red)'}">${gG>=0?'+':''}${exF(gG)}</td><td><span class="pill ${gR>=1?'green':'red'}">${gR>0?(gR*100).toFixed(0)+'%':'-'}</span></td></tr></tfoot></table></div></div>`;
 
   document.getElementById('exAnTabOverview').innerHTML=h;
 
@@ -6768,7 +6782,7 @@ function exRenderOverview(){
       allMonths.forEach(m=>{cc+=monthlyCost[m]||0;cb+=monthlyPay[m]||0;ccs.push(cc/1e8);cbs.push(cb/1e8)});
       const el1=document.getElementById('exChCF');
       if(el1)exCharts.push(new Chart(el1,{type:'line',data:{labels:ml,datasets:[
-        {label:'누적 투입비',data:ccs,borderColor:'#F04452',backgroundColor:'rgba(240,68,82,.06)',fill:true,tension:.3,pointRadius:3,borderWidth:2},
+        {label:'누적 원가',data:ccs,borderColor:'#F04452',backgroundColor:'rgba(240,68,82,.06)',fill:true,tension:.3,pointRadius:3,borderWidth:2},
         {label:'누적 기성금',data:cbs,borderColor:'#3A4CA8',backgroundColor:'rgba(58,76,168,.05)',fill:true,tension:.3,pointRadius:3,borderWidth:2}
       ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:txtC,usePointStyle:true,pointStyleWidth:8,font:{size:11}}}},scales:{y:{grid:{color:gridC},ticks:{color:txtC,callback:v=>v+'억',font:{size:11}}},x:{grid:{color:gridC},ticks:{color:txtC,font:{size:11}}}}}}));
     }
@@ -6797,12 +6811,13 @@ function exRenderProject(){
   const sel=P.find(p=>p.nm===EX_SP);
   if(sel){
     const hr=sel.hr;
-    h+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
-      <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">투입비</div><div class="kpi-num" style="font-size:26px">${exF(sel.tot)}</div><div class="kpi-sub">${sel.rw.length}명 · ${sel.h}h</div></div>
-      <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">기성금</div><div class="kpi-num" style="font-size:26px;color:${sel.pay?'var(--sig)':'var(--text-muted)'}">${sel.pay?exF(sel.pay):'미입금'}</div><div class="kpi-sub">${sel.pay?'실행율 '+(sel.rt*100).toFixed(0)+'%':''}</div></div>
-      <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">시간당 수익</div><div class="kpi-num" style="font-size:26px;color:${hr>20000?'var(--kpi-green)':'var(--kpi-amber)'}">${hr?Math.round(hr).toLocaleString()+'<span>원</span>':'-'}</div></div></div>`;
+    h+=`<div style="display:grid;grid-template-columns:repeat(${sel.misc?4:3},1fr);gap:12px;margin-bottom:14px">
+      <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">인건비</div><div class="kpi-num" style="font-size:26px">${exF(sel.tot)}</div><div class="kpi-sub">${sel.rw.length}명 · ${sel.h}h</div></div>
+      ${sel.misc?`<div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">기타경비</div><div class="kpi-num" style="font-size:26px;color:var(--kpi-amber)">${exF(sel.misc)}</div><div class="kpi-sub">총 원가 ${exF(sel.totalCost)}</div></div>`:''}
+      <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">기성금</div><div class="kpi-num" style="font-size:26px;color:${sel.pay?'var(--sig)':'var(--text-muted)'}">${sel.pay?exF(sel.pay):'미입금'}</div><div class="kpi-sub">${sel.pay?'손익 '+(sel.gap>=0?'+':'')+exF(sel.gap):''}</div></div>
+      <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">실행률</div><div class="kpi-num" style="font-size:26px;color:${sel.rt>=1?'var(--kpi-green)':sel.pay?'var(--kpi-red)':'var(--text-muted)'}">${sel.pay?(sel.rt*100).toFixed(0)+'<span>%</span>':'-'}</div><div class="kpi-sub">${sel.pay?'기성금 ÷ 원가':''}</div></div></div>`;
     // 인력 테이블
-    h+='<div class="sc-section"><div class="sc-section-title">인력별 투입</div><table class="sc-tbl"><thead><tr><th style="text-align:left">인력</th><th>팀</th><th>직급</th><th>기간</th><th>시간</th><th>투입비</th><th>비중</th></tr></thead><tbody>';
+    h+='<div class="sc-section"><div class="sc-section-title">인력별 투입</div><table class="sc-tbl"><thead><tr><th style="text-align:left">인력</th><th>팀</th><th>직급</th><th>기간</th><th>시간</th><th>인건비</th><th>비중</th></tr></thead><tbody>';
     sel.rw.sort((a,b)=>b.h-a.h).forEach(r=>{const pct=sel.h>0?(r.h/sel.h*100).toFixed(0):0;
       h+=`<tr style="cursor:pointer" onclick="EX_SS='${r.nm}';exAnTab('staff',document.querySelectorAll('#subNavExecAn .nav-tab')[2])"><td class="name">${r.nm}</td><td style="font-size:13px">${r.tm}</td><td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td><td style="font-size:13px;color:var(--text-secondary)">${r.pd||'-'}</td><td style="font-weight:700">${r.h}h</td><td class="r">${exN(Math.round(r.tot))}</td><td><div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:var(--bg-thead);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--sig)"></div></div><span style="font-size:11px;color:var(--text-tertiary)">${pct}%</span></div></td></tr>`});
     h+='</tbody></table></div>';
@@ -6836,7 +6851,7 @@ function exRenderStaff(){
     h+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
       <div class="kpi" style="padding:16px 18px"><div class="kpi-label" style="font-size:13px">투입시간</div><div class="kpi-num" style="font-size:24px">${sel.h}<span>h</span></div><div class="kpi-sub">${sel.tm} · ${sel.g}</div></div>
       <div class="kpi" style="padding:16px 18px"><div class="kpi-label" style="font-size:13px">참여 과업</div><div class="kpi-num" style="font-size:24px">${sel.pc}<span>개</span></div></div>
-      <div class="kpi" style="padding:16px 18px"><div class="kpi-label" style="font-size:13px">투입비</div><div class="kpi-num" style="font-size:24px">${exF(sel.tot)}</div></div></div>`;
+      <div class="kpi" style="padding:16px 18px"><div class="kpi-label" style="font-size:13px">인건비</div><div class="kpi-num" style="font-size:24px">${exF(sel.tot)}</div></div></div>`;
     h+='<div class="sc-section"><div class="sc-section-title">과업별 투입 포트폴리오</div>';
     const pe=Object.entries(sel.pj).sort((a,b)=>b[1].h-a[1].h),mH=pe[0]?pe[0][1].h:1;
     pe.forEach(([pn,d])=>{h+=`<div class="hbar" style="cursor:pointer" onclick="EX_SP='${pn.replace(/'/g,"\\'")}';exAnTab('project',document.querySelectorAll('#subNavExecAn .nav-tab')[1])"><div class="hbar-label">${pn.length>18?pn.slice(0,18)+'…':pn}</div><div class="hbar-track"><div class="hbar-fill" style="width:${d.h/mH*100}%;background:var(--sig)"><span>${d.h}h</span></div></div><div class="hbar-val" style="color:var(--text-primary)">${exF(d.tot)}</div></div>`});
@@ -6887,17 +6902,18 @@ function exRenderProfit(){
   let h=`<div class="kpi-row">
     <div class="kpi"><div class="kpi-label">수익 과업</div><div class="kpi-num" style="color:var(--kpi-green)">${profitP.length}<span>개</span></div><div class="kpi-sub">실행율 100% 이상</div></div>
     <div class="kpi"><div class="kpi-label">적자 과업</div><div class="kpi-num" style="color:var(--kpi-red)">${lossP.length}<span>개</span></div><div class="kpi-sub">기성금 수취했지만 적자</div></div>
-    <div class="kpi"><div class="kpi-label">미입금 과업</div><div class="kpi-num" style="color:var(--kpi-amber)">${unp.length}<span>개</span></div><div class="kpi-sub">비용 ${exF(unp.reduce((s,p)=>s+p.tot,0))} 누적</div></div>
+    <div class="kpi"><div class="kpi-label">미입금 과업</div><div class="kpi-num" style="color:var(--kpi-amber)">${unp.length}<span>개</span></div><div class="kpi-sub">원가 ${exF(unp.reduce((s,p)=>s+p.totalCost,0))} 누적</div></div>
     <div class="kpi"><div class="kpi-label">평균 시간당 수익</div><div class="kpi-num" style="color:var(--sig)">${avgHr>0?Math.round(avgHr).toLocaleString():0}<span>원/h</span></div><div class="kpi-sub">기성금 수취 과업 기준</div></div></div>`;
 
   // ── ROW1: 손익 테이블 | 시뮬레이터 ──
   h+='<div class="sc-chart-grid2">';
 
   // 좌: 과업별 손익
-  h+='<div class="sc-section" style="display:flex;flex-direction:column"><div class="sc-section-title">과업별 손익</div><div style="max-height:480px;overflow-y:auto;padding-right:4px"><table class="sc-tbl" style="font-size:14px"><thead><tr><th style="text-align:left">과업명</th><th>시간</th><th>투입비</th><th>기성금</th><th>손익</th><th>실행율</th></tr></thead><tbody>';
+  h+='<div class="sc-section" style="display:flex;flex-direction:column"><div class="sc-section-title">과업별 손익</div><div style="max-height:480px;overflow-y:auto;padding-right:4px"><table class="sc-tbl" style="font-size:14px"><thead><tr><th style="text-align:left">과업명</th><th>시간</th><th>인건비</th><th>기타경비</th><th>기성금</th><th>손익</th><th>실행율</th></tr></thead><tbody>';
   P.sort((a,b)=>(b.hr||0)-(a.hr||0)).forEach(p=>{const rc=p.rt>=1?'green':p.pay?'red':'muted';
-    h+=`<tr style="cursor:pointer" onclick="EX_SP='${p.nm.replace(/'/g,"\\'")}';exAnTab('project',document.querySelectorAll('#subNavExecAn .nav-tab')[1])"><td class="name" style="font-size:13px">${p.nm.length>22?p.nm.slice(0,22)+'…':p.nm}</td><td style="font-weight:600">${p.h.toLocaleString()}</td><td class="r" style="font-size:13px">${exF(p.tot)}</td><td class="r" style="font-size:13px;color:${p.pay?'var(--sig)':'var(--text-muted)'}">${p.pay?exF(p.pay):'-'}</td><td style="font-weight:700;font-size:13px;color:${p.rt>=1?'var(--kpi-green)':p.pay?'var(--kpi-red)':'var(--text-muted)'}">${p.pay?(p.gap>=0?'+':'')+exF(p.gap):'-'}</td><td><span class="pill ${rc}">${p.pay?(p.rt*100).toFixed(0)+'%':'미입금'}</span></td></tr>`});
-  h+=`</tbody><tfoot><tr><td style="text-align:left">합계</td><td style="font-weight:800">${P.reduce((s,p)=>s+p.h,0).toLocaleString()}</td><td class="r">${exF(totalTot)}</td><td class="r" style="color:var(--sig)">${exF(totalPay)}</td><td style="font-weight:800;color:${totalPay-totalTot>=0?'var(--kpi-green)':'var(--kpi-red)'}">${(totalPay-totalTot>=0?'+':'')+exF(totalPay-totalTot)}</td><td></td></tr></tfoot></table></div></div>`;
+    h+=`<tr style="cursor:pointer" onclick="EX_SP='${p.nm.replace(/'/g,"\\'")}';exAnTab('project',document.querySelectorAll('#subNavExecAn .nav-tab')[1])"><td class="name" style="font-size:13px">${p.nm.length>22?p.nm.slice(0,22)+'…':p.nm}</td><td style="font-weight:600">${p.h.toLocaleString()}</td><td class="r" style="font-size:13px">${exF(p.tot)}</td><td class="r" style="font-size:13px;color:${p.misc?'var(--kpi-amber)':'var(--text-muted)'}">${p.misc?exF(p.misc):'-'}</td><td class="r" style="font-size:13px;color:${p.pay?'var(--sig)':'var(--text-muted)'}">${p.pay?exF(p.pay):'-'}</td><td style="font-weight:700;font-size:13px;color:${p.rt>=1?'var(--kpi-green)':p.pay?'var(--kpi-red)':'var(--text-muted)'}">${p.pay?(p.gap>=0?'+':'')+exF(p.gap):'-'}</td><td><span class="pill ${rc}">${p.pay?(p.rt*100).toFixed(0)+'%':'미입금'}</span></td></tr>`});
+  const totalMisc=P.reduce((s,p)=>s+p.misc,0);const totalTC=totalTot+totalMisc;
+  h+=`</tbody><tfoot><tr><td style="text-align:left">합계</td><td style="font-weight:800">${P.reduce((s,p)=>s+p.h,0).toLocaleString()}</td><td class="r">${exF(totalTot)}</td><td class="r" style="color:${totalMisc?'var(--kpi-amber)':'var(--text-muted)'}">${totalMisc?exF(totalMisc):'-'}</td><td class="r" style="color:var(--sig)">${exF(totalPay)}</td><td style="font-weight:800;color:${totalPay-totalTC>=0?'var(--kpi-green)':'var(--kpi-red)'}">${(totalPay-totalTC>=0?'+':'')+exF(totalPay-totalTC)}</td><td></td></tr></tfoot></table></div></div>`;
 
   // 우: 시뮬레이터
   if(!EX_SIM._proj&&P.length)EX_SIM._proj=P.sort((a,b)=>b.tot-a.tot)[0].nm;
@@ -6934,8 +6950,8 @@ function exRenderProfit(){
   // ══════════════════════════════════════
   h+='<div class="sc-chart-grid2">';
 
-  // ── A: 수익성 매트릭스 (버블차트) ──
-  h+='<div class="sc-section"><div class="sc-section-title">수익성 매트릭스</div><div class="sc-section-desc" style="margin-top:-8px;padding-left:12px">X축 투입시간 · Y축 시간당수익 · 버블크기 총 투입비. 우상단 = 고효율</div>';
+  // ── A: 원가 vs 기성금 매트릭스 ──
+  h+='<div class="sc-section"><div class="sc-section-title">원가 vs 기성금</div><div class="sc-section-desc" style="margin-top:-8px;padding-left:12px"><span style="color:var(--text-muted)">대각선</span> = 손익분기(BEP). 선 위 = 수익 · 선 아래 = 적자 · 버블크기 = 투입시간</div>';
   h+='<div style="height:320px;position:relative"><canvas id="exChBubble"></canvas></div></div>';
 
   // ── B: 목표 기성금 역산 계산기 ──
@@ -6947,18 +6963,19 @@ function exRenderProfit(){
   P.sort((a,b)=>b.tot-a.tot).forEach(p=>{h+=`<option value="${p.nm}" ${p.nm===EX_CALC_PROJ?'selected':''}>${p.nm.length>30?p.nm.slice(0,30)+'…':p.nm}</option>`});
   h+='</select>';
   if(calcP){
-    const bep=calcP.tot;
+    const bep=calcP.totalCost;
     const target2=calcP.h>0?calcP.h*20000:bep*1.2;
     const target3=calcP.h>0?calcP.h*30000:bep*1.5;
     h+=`<div id="exCalcBody">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div style="padding:14px 16px;background:var(--bg-card-hover);border-radius:10px;border:1px solid var(--border-light)"><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px">투입비</div><div style="font-size:20px;font-weight:900;font-variant-numeric:tabular-nums">${exF(calcP.tot)}</div><div style="font-size:11px;color:var(--text-muted)">${calcP.h.toLocaleString()}h · ${calcP.rw.length}명</div></div>
+      <div style="display:grid;grid-template-columns:${calcP.misc?'1fr 1fr 1fr':'1fr 1fr'};gap:10px;margin-bottom:14px">
+        <div style="padding:14px 16px;background:var(--bg-card-hover);border-radius:10px;border:1px solid var(--border-light)"><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px">인건비</div><div style="font-size:20px;font-weight:900;font-variant-numeric:tabular-nums">${exF(calcP.tot)}</div><div style="font-size:11px;color:var(--text-muted)">${calcP.h.toLocaleString()}h · ${calcP.rw.length}명</div></div>
+        ${calcP.misc?`<div style="padding:14px 16px;background:var(--bg-card-hover);border-radius:10px;border:1px solid var(--border-light)"><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px">기타경비</div><div style="font-size:20px;font-weight:900;color:var(--kpi-amber);font-variant-numeric:tabular-nums">${exF(calcP.misc)}</div><div style="font-size:11px;color:var(--text-muted)">원가 ${exF(calcP.totalCost)}</div></div>`:''}
         <div style="padding:14px 16px;background:var(--bg-card-hover);border-radius:10px;border:1px solid var(--border-light)"><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px">현재 기성금</div><div style="font-size:20px;font-weight:900;color:${calcP.pay?'var(--sig)':'var(--text-muted)'};font-variant-numeric:tabular-nums">${calcP.pay?exF(calcP.pay):'미입금'}</div><div style="font-size:11px;color:var(--text-muted)">${calcP.pay?'실행율 '+(calcP.rt*100).toFixed(0)+'%':'입금 내역 없음'}</div></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:${calcP.pay>=bep?'rgba(0,196,113,.06)':'rgba(240,68,82,.04)'};border:1px solid ${calcP.pay>=bep?'rgba(0,196,113,.15)':'rgba(240,68,82,.1)'}">
           <div style="width:8px;height:8px;border-radius:50%;background:${calcP.pay>=bep?'var(--kpi-green)':'var(--kpi-red)'};flex-shrink:0"></div>
-          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">손익분기점 (BEP)</div><div style="font-size:11px;color:var(--text-secondary)">투입비 = 기성금</div></div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">손익분기점 (BEP)</div><div style="font-size:11px;color:var(--text-secondary)">원가 = 기성금</div></div>
           <div style="font-size:17px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--text-primary)">${exF(Math.round(bep))}</div>
           <div style="font-size:11px;font-weight:600;color:${calcP.pay>=bep?'var(--kpi-green)':'var(--kpi-red)'};width:44px;text-align:right">${calcP.pay>=bep?'달성':'미달'}</div>
         </div>
@@ -6994,7 +7011,7 @@ function exRenderProfit(){
 
   // ── C: 과업별 마진 추이 ──
   if(!EX_TREND_PROJ&&P.length)EX_TREND_PROJ=P.sort((a,b)=>b.tot-a.tot)[0].nm;
-  h+='<div class="sc-section"><div class="sc-section-title">과업별 마진 추이</div><div class="sc-section-desc" style="margin-top:-8px;padding-left:12px">월별 누적 투입비 vs 기성금 입금 시점</div>';
+  h+='<div class="sc-section"><div class="sc-section-title">과업별 마진 추이</div><div class="sc-section-desc" style="margin-top:-8px;padding-left:12px">월별 누적 원가 vs 기성금 입금 시점</div>';
   h+='<select id="exTrendSel" onchange="EX_TREND_PROJ=this.value;exUpdateTrendChart()" style="width:100%;padding:10px 14px;border:1px solid var(--border-main);border-radius:10px;font-size:14px;font-weight:600;color:var(--text-primary);background:var(--bg-input);font-family:inherit;margin-bottom:10px">';
   P.sort((a,b)=>b.tot-a.tot).forEach(p=>{h+=`<option value="${p.nm}" ${p.nm===EX_TREND_PROJ?'selected':''}>${p.nm.length>30?p.nm.slice(0,30)+'…':p.nm}</option>`});
   h+='</select>';
@@ -7021,7 +7038,7 @@ function exRenderProfit(){
       <div style="height:10px;background:var(--bg-thead);border-radius:5px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:${Math.max(pct,2)}%;background:${barC};border-radius:5px;transition:width .4s"></div></div>
       <div style="display:flex;gap:16px;font-size:12px;color:var(--text-tertiary)">
         <span>투입 <b style="color:var(--text-secondary)">${t.h.toLocaleString()}h</b></span>
-        <span>투입비 <b style="color:var(--text-secondary)">${exF(t.tot)}</b></span>
+        <span>인건비 <b style="color:var(--text-secondary)">${exF(t.tot)}</b></span>
         <span>기성금 <b style="color:${t.pay?'var(--sig)':'var(--text-muted)'}">${t.pay?exF(t.pay):'-'}</b></span>
         <span>마진율 <b style="color:${t.rt>=1?'var(--kpi-green)':t.pay?'var(--kpi-red)':'var(--text-muted)'}">${t.pay?(t.rt*100).toFixed(0)+'%':'-'}</b></span>
       </div>
@@ -7043,29 +7060,28 @@ function exRenderProfit(){
     const txtC=isDark?'#9BA3B3':'#8B95A1';
     const sigC='#3A4CA8';
 
-    // ── A: 버블차트 ──
+    // ── A: 원가 vs 기성금 스캐터 ──
     const elB=document.getElementById('exChBubble');
-    if(elB&&pp.length){
-      const bubbleData=pp.map(p=>{
-        const maxTot=Math.max(...pp.map(x=>x.tot));
-        return{x:p.h,y:Math.round(p.hr),r:Math.max(4,Math.min(30,p.tot/maxTot*28)),label:p.nm,rt:p.rt};
-      });
-      exCharts.push(new Chart(elB,{type:'bubble',data:{datasets:[{
-        data:bubbleData,
-        backgroundColor:bubbleData.map(d=>d.rt>=1?'rgba(0,196,113,.35)':'rgba(240,68,82,.3)'),
-        borderColor:bubbleData.map(d=>d.rt>=1?'rgba(0,196,113,.7)':'rgba(240,68,82,.6)'),
-        borderWidth:1.5
-      }]},options:{responsive:true,maintainAspectRatio:false,
+    if(elB&&P.length){
+      const maxVal=Math.max(...P.map(p=>Math.max(p.totalCost,p.pay)))*1.15;
+      const maxH=Math.max(...P.map(x=>x.h));
+      const scatterData=P.map(p=>({x:Math.round(p.totalCost),y:Math.round(p.pay),r:Math.max(5,Math.min(24,(p.h/maxH)*22)),label:p.nm,rt:p.rt,h:p.h}));
+      exCharts.push(new Chart(elB,{type:'bubble',data:{datasets:[
+        {data:scatterData,
+          backgroundColor:scatterData.map(d=>d.rt>=1?'rgba(0,196,113,.4)':d.y>0?'rgba(240,68,82,.35)':'rgba(139,149,161,.25)'),
+          borderColor:scatterData.map(d=>d.rt>=1?'rgba(0,196,113,.75)':d.y>0?'rgba(240,68,82,.65)':'rgba(139,149,161,.45)'),
+          borderWidth:1.5},
+        {type:'line',data:[{x:0,y:0},{x:maxVal,y:maxVal}],
+          borderColor:isDark?'rgba(255,255,255,.12)':'rgba(0,0,0,.1)',borderDash:[6,4],borderWidth:1.5,pointRadius:0,fill:false}
+      ]},options:{responsive:true,maintainAspectRatio:false,
         layout:{padding:{top:10,right:10,bottom:0,left:0}},
         plugins:{legend:{display:false},tooltip:{callbacks:{
-          label:ctx=>{const d=ctx.raw;return[d.label,`${d.x}h · ${d.y.toLocaleString()}원/h`]},
+          label:ctx=>{if(ctx.datasetIndex===1)return'';const d=ctx.raw;return[d.label,`원가 ${exF(d.x)} → 기성금 ${d.y?exF(d.y):'미입금'}`,`${d.h}h · 실행율 ${d.rt>0?(d.rt*100).toFixed(0)+'%':'-'}`]},
           title:()=>''
         }}},
         scales:{
-          x:{title:{display:true,text:'투입시간 (h)',color:txtC,font:{size:11}},grid:{color:gridC},ticks:{color:txtC,font:{size:11}},
-            min:0,max:Math.max(...pp.map(p=>p.h))*1.15},
-          y:{title:{display:true,text:'시간당 수익 (원)',color:txtC,font:{size:11}},grid:{color:gridC},ticks:{color:txtC,font:{size:11},callback:v=>v>=10000?(v/10000)+'만':v},
-            min:0,max:Math.max(...pp.map(p=>p.hr))*1.2}
+          x:{title:{display:true,text:'원가 (인건비+기타경비)',color:txtC,font:{size:11}},grid:{color:gridC},ticks:{color:txtC,font:{size:11},callback:v=>exF(v)},min:0,max:maxVal},
+          y:{title:{display:true,text:'기성금',color:txtC,font:{size:11}},grid:{color:gridC},ticks:{color:txtC,font:{size:11},callback:v=>exF(v)},min:0,max:maxVal}
         }
       }}));
     }
@@ -7143,7 +7159,7 @@ function exUpdateTrendChart(){
   });
 
   const ch=new Chart(elT,{type:'line',data:{labels,datasets:[
-    {label:'누적 투입비',data:costData.map(v=>v/1e4),borderColor:'#F04452',backgroundColor:'rgba(240,68,82,.06)',fill:true,tension:.3,pointRadius:3,borderWidth:2},
+    {label:'누적 원가',data:costData.map(v=>v/1e4),borderColor:'#F04452',backgroundColor:'rgba(240,68,82,.06)',fill:true,tension:.3,pointRadius:3,borderWidth:2},
     {label:'누적 기성금',data:payData.map(v=>v/1e4),borderColor:'#3A4CA8',backgroundColor:'rgba(58,76,168,.06)',fill:true,tension:.3,pointRadius:payData.map((_,i)=>{const m=allM[i];return payMonthly[m]?6:0}),pointBackgroundColor:payData.map((_,i)=>{const m=allM[i];return payMonthly[m]?'#3A4CA8':'transparent'}),borderWidth:2}
   ]},options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{labels:{color:txtC,usePointStyle:true,pointStyleWidth:8,font:{size:11}}},
@@ -7179,7 +7195,7 @@ function exRenderPay(){
   if(!p){document.getElementById('exPayBody').innerHTML='<div style="padding:40px;text-align:center;color:var(--text-muted)">과업을 찾을 수 없습니다</div>';return}
   document.getElementById('exPayHead').innerHTML=`${EX_PE_PROJ.length>28?EX_PE_PROJ.slice(0,28)+'…':EX_PE_PROJ} <span onclick="exClosePay()" style="cursor:pointer;font-size:20px;color:var(--text-muted)">✕</span>`;
   const entries=EX_PAY_MAP[EX_PE_PROJ]||[];const total=entries.reduce((s,e)=>s+e.amt,0);
-  let h=`<div style="display:flex;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border-light)"><div><div style="font-size:13px;color:var(--text-tertiary)">투입비</div><div style="font-size:18px;font-weight:800">${exF(p.tot)}</div></div><div style="text-align:center"><div style="font-size:13px;color:var(--text-tertiary)">기성금</div><div style="font-size:18px;font-weight:800;color:var(--sig)">${total?exF(total):'-'}</div></div><div style="text-align:right"><div style="font-size:13px;color:var(--text-tertiary)">실행율</div><div style="font-size:18px;font-weight:800;color:${total/p.tot>=1?'var(--kpi-green)':total?'var(--kpi-red)':'var(--text-muted)'}">${total?(total/p.tot*100).toFixed(0)+'%':'-'}</div></div></div>`;
+  let h=`<div style="display:flex;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border-light)"><div><div style="font-size:13px;color:var(--text-tertiary)">원가</div><div style="font-size:18px;font-weight:800">${exF(p.totalCost)}</div></div><div style="text-align:center"><div style="font-size:13px;color:var(--text-tertiary)">기성금</div><div style="font-size:18px;font-weight:800;color:var(--sig)">${total?exF(total):'-'}</div></div><div style="text-align:right"><div style="font-size:13px;color:var(--text-tertiary)">실행율</div><div style="font-size:18px;font-weight:800;color:${total/p.totalCost>=1?'var(--kpi-green)':total?'var(--kpi-red)':'var(--text-muted)'}">${total?(total/p.totalCost*100).toFixed(0)+'%':'-'}</div></div></div>`;
   entries.forEach((e,i)=>{
     const amtDisplay=e.amt?e.amt.toLocaleString():'';
     h+=`<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center">
