@@ -1004,7 +1004,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 <div class="sub-nav sub-nav-hide" id="subNavExecAn">
   <div class="nav-tab active" onclick="exAnTab('overview',this)">종합 현황</div>
   <div class="nav-tab" onclick="exAnTab('project',this)">과업별 분석</div>
-  <div class="nav-tab" onclick="exAnTab('staff',this)">인력 분석</div>
+  <div class="nav-tab" onclick="exAnTab('staff',this)">투입 현황</div>
   <div class="nav-tab" onclick="exAnTab('profit',this)">수익성 분석</div>
 </div>
 <!-- Sub-nav: 투찰분석 -->
@@ -6825,7 +6825,7 @@ function exRenderProfit(){
   // 우: 시뮬레이터
   if(!EX_SIM._proj&&P.length)EX_SIM._proj=P.sort((a,b)=>b.tot-a.tot)[0].nm;
   const simProj=P.find(p=>p.nm===EX_SIM._proj);
-  h+='<div class="sc-section" style="display:flex;flex-direction:column"><div class="sc-section-title">💡 원가 시뮬레이터</div>';
+  h+='<div class="sc-section" style="display:flex;flex-direction:column"><div class="sc-section-title">원가 시뮬레이터</div>';
   h+='<select onchange="EX_SIM._proj=this.value;exRenderProfit()" style="width:100%;padding:10px 14px;border:1px solid var(--border-main);border-radius:10px;font-size:14px;font-weight:600;color:var(--text-primary);background:var(--bg-input);font-family:inherit;margin-bottom:12px">';
   P.sort((a,b)=>b.tot-a.tot).forEach(p=>{h+=`<option value="${p.nm}" ${p.nm===EX_SIM._proj?'selected':''}>${p.nm.length>28?p.nm.slice(0,28)+'…':p.nm}</option>`});
   h+='</select>';
@@ -6868,6 +6868,92 @@ function exRenderProfit(){
     h+=`<div style="text-align:center;margin-top:8px"><button onclick="Object.keys(EX_SIM).filter(k=>k!=='_proj').forEach(k=>delete EX_SIM[k]);exRenderProfit()" style="background:var(--bg-thead);border:1px solid var(--border-main);padding:7px 16px;border-radius:7px;font-size:12px;font-weight:600;color:var(--text-tertiary);cursor:pointer;font-family:inherit">↩ 초기화</button></div>`;
   }
   h+='</div></div>';
+
+  // ── F: 직급별 투입 효과 분석 ──
+  h+='<div class="sc-chart-grid2">';
+  // 직급별 평균 실행율 비교
+  const gradeStats={};
+  P.forEach(p=>{
+    const grades={};p.rw.forEach(r=>{if(!grades[r.g])grades[r.g]=0;grades[r.g]+=r.h});
+    const mainGrade=Object.entries(grades).sort((a,b)=>b[1]-a[1])[0];
+    if(mainGrade){const g=mainGrade[0];if(!gradeStats[g])gradeStats[g]={projects:[],totalH:0,totalTot:0,totalPay:0};gradeStats[g].projects.push(p);gradeStats[g].totalH+=p.h;gradeStats[g].totalTot+=p.tot;gradeStats[g].totalPay+=p.pay}
+  });
+  h+='<div class="sc-section"><div class="sc-section-title">직급별 투입 효과</div><div class="sc-section-desc">주 투입 직급 기준 — 고급 인력이 수익에 기여하는가?</div>';
+  const gOrder=['책임','선임','주임'];
+  const gColors={'책임':'var(--kpi-red)','선임':'var(--kpi-amber)','주임':'var(--sig)'};
+  h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
+  gOrder.forEach(g=>{
+    const gs=gradeStats[g];
+    if(!gs){h+=`<div style="padding:14px;border-radius:10px;background:var(--bg-thead);text-align:center"><div style="font-size:12px;font-weight:700;color:${gColors[g]}">${g}급 중심</div><div style="font-size:22px;font-weight:900;color:var(--text-muted);margin:4px 0">-</div><div style="font-size:11px;color:var(--text-tertiary)">해당 과업 없음</div></div>`;return}
+    const avgRate=gs.totalTot>0?gs.totalPay/gs.totalTot:0;
+    const avgHrCost=gs.totalH>0?gs.totalTot/gs.totalH:0;
+    h+=`<div style="padding:14px;border-radius:10px;background:var(--bg-thead);text-align:center;border-top:3px solid ${gColors[g]}">
+      <div style="font-size:12px;font-weight:700;color:${gColors[g]}">${g}급 중심</div>
+      <div style="font-size:22px;font-weight:900;margin:4px 0;color:${avgRate>=1?'var(--kpi-green)':avgRate>0?'var(--kpi-red)':'var(--text-muted)'}">${avgRate>0?(avgRate*100).toFixed(0)+'%':'-'}</div>
+      <div style="font-size:11px;color:var(--text-tertiary)">평균 실행율</div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">${gs.projects.length}개 과업 · ${gs.totalH.toLocaleString()}h</div>
+      <div style="font-size:11px;color:var(--text-tertiary)">시간당 ${Math.round(avgHrCost).toLocaleString()}원</div>
+    </div>`;
+  });
+  h+='</div>';
+  // 직급별 과업 상세
+  h+='<table class="sc-tbl" style="font-size:13px"><thead><tr><th style="text-align:left">과업명</th><th>주 직급</th><th>투입비</th><th>기성금</th><th>실행율</th></tr></thead><tbody>';
+  P.sort((a,b)=>b.tot-a.tot).forEach(p=>{
+    const grades={};p.rw.forEach(r=>{if(!grades[r.g])grades[r.g]=0;grades[r.g]+=r.h});
+    const mg=Object.entries(grades).sort((a,b)=>b[1]-a[1])[0];
+    const mgName=mg?mg[0]:'주임';const rc=p.rt>=1?'green':p.pay?'red':'muted';
+    h+=`<tr><td class="name" style="font-size:12px">${p.nm.length>22?p.nm.slice(0,22)+'…':p.nm}</td><td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${mgName}</span></td><td class="r" style="font-size:12px">${exF(p.tot)}</td><td class="r" style="font-size:12px;color:${p.pay?'var(--sig)':'var(--text-muted)'}">${p.pay?exF(p.pay):'-'}</td><td><span class="pill ${rc}">${p.pay?(p.rt*100).toFixed(0)+'%':'미입금'}</span></td></tr>`;
+  });
+  h+='</tbody></table></div>';
+
+  // ── H: 과업 수행 통계 (포트폴리오 인사이트) ──
+  h+='<div class="sc-section"><div class="sc-section-title">과업 수행 통계</div><div class="sc-section-desc">종료 과업 기반 — 신규 수주 시 견적 참고</div>';
+  const completedP=P.filter(p=>p.pay>0);
+  const allRw=P.reduce((s,p)=>s+p.rw.length,0);
+  const avgH=P.length?P.reduce((s,p)=>s+p.h,0)/P.length:0;
+  const avgTot=P.length?totalTot/P.length:0;
+  const avgStaff=P.length?allRw/P.length:0;
+  const avgMargin=completedP.length?completedP.reduce((s,p)=>s+(p.pay-p.tot),0)/completedP.reduce((s,p)=>s+p.pay,0):0;
+  const avgHrly=completedP.length?completedP.reduce((s,p)=>s+p.hr,0)/completedP.length:0;
+  // 직급 비율
+  const totalGradeH={책임:0,선임:0,주임:0};
+  P.forEach(p=>p.rw.forEach(r=>{totalGradeH[r.g]=(totalGradeH[r.g]||0)+r.h}));
+  const totalAllH=Object.values(totalGradeH).reduce((s,v)=>s+v,0);
+
+  h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    <div style="padding:14px;border-radius:10px;background:var(--bg-thead);text-align:center">
+      <div style="font-size:11px;color:var(--text-tertiary)">과업당 평균 인원</div>
+      <div style="font-size:24px;font-weight:900;margin:4px 0">${avgStaff.toFixed(1)}<span style="font-size:13px;font-weight:500;color:var(--text-tertiary)">명</span></div>
+    </div>
+    <div style="padding:14px;border-radius:10px;background:var(--bg-thead);text-align:center">
+      <div style="font-size:11px;color:var(--text-tertiary)">과업당 평균 시간</div>
+      <div style="font-size:24px;font-weight:900;margin:4px 0">${Math.round(avgH).toLocaleString()}<span style="font-size:13px;font-weight:500;color:var(--text-tertiary)">h</span></div>
+    </div>
+    <div style="padding:14px;border-radius:10px;background:var(--bg-thead);text-align:center">
+      <div style="font-size:11px;color:var(--text-tertiary)">과업당 평균 투입비</div>
+      <div style="font-size:24px;font-weight:900;margin:4px 0">${exF(avgTot)}</div>
+    </div>
+    <div style="padding:14px;border-radius:10px;background:var(--bg-thead);text-align:center">
+      <div style="font-size:11px;color:var(--text-tertiary)">평균 마진율</div>
+      <div style="font-size:24px;font-weight:900;margin:4px 0;color:${avgMargin>=0?'var(--kpi-green)':'var(--kpi-red)'}">${completedP.length?(avgMargin*100).toFixed(1)+'%':'-'}</div>
+      <div style="font-size:10px;color:var(--text-muted)">기성금 수취 ${completedP.length}개 기준</div>
+    </div>
+  </div>`;
+
+  // 직급 구성 비율 바
+  h+='<div style="margin-bottom:10px;font-size:13px;font-weight:700;color:var(--text-secondary)">전체 직급 투입 비율</div>';
+  if(totalAllH>0){
+    h+='<div style="display:flex;height:32px;border-radius:8px;overflow:hidden;margin-bottom:6px">';
+    gOrder.forEach(g=>{const pct=totalGradeH[g]/totalAllH*100;if(pct<1)return;
+      h+=`<div style="width:${pct}%;background:${gColors[g]};display:flex;align-items:center;justify-content:center;opacity:.75"><span style="font-size:10px;font-weight:700;color:#FFF">${g} ${pct.toFixed(0)}%</span></div>`;
+    });
+    h+='</div>';
+    h+='<div style="display:flex;gap:14px;font-size:12px;color:var(--text-tertiary)">';
+    gOrder.forEach(g=>{h+=`<span><span style="color:${gColors[g]};font-weight:700">●</span> ${g} ${totalGradeH[g].toLocaleString()}h (${(totalGradeH[g]/totalAllH*100).toFixed(0)}%)</span>`});
+    h+='</div>';
+  }
+  h+='</div></div>';
+
   document.getElementById('exAnTabProfit').innerHTML=h;
 }
 function exCalcSimProj(p){
