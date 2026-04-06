@@ -6512,6 +6512,7 @@ function ctDelProject(){
 let EX_LOADED=false,EX_TAB='project',EX_SP=null,EX_SS=null,EX_CM=false,EX_CL=[],EX_SIM={},EX_PE_PROJ=null;
 let EX_CLOSED_PROJECTS=[],EX_PAY_MAP={},EX_GRADE_COST={책임:29460,선임:21438,주임:18299};
 let EX_MISC_COST={}; // {과업명: 기타경비 금액}
+let EX_MISC_DESC={}; // {과업명: 기타경비 내역 설명}
 let EX_STAFF_GRADE={}; // {이름: 직급} 매핑
 let EX_FEEDBACK={}; // {과업명: {reason:'실행사유', plan:'개선대책', risk:[], review:''}}
 let exCharts=[];
@@ -6543,17 +6544,22 @@ async function exAnFetchGS(){
     try{
       const r1=await fetch(url+encodeURIComponent('종료과업'));
       const t1=await r1.text();const j1=JSON.parse(t1.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
-      EX_CLOSED_PROJECTS=[];EX_MISC_COST={};
+      EX_CLOSED_PROJECTS=[];EX_MISC_COST={};EX_MISC_DESC={};
       j1.table.rows.forEach(row=>{
         const nm=row.c&&row.c[0]?String(row.c[0].v||'').trim():'';
         if(!nm||nm.startsWith('■')||nm.startsWith('※')||nm==='과업명')return;
         EX_CLOSED_PROJECTS.push(nm);
-        // B열: 기타경비 — 숫자/문자열/콤마 포맷 모두 처리
+        // B열: 기타경비 금액
         if(row.c&&row.c[1]&&row.c[1]!==null){
           const rv=row.c[1];
           const raw=rv.v!==undefined&&rv.v!==null?rv.v:(rv.f||'');
           const num=typeof raw==='number'?raw:parseFloat(String(raw).replace(/[,\s]/g,''))||0;
           if(num>0){EX_MISC_COST[nm]=num;console.log('📊 기타경비:',nm,'=',num)}
+        }
+        // D열: 비고 (기타경비 내역 설명)
+        if(row.c&&row.c[3]&&row.c[3]!==null){
+          const desc=String(row.c[3].v||row.c[3].f||'').trim();
+          if(desc)EX_MISC_DESC[nm]=desc;
         }
       });
       console.log('📊 종료과업:', EX_CLOSED_PROJECTS.length+'개', '기타경비:', JSON.stringify(EX_MISC_COST));
@@ -6718,8 +6724,8 @@ function exGetProjects(){
   });
   // 기타경비 매칭
   Object.entries(m).forEach(([k,v])=>{
-    if(EX_MISC_COST[k])v.misc=EX_MISC_COST[k];
-    else{for(const mk of Object.keys(EX_MISC_COST)){const a=exNorm(k),b=exNorm(mk);if(a.includes(b)||b.includes(a)){v.misc=EX_MISC_COST[mk];break}}}
+    if(EX_MISC_COST[k]){v.misc=EX_MISC_COST[k];v.miscDesc=EX_MISC_DESC[k]||''}
+    else{for(const mk of Object.keys(EX_MISC_COST)){const a=exNorm(k),b=exNorm(mk);if(a.includes(b)||b.includes(a)){v.misc=EX_MISC_COST[mk];v.miscDesc=EX_MISC_DESC[mk]||'';break}}}
   });
   // 기성금 매칭
   Object.entries(m).forEach(([k,v])=>{
@@ -6765,6 +6771,13 @@ function exRenderProject(){
       ${sel.misc?`<div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">기타경비</div><div class="kpi-num" style="font-size:26px;color:var(--kpi-amber)">${exF(sel.misc)}</div><div class="kpi-sub">원가 합계 ${exF(sel.totalCost)}</div></div>`:''}
       <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">기성금</div><div class="kpi-num" style="font-size:26px;color:${sel.pay?'var(--sig)':'var(--text-muted)'}">${sel.pay?exF(sel.pay):'미입금'}</div><div class="kpi-sub">${sel.pay?'손익 '+(sel.gap>=0?'+':'')+exF(sel.gap):''}</div></div>
       <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">실행률</div><div class="kpi-num" style="font-size:26px;color:${sel.rt>=1?'var(--kpi-green)':sel.pay?'var(--kpi-red)':'var(--text-muted)'}">${sel.pay?(sel.rt*100).toFixed(0)+'<span>%</span>':'-'}</div></div></div>`;
+    // 기타경비 내역 (있을 때만)
+    if(sel.misc){
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;margin-bottom:14px;border-radius:10px;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15)">
+        <span style="font-size:13px;font-weight:700;color:var(--kpi-amber);white-space:nowrap">기타경비 ${exF(sel.misc)}</span>
+        <span style="font-size:13px;color:var(--text-secondary)">${sel.miscDesc||'내역 없음 — 종료과업 시트 D열(비고)에 입력'}</span>
+      </div>`;
+    }
     // 인력 테이블
     h+='<div class="sc-section"><div class="sc-section-title">인력별 투입</div><table class="sc-tbl"><thead><tr><th style="text-align:left">인력</th><th>팀</th><th>직급</th><th>기간</th><th>시간</th><th>인건비</th><th>비중</th></tr></thead><tbody>';
     sel.rw.sort((a,b)=>b.h-a.h).forEach(r=>{const pct=sel.h>0?(r.h/sel.h*100).toFixed(0):0;
