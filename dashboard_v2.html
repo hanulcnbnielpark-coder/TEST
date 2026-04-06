@@ -848,13 +848,15 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 @media print{.nav,.sub-nav,.detail-overlay,.detail-panel,.filter-btn,.nav-btn,.rpt-toolbar,.rpt-select-wrap,#exPayOverlay,#exPayPanel{display:none!important}body{background:#fff!important;color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0}.page{background:#fff!important}.container{padding:0!important}.rpt-page{box-shadow:none!important;border:none!important;margin:0!important;padding:20mm 15mm!important;max-width:none!important;border-radius:0!important}.rpt-tbl td,.rpt-tbl th{border-color:#000!important;color:#000!important;background:#fff!important}.rpt-tbl th{background:#f0f0f0!important}.rpt-ta{border:1px solid #000!important;background:#fff!important;color:#000!important;font-size:11px!important;padding:6px!important}}
 /* 수행환류 보고서 스타일 */
 .rpt-page{max-width:860px;margin:0 auto;background:var(--bg-card);border-radius:12px;padding:48px 44px;box-shadow:0 2px 20px rgba(0,0,0,.06);border:1px solid var(--border-light)}
+@media(max-width:900px){.rpt-page{padding:28px 20px;border-radius:8px}}
+@media(max-width:500px){.rpt-page{padding:20px 14px;border-radius:6px}.rpt-tbl th{width:80px!important;font-size:12px;padding:8px 6px}.rpt-tbl td{padding:8px}.rpt-ta{font-size:12px;padding:6px 8px}.rpt-stamp{grid-template-columns:50px repeat(3,1fr)}.rpt-stamp>div{padding:6px 8px;font-size:11px}}
 .rpt-title{font-size:22px;font-weight:900;text-align:center;letter-spacing:1px;margin-bottom:6px;color:var(--text-primary)}
 .rpt-sub{font-size:13px;text-align:center;color:var(--text-tertiary);margin-bottom:24px}
 .rpt-h{font-size:15px;font-weight:800;color:var(--text-primary);margin:24px 0 10px;display:flex;align-items:center;gap:6px}
 .rpt-h::before{content:'□';font-size:14px}
-.rpt-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:4px}
-.rpt-tbl th,.rpt-tbl td{border:1px solid var(--border-main);padding:10px 14px;text-align:left;vertical-align:middle;color:var(--text-primary)}
-.rpt-tbl th{background:var(--bg-thead);font-weight:700;white-space:nowrap;color:var(--text-secondary);text-align:center;width:110px;vertical-align:middle}
+.rpt-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:4px;table-layout:fixed}
+.rpt-tbl th,.rpt-tbl td{border:1px solid var(--border-main);padding:10px 14px;text-align:left;vertical-align:middle;color:var(--text-primary);word-wrap:break-word}
+.rpt-tbl th{background:var(--bg-thead);font-weight:700;color:var(--text-secondary);text-align:center;width:90px;vertical-align:middle}
 .rpt-tbl td.c{text-align:center}
 .rpt-ta{width:100%;border:1px solid var(--border-main);border-radius:0;padding:8px 10px;font-size:13px;font-family:inherit;color:var(--text-primary);background:transparent;resize:vertical;line-height:1.6}
 .rpt-ta:focus{outline:2px solid var(--sig);outline-offset:-1px}
@@ -6860,7 +6862,7 @@ function exRenderFeedback(){
 
   // ── □ 프로젝트 수행 성과 ──
   h+='<div class="rpt-h">프로젝트 수행 성과</div>';
-  h+='<table class="rpt-tbl"><thead><tr><th style="width:110px">구분</th><th>주요 내용(성과)</th></tr></thead><tbody>';
+  h+='<table class="rpt-tbl"><thead><tr><th style="width:90px">구분</th><th>주요 내용(성과)</th></tr></thead><tbody>';
   fb.perf.forEach((p,i)=>{
     h+=`<tr><th>${p.cat}</th><td><textarea class="rpt-ta" rows="2" placeholder="수행 성과를 기술하세요" onchange="exUpdPerf('${esc(sel.nm)}',${i},this.value)">${p.content||''}</textarea></td></tr>`;
   });
@@ -6869,7 +6871,7 @@ function exRenderFeedback(){
 
   // ── □ 주요 이슈 및 피드백(환류) ──
   h+='<div class="rpt-h">주요 이슈 및 피드백(환류)</div>';
-  h+='<table class="rpt-tbl"><thead><tr><th style="width:100px">리스크항목</th><th>발생 문제 및 원인 분석</th><th>향후 대응 및 기준 수정 제안</th><th style="width:90px">비고사항</th></tr></thead><tbody>';
+  h+='<table class="rpt-tbl"><thead><tr><th style="width:90px">리스크항목</th><th>발생 문제 및 원인 분석</th><th>향후 대응 및 기준 수정 제안</th><th style="width:80px">비고사항</th></tr></thead><tbody>';
   const riskCats=['과업범위','참여판단','인력/조직','기술/운영','재무/손익','행정/계약','대외/협력'];
   fb.risks.forEach((r,i)=>{
     h+=`<tr>
