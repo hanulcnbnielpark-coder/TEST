@@ -6771,20 +6771,17 @@ function exRenderProject(){
       ${sel.misc?`<div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">기타경비</div><div class="kpi-num" style="font-size:26px;color:var(--kpi-amber)">${exF(sel.misc)}</div><div class="kpi-sub">원가 합계 ${exF(sel.totalCost)}</div></div>`:''}
       <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">기성금</div><div class="kpi-num" style="font-size:26px;color:${sel.pay?'var(--sig)':'var(--text-muted)'}">${sel.pay?exF(sel.pay):'미입금'}</div><div class="kpi-sub">${sel.pay?'손익 '+(sel.gap>=0?'+':'')+exF(sel.gap):''}</div></div>
       <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">실행률</div><div class="kpi-num" style="font-size:26px;color:${sel.rt>=1?'var(--kpi-green)':sel.pay?'var(--kpi-red)':'var(--text-muted)'}">${sel.pay?(sel.rt*100).toFixed(0)+'<span>%</span>':'-'}</div></div></div>`;
-    // 기타경비 내역 (있을 때만)
-    if(sel.misc){
-      h+=`<div class="sc-section" style="padding:16px 20px;margin-bottom:14px">
-        <div class="sc-section-title" style="font-size:14px;margin-bottom:10px">기타경비 내역</div>
-        <table class="sc-tbl" style="font-size:14px"><thead><tr><th style="text-align:left">항목</th><th style="width:140px">금액</th></tr></thead><tbody>
-          <tr><td style="color:var(--text-secondary)">${sel.miscDesc||'-'}</td><td class="r" style="font-weight:700;color:var(--kpi-amber)">${exN(sel.misc)}</td></tr>
-        </tbody><tfoot><tr><td style="text-align:left;font-weight:700">원가 합계 <span style="font-weight:400;color:var(--text-tertiary)">(인건비 + 기타경비)</span></td><td class="r" style="font-weight:800">${exN(Math.round(sel.totalCost))}</td></tr></tfoot></table>
-      </div>`;
-    }
-    // 인력 테이블
+    // 인력 테이블 + 기타경비 통합
     h+='<div class="sc-section"><div class="sc-section-title">인력별 투입</div><table class="sc-tbl"><thead><tr><th style="text-align:left">인력</th><th>팀</th><th>직급</th><th>기간</th><th>시간</th><th>인건비</th><th>비중</th></tr></thead><tbody>';
     sel.rw.sort((a,b)=>b.h-a.h).forEach(r=>{const pct=sel.h>0?(r.h/sel.h*100).toFixed(0):0;
       h+=`<tr><td class="name">${r.nm}</td><td style="font-size:13px">${r.tm}</td><td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td><td style="font-size:13px;color:var(--text-secondary)">${r.pd||'-'}</td><td style="font-weight:700">${r.h}h</td><td class="r">${exN(Math.round(r.tot))}</td><td><div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:var(--bg-thead);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--sig)"></div></div><span style="font-size:11px;color:var(--text-tertiary)">${pct}%</span></div></td></tr>`});
-    h+='</tbody></table></div>';
+    h+='</tbody><tfoot>';
+    h+=`<tr><td colspan="4" style="text-align:left;font-weight:700">인건비 소계</td><td style="font-weight:800">${sel.h.toLocaleString()}h</td><td class="r" style="font-weight:800">${exN(Math.round(sel.tot))}</td><td></td></tr>`;
+    if(sel.misc){
+      h+=`<tr style="background:rgba(251,191,36,.04)"><td colspan="4" style="text-align:left;font-weight:600;color:var(--kpi-amber)">기타경비 <span style="font-weight:400;color:var(--text-tertiary)">${sel.miscDesc||''}</span></td><td></td><td class="r" style="font-weight:700;color:var(--kpi-amber)">${exN(sel.misc)}</td><td></td></tr>`;
+      h+=`<tr><td colspan="4" style="text-align:left;font-weight:800">원가 합계</td><td></td><td class="r" style="font-weight:900;font-size:15px">${exN(Math.round(sel.totalCost))}</td><td></td></tr>`;
+    }
+    h+='</tfoot></table></div>';
     // 기성금 내역
     if(sel.payEntries&&sel.payEntries.length){
       h+='<div class="sc-section"><div class="sc-section-title">기성금 입금 내역</div><table class="sc-tbl"><thead><tr><th>#</th><th>입금일</th><th>금액</th><th>누적</th></tr></thead><tbody>';
