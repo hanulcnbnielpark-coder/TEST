@@ -854,9 +854,9 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .rpt-sub{font-size:13px;text-align:center;color:var(--text-tertiary);margin-bottom:24px}
 .rpt-h{font-size:15px;font-weight:800;color:var(--text-primary);margin:24px 0 10px;display:flex;align-items:center;gap:6px}
 .rpt-h::before{content:'□';font-size:14px}
-.rpt-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:4px;table-layout:fixed}
+.rpt-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:4px}
 .rpt-tbl th,.rpt-tbl td{border:1px solid var(--border-main);padding:10px 14px;text-align:left;vertical-align:middle;color:var(--text-primary);word-wrap:break-word}
-.rpt-tbl th{background:var(--bg-thead);font-weight:700;color:var(--text-secondary);text-align:center;width:90px;vertical-align:middle}
+.rpt-tbl th{background:var(--bg-thead);font-weight:700;color:var(--text-secondary);text-align:center;vertical-align:middle}
 .rpt-tbl td.c{text-align:center}
 .rpt-ta{width:100%;border:1px solid var(--border-main);border-radius:0;padding:8px 10px;font-size:13px;font-family:inherit;color:var(--text-primary);background:transparent;resize:vertical;line-height:1.6}
 .rpt-ta:focus{outline:2px solid var(--sig);outline-offset:-1px}
@@ -6853,7 +6853,7 @@ function exRenderFeedback(){
   const mainW=sel.rw.sort((a,b)=>b.h-a.h)[0];
 
   h+='<div class="rpt-h">사업정보</div>';
-  h+=`<table class="rpt-tbl"><tbody>
+  h+=`<table class="rpt-tbl"><colgroup><col style="width:80px"><col><col style="width:80px"><col></colgroup><tbody>
     <tr><th>사업명</th><td colspan="3" style="font-weight:700">${sel.nm}</td></tr>
     <tr><th>수행기간</th><td>${period}</td><th>수행부서</th><td>${mainW?mainW.tm+' '+mainW.nm+' '+mainW.g:'-'}</td></tr>
     <tr><th>인건비</th><td>${exF(sel.tot)} (${sel.rw.length}명, ${sel.h}h)</td><th>기타경비</th><td>${sel.misc?exF(sel.misc):'-'}</td></tr>
@@ -6862,7 +6862,7 @@ function exRenderFeedback(){
 
   // ── □ 프로젝트 수행 성과 ──
   h+='<div class="rpt-h">프로젝트 수행 성과</div>';
-  h+='<table class="rpt-tbl"><thead><tr><th style="width:90px">구분</th><th>주요 내용(성과)</th></tr></thead><tbody>';
+  h+='<table class="rpt-tbl"><colgroup><col style="width:100px"><col></colgroup><thead><tr><th>구분</th><th>주요 내용(성과)</th></tr></thead><tbody>';
   fb.perf.forEach((p,i)=>{
     h+=`<tr><th>${p.cat}</th><td><textarea class="rpt-ta" rows="2" placeholder="수행 성과를 기술하세요" onchange="exUpdPerf('${esc(sel.nm)}',${i},this.value)">${p.content||''}</textarea></td></tr>`;
   });
@@ -6871,7 +6871,7 @@ function exRenderFeedback(){
 
   // ── □ 주요 이슈 및 피드백(환류) ──
   h+='<div class="rpt-h">주요 이슈 및 피드백(환류)</div>';
-  h+='<table class="rpt-tbl"><thead><tr><th style="width:90px">리스크항목</th><th>발생 문제 및 원인 분석</th><th>향후 대응 및 기준 수정 제안</th><th style="width:80px">비고사항</th></tr></thead><tbody>';
+  h+='<table class="rpt-tbl"><colgroup><col style="width:90px"><col><col><col style="width:80px"></colgroup><thead><tr><th>리스크항목</th><th>발생 문제 및 원인 분석</th><th>향후 대응 및 기준 수정 제안</th><th>비고사항</th></tr></thead><tbody>';
   const riskCats=['과업범위','참여판단','인력/조직','기술/운영','재무/손익','행정/계약','대외/협력'];
   fb.risks.forEach((r,i)=>{
     h+=`<tr>
@@ -6888,7 +6888,7 @@ function exRenderFeedback(){
   // ── □ 실행사유 및 개선대책 (적자/미입금) ──
   if(sel.gap<0||!sel.pay||fb.reason||fb.plan){
     h+='<div class="rpt-h">실행사유 및 개선대책</div>';
-    h+=`<table class="rpt-tbl"><tbody>
+    h+=`<table class="rpt-tbl"><colgroup><col style="width:90px"><col></colgroup><tbody>
       <tr><th>실행사유</th><td><textarea class="rpt-ta" rows="2" placeholder="원가 초과·적자 발생 원인" onchange="exSaveFb('${esc(sel.nm)}','reason',this.value)">${fb.reason||''}</textarea></td></tr>
       <tr><th>개선대책</th><td><textarea class="rpt-ta" rows="2" placeholder="향후 대응 방안" onchange="exSaveFb('${esc(sel.nm)}','plan',this.value)">${fb.plan||''}</textarea></td></tr>
     </tbody></table>`;
@@ -6896,7 +6896,7 @@ function exRenderFeedback(){
 
   // ── □ 전략기획팀 검토 의견 ──
   h+='<div class="rpt-h">전략기획팀 검토 의견</div>';
-  h+=`<table class="rpt-tbl"><tbody>
+  h+=`<table class="rpt-tbl"><colgroup><col style="width:90px"><col></colgroup><tbody>
     <tr><th>검토의견</th><td><textarea class="rpt-ta" rows="4" placeholder="차기 유사 사업 수주 시 반영할 사항, 리스크 검토 강화 제언 등" onchange="exSaveFb('${esc(sel.nm)}','review',this.value)">${fb.review||''}</textarea></td></tr>
   </tbody></table>`;
 
@@ -6942,9 +6942,14 @@ async function exSaveFeedbackGAS(proj){
   try{
     const payload=JSON.stringify(fb);
     const url=GAS_WEB_URL+'?action=saveFeedback&project='+encodeURIComponent(proj)+'&data='+encodeURIComponent(payload)+'&_='+Date.now();
-    await fetch(url,{mode:'no-cors',redirect:'follow'});
-    showToast('✅ 수행환류 저장 완료');
-  }catch(e){console.error('수행환류 저장 실패:',e);showToast('⚠️ 저장 실패')}
+    console.log('📊 수행환류 저장 요청:', proj, 'URL길이:', url.length);
+    const resp=await fetch(url,{redirect:'follow'});
+    const txt=await resp.text();
+    console.log('📊 수행환류 저장 응답:', txt);
+    if(txt.includes('OK'))showToast('✅ 수행환류 저장 완료');
+    else if(txt.includes('현재 파일을 열 수 없습니다')||txt.includes('<!DOCTYPE'))showToast('⚠️ Code.gs에 saveFeedback 함수가 없음 — 배포 확인 필요');
+    else showToast('⚠️ 저장 응답: '+txt.slice(0,50));
+  }catch(e){console.error('수행환류 저장 실패:',e);showToast('⚠️ 저장 실패 — '+e.message)}
 }
 
 // ═══ 기성금 패널 ═══
