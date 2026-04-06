@@ -4733,6 +4733,11 @@ async function eaFetchGS(){
     function eaCsvRows(t){const rows=[];let c='',q=false,row=[];for(let i=0;i<t.length;i++){const ch=t[i];if(ch==='"'){if(q&&t[i+1]==='"'){c+='"';i++}else q=!q}else if(ch===','&&!q){row.push(c.replace(/^"|"$/g,''));c=''}else if((ch==='\n'||(ch==='\r'&&t[i+1]==='\n'))&&!q){if(ch==='\r')i++;row.push(c.replace(/^"|"$/g,''));rows.push(row);row=[];c=''}else if(ch==='\n'&&q){c+=' '}else c+=ch}if(c||row.length){row.push(c.replace(/^"|"$/g,''));rows.push(row)}return rows}
     const rows=eaCsvRows(txt.trim());
     if(rows.length<2)continue;const h=rows[0].map(x=>x.trim());
+    // CSV 행 길이 보정: 헤더보다 짧은 행은 빈 값으로 패딩
+    const hLen=h.length;
+    const shortRows=rows.filter((r,i)=>i>0&&r.length<hLen).length;
+    if(shortRows)console.warn('⚠️ CSV 행 패딩:', shortRows+'개 행이 헤더('+hLen+'컬럼)보다 짧음 → 패딩 적용');
+    rows.forEach((r,i)=>{if(i>0&&r.length<hLen){while(r.length<hLen)r.push('')}});
     const ci=n=>h.findIndex(x=>x.includes(n));
     const iD=ci('작업일자'),iW=ci('작업자'),iT=ci('팀'),iG=ci('구분'),iP=ci('과업명'),iR=Math.max(ci('업무시간'),ci('근무시간')),iO=Math.max(ci('야근'),ci('연장')),iH=ci('근로');
     if(iD<0||iW<0||iP<0)continue;EA=[];
@@ -4808,42 +4813,44 @@ async function eaFetchGS(){
     // Build catCols array with multi-set structure
     let catCols=Object.entries(catMap2).map(([name,sets])=>({name,sets}));
     const progCols=[];
+    // 구포맷 우선 + 신포맷 fallback: 카테고리별 여러 컬럼셋 저장
+    const progMap2={}; // {cat: [{pdCol,phCol,pndCol,pnhCol}, ...]}
     if(hasOldFmt){
       [['모델','프모주구','프모주시','프모야구','프모야시'],['시각화','프시주구','프시주시','프시야구','프시야시'],
        ['자동화','프자주구','프자주시','프자야구','프자야시'],['문서','프문주구','프문주시','프문야구','프문야시'],
        ['P/W','프P/W주구','프P/W주시','프P/W야구','프P/W야시']
       ].forEach(([cat,pd,ph,pnd,pnh])=>{
         const a=ci(pd),b=ci(ph),c2=ci(pnd),d2=ci(pnh);
-        if(a>=0||b>=0)progCols.push({cat,pdCol:a,phCol:b,pndCol:c2,pnhCol:d2});
+        if(a>=0||b>=0){if(!progMap2[cat])progMap2[cat]=[];progMap2[cat].push({pdCol:a,phCol:b,pndCol:c2,pnhCol:d2})}
       });
     }
     if(hasNewFmt){
-      const pSeen=new Set(progCols.map(p=>p.cat));
-      // Pattern 1: 카테고리_주간프로그램 (new EXE format)
+      // Pattern 1: 카테고리_주간프로그램
       h.forEach((hx,idx)=>{
         const m=hx.match(/(.+?)_주간프로그램/);
-        if(m){const cat=m[1].trim();if(!pSeen.has(cat)){pSeen.add(cat);
-          // prog day name = this col, prog day hrs = 카테고리_주간시간
+        if(m){const cat=m[1].trim();
           const ph=h.findIndex(x=>x.includes(cat+'_주간시간'));
           const pnd=h.findIndex(x=>x.includes(cat+'_야간프로그램'));
           const pnh=h.findIndex(x=>x.includes(cat+'_야간시간'));
-          progCols.push({cat,pdCol:idx,phCol:ph,pndCol:pnd,pnhCol:pnh});
-        }}
+          if(!progMap2[cat])progMap2[cat]=[];progMap2[cat].push({pdCol:idx,phCol:ph,pndCol:pnd,pnhCol:pnh});
+        }
       });
-      // Pattern 2: 프X주구 (old format prog)
+      // Pattern 2: 프로그램_X_주간구분
       h.forEach((hx,idx)=>{
-        const m=hx.match(/프로그램_?(.+?)_주간구분/)||hx.match(/프(.+?)주구/);
-        if(m){const cat=m[1].trim();if(!pSeen.has(cat)){pSeen.add(cat);
+        const m=hx.match(/프로그램_?(.+?)_주간구분/);
+        if(m){const cat=m[1].trim();
           const ph=h.findIndex(x=>x.includes('프'+cat)&&x.includes('주시'));
           const pnd=h.findIndex(x=>x.includes('프'+cat)&&x.includes('야구'));
           const pnh=h.findIndex(x=>x.includes('프'+cat)&&x.includes('야시'));
-          progCols.push({cat,pdCol:idx,phCol:ph,pndCol:pnd,pnhCol:pnh});
-        }}
+          if(!progMap2[cat])progMap2[cat]=[];progMap2[cat].push({pdCol:idx,phCol:ph,pndCol:pnd,pnhCol:pnh});
+        }
       });
     }
+    // progCols: 각 카테고리의 컬럼셋 배열 (구포맷 먼저 → 신포맷 fallback)
+    Object.entries(progMap2).forEach(([cat,sets])=>progCols.push({cat,sets}));
     EA_ALL_CATS=[...new Set(catCols.map(c=>c.name))];
     console.warn('📊 인력분석 파싱:', {hasNewFmt, hasOldFmt, hasLegacySum, catCols:catCols.length, setsPerCat:catCols.map(c=>c.name+'('+c.sets.length+')').join(','), categories:EA_ALL_CATS});
-    console.warn('📊 프로그램 컬럼:', progCols.map(p=>p.cat+'(pd:'+p.pdCol+',ph:'+p.phCol+',pnd:'+p.pndCol+',pnh:'+p.pnhCol+')').join(', ')||'없음');
+    console.warn('📊 프로그램 컬럼:', progCols.map(p=>p.cat+'('+p.sets.length+'셋: '+p.sets.map(s=>'pd:'+s.pdCol).join('/')+')').join(', ')||'없음');
     // 문서 프로그램 헤더 디버그
     const docProgHeaders=h.filter(x=>x&&(x.includes('문서')&&x.includes('프로그램'))||x.includes('프문'));
     if(docProgHeaders.length)console.warn('📊 문서 프로그램 관련 헤더:', docProgHeaders);
@@ -4862,9 +4869,11 @@ async function eaFetchGS(){
       });
       const progs={};
       progCols.forEach(pc=>{
-        const pd=pc.pdCol>=0?(v[pc.pdCol]||''):'';const ph=pc.phCol>=0?parseFloat(v[pc.phCol])||0:0;
-        const pnd=pc.pndCol>=0?(v[pc.pndCol]||''):'';const pnh=pc.pnhCol>=0?parseFloat(v[pc.pnhCol])||0:0;
-        if(pd||ph>0||pnd||pnh>0) progs[pc.cat]={pd,ph,pnd,pnh};
+        for(const s of pc.sets){
+          const pd=s.pdCol>=0?(v[s.pdCol]||''):'';const ph=s.phCol>=0?parseFloat(v[s.phCol])||0:0;
+          const pnd=s.pndCol>=0?(v[s.pndCol]||''):'';const pnh=s.pnhCol>=0?parseFloat(v[s.pnhCol])||0:0;
+          if(pd||ph>0||pnd||pnh>0){progs[pc.cat]={pd,ph,pnd,pnh};break}
+        }
       });
       const rec={date:eaParseDate(v[iD]),worker:v[iW],team:cleanTeam,gubun:v[iG]||'',project:v[iP],
         regular:rg,ot:ot,hours:parseFloat(v[iH])||(rg+ot),cats:cats,progs:progs,
@@ -4894,10 +4903,14 @@ async function eaFetchGS(){
       if(rec.pw_hrs===undefined)rec.pw_hrs=0;if(rec.pw_n_hrs===undefined)rec.pw_n_hrs=0;
       if(rec.co_item===undefined)rec.co_item='';if(rec.co_hrs===undefined)rec.co_hrs=0;if(rec.co_n_hrs===undefined)rec.co_n_hrs=0;
       if(rec.hol_hrs===undefined)rec.hol_hrs=0;
-      // Prog fields from progCols — names only from actual prog columns, no category item fallback
+      // Prog fields from progCols — multi-set: try each column set, use first with data
       progCols.forEach(pc=>{
-        const pd=pc.pdCol>=0?(v[pc.pdCol]||''):'';const ph=pc.phCol>=0?parseFloat(v[pc.phCol])||0:0;
-        const pnd=pc.pndCol>=0?(v[pc.pndCol]||''):'';const pnh=pc.pnhCol>=0?parseFloat(v[pc.pnhCol])||0:0;
+        let pd='',ph=0,pnd='',pnh=0;
+        for(const s of pc.sets){
+          const tpd=s.pdCol>=0?(v[s.pdCol]||''):'';const tph=s.phCol>=0?parseFloat(v[s.phCol])||0:0;
+          const tpnd=s.pndCol>=0?(v[s.pndCol]||''):'';const tpnh=s.pnhCol>=0?parseFloat(v[s.pnhCol])||0:0;
+          if(tpd||tph>0||tpnd||tpnh>0){pd=tpd;ph=tph;pnd=tpnd;pnh=tpnh;break}
+        }
         if(pc.cat==='모델'){rec.prog_mo=pd;rec.prog_mo_hrs=ph||rec.mo_hrs;rec.prog_mo_n=pnd;rec.prog_mo_n_hrs=pnh||rec.mo_n_hrs}
         else if(pc.cat==='시각화'){rec.prog_vi=pd;rec.prog_vi_hrs=ph||rec.vi_hrs;rec.prog_vi_n=pnd;rec.prog_vi_n_hrs=pnh}
         else if(pc.cat==='자동화'){rec.prog_au=pd;rec.prog_au_hrs=ph||rec.au_hrs;rec.prog_au_n=pnd;rec.prog_au_n_hrs=pnh}
