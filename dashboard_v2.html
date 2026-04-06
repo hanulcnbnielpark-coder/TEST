@@ -862,8 +862,8 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .rpt-ta:focus{background:#FAFAFA}
 .rpt-ta::placeholder{color:#bbb}
 .rpt-stamp{display:grid;grid-template-columns:56px repeat(3,72px);margin-left:auto;width:fit-content;margin-bottom:32px;border:1.5px solid #333}
-.rpt-stamp>div{border:0.5px solid #999;padding:7px 0;text-align:center;font-size:11px;color:#333}
-.rpt-stamp .sh{font-weight:700;background:#F5F5F5}
+.rpt-stamp>div{border:0.5px solid #bbb;padding:7px 0;text-align:center;font-size:11px;color:#333}
+.rpt-stamp .sh{font-weight:700;background:#F5F5F5;border-bottom:1px solid #333}
 .rpt-stamp .sv{min-height:40px}
 .rpt-toolbar{display:flex;gap:10px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
 .rpt-select-wrap{margin-bottom:16px}
@@ -6842,8 +6842,8 @@ function exRenderFeedback(){
 
   // 결재란
   h+=`<div class="rpt-stamp">
-    <div>결재</div><div class="sh">작성</div><div class="sh">팀장</div><div class="sh">본부장</div>
-    <div style="border:none"></div><div class="sv"></div><div class="sv"></div><div class="sv"></div>
+    <div style="grid-row:span 2;display:flex;align-items:center;justify-content:center;font-weight:700;background:#F5F5F5">결재</div><div class="sh">작성</div><div class="sh">팀장</div><div class="sh">본부장</div>
+    <div class="sv"></div><div class="sv"></div><div class="sv"></div>
   </div>`;
 
   // ── □ 사업정보 ──
