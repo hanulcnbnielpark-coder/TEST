@@ -845,7 +845,26 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 @media(max-width:900px){.nav{padding:0 12px}.nav-brand{padding:10px 10px 10px 0;margin-right:6px}.nav-brand img{height:22px}.sub-nav{padding:0 12px;top:50px}.sub-nav .nav-tab{padding:10px 14px;font-size:11px}.nav-main{padding:14px 16px;font-size:13px}.nav-right{gap:6px}.nav-btn{padding:5px 10px;font-size:10px}.file-badge{display:none}.kpi-row{grid-template-columns:1fr 1fr;gap:10px}.kpi{padding:16px 18px;border-radius:14px}.kpi-num{font-size:24px}.kpi-num.big{font-size:30px}.kpi-amt{font-size:13px}.row2,.row2b{grid-template-columns:1fr;gap:12px}.tg{grid-template-columns:1fr}.container{padding:16px 14px}.entry-container{padding:12px}.detail-panel{width:100%;right:-100%}.detail-panel.open{right:0!important}.dp-stats{grid-template-columns:repeat(2,1fr);gap:8px}.dp-header{padding:0}.dp-body{padding:16px}.dp-title{font-size:17px}.lot-details{grid-template-columns:1fr}.entry-table-wrap{overflow-x:auto}.panel{padding:18px;border-radius:14px}.chart-c{height:180px}.upload-box{width:95vw!important;padding:0 8px}.gs-box{padding:18px}.gs-input-row{flex-direction:column;gap:8px}.gs-input{font-size:12px}.gs-interval-row{flex-wrap:wrap}table{font-size:11px}th,td{padding:8px 10px}.th2{padding:14px 18px}.tw{margin:0 -4px}#bidKpiRow{grid-template-columns:repeat(3,1fr)!important}}
 @media(max-width:480px){.nav-main{padding:12px 10px;font-size:12px}.sub-nav .nav-tab{padding:10px 8px;font-size:10px}.kpi-row{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}.kpi{padding:14px;border-radius:12px}.kpi-label{font-size:9px;margin-bottom:6px}.kpi-num{font-size:20px}.kpi-num.big{font-size:26px}.kpi-amt{font-size:12px}.kpi-badge{width:32px;height:32px;font-size:16px;right:12px;border-radius:10px}.container{padding:10px 12px}.row2,.row2b{gap:10px;margin-bottom:16px}.panel{padding:14px;border-radius:12px}.panel-t{font-size:12px;margin-bottom:12px}.chart-c{height:150px}.cleg{gap:8px}.cli{font-size:10px}.sr{gap:8px;margin-bottom:6px}.sl0{width:50px;font-size:10px}.sb0{height:28px}.stt .n{font-size:12px}.pr{padding:10px 0}.pn{font-size:12px}.pc{font-size:14px}.ti{padding:10px 12px;gap:8px;border-radius:12px}.tn{font-size:11px}.ta0{font-size:11px}.dp-title{font-size:15px}.dp-stats{gap:6px}.dp-stat{padding:10px}.dp-stat .v{font-size:20px}.lot-card{margin-bottom:8px;border-radius:14px}.lot-top{padding:12px}.lot-nums{gap:12px}.lot-num .v{font-size:13px}.upload-title{font-size:18px}.upload-sub{font-size:12px;margin-bottom:20px}.chart-toggle{padding:3px 8px!important;font-size:10px!important;border-radius:6px!important}table{font-size:10px}th,td{padding:6px 8px}.gtag,.stag{font-size:9px;padding:2px 6px}#bidKpiRow{grid-template-columns:repeat(2,1fr)!important}.bid-kpi-num{font-size:18px}}
 
-@media print{.nav,.sub-nav,.detail-overlay,.detail-panel,.filter-btn,.nav-btn{display:none!important}body{background:var(--bg-card);color:var(--text-primary);-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{background:var(--bg-card)}}
+@media print{.nav,.sub-nav,.detail-overlay,.detail-panel,.filter-btn,.nav-btn,.rpt-toolbar,.rpt-select-wrap,#exPayOverlay,#exPayPanel{display:none!important}body{background:#fff!important;color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0}.page{background:#fff!important}.container{padding:0!important}.rpt-page{box-shadow:none!important;border:none!important;margin:0!important;padding:20mm 15mm!important;max-width:none!important;border-radius:0!important}.rpt-tbl td,.rpt-tbl th{border-color:#000!important;color:#000!important;background:#fff!important}.rpt-tbl th{background:#f0f0f0!important}.rpt-ta{border:1px solid #000!important;background:#fff!important;color:#000!important;font-size:11px!important;padding:6px!important}}
+/* 수행환류 보고서 스타일 */
+.rpt-page{max-width:860px;margin:0 auto;background:var(--bg-card);border-radius:12px;padding:48px 44px;box-shadow:0 2px 20px rgba(0,0,0,.06);border:1px solid var(--border-light)}
+.rpt-title{font-size:22px;font-weight:900;text-align:center;letter-spacing:1px;margin-bottom:6px;color:var(--text-primary)}
+.rpt-sub{font-size:13px;text-align:center;color:var(--text-tertiary);margin-bottom:24px}
+.rpt-h{font-size:15px;font-weight:800;color:var(--text-primary);margin:24px 0 10px;display:flex;align-items:center;gap:6px}
+.rpt-h::before{content:'□';font-size:14px}
+.rpt-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:4px}
+.rpt-tbl th,.rpt-tbl td{border:1px solid var(--border-main);padding:10px 14px;text-align:left;vertical-align:top;color:var(--text-primary)}
+.rpt-tbl th{background:var(--bg-thead);font-weight:700;white-space:nowrap;color:var(--text-secondary);text-align:center;width:110px}
+.rpt-tbl td.c{text-align:center}
+.rpt-ta{width:100%;border:1px solid var(--border-main);border-radius:0;padding:8px 10px;font-size:13px;font-family:inherit;color:var(--text-primary);background:transparent;resize:vertical;line-height:1.6}
+.rpt-ta:focus{outline:2px solid var(--sig);outline-offset:-1px}
+.rpt-stamp{display:grid;grid-template-columns:60px repeat(3,1fr);border:1px solid var(--border-main);margin-left:auto;width:fit-content;margin-bottom:20px}
+.rpt-stamp>div{border:1px solid var(--border-main);padding:8px 16px;text-align:center;font-size:12px;color:var(--text-secondary)}
+.rpt-stamp>div:first-child{font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--bg-thead)}
+.rpt-stamp .sh{font-weight:600;background:var(--bg-thead);font-size:11px}
+.rpt-stamp .sv{min-height:36px}
+.rpt-toolbar{display:flex;gap:10px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.rpt-select-wrap{margin-bottom:16px}
 
 /* ═══ Mobile Responsive (≤768px) ═══ */
 @media(max-width:768px){
@@ -6527,10 +6546,15 @@ async function exAnFetchGS(){
         const nm=row.c&&row.c[0]?String(row.c[0].v||'').trim():'';
         if(!nm||nm.startsWith('■')||nm.startsWith('※')||nm==='과업명')return;
         EX_CLOSED_PROJECTS.push(nm);
-        const misc=row.c&&row.c[1]?parseFloat(row.c[1].v)||0:0;
-        if(misc)EX_MISC_COST[nm]=misc;
+        // B열: 기타경비 — 숫자/문자열/콤마 포맷 모두 처리
+        if(row.c&&row.c[1]&&row.c[1]!==null){
+          const rv=row.c[1];
+          const raw=rv.v!==undefined&&rv.v!==null?rv.v:(rv.f||'');
+          const num=typeof raw==='number'?raw:parseFloat(String(raw).replace(/[,\s]/g,''))||0;
+          if(num>0){EX_MISC_COST[nm]=num;console.log('📊 기타경비:',nm,'=',num)}
+        }
       });
-      console.log('📊 종료과업:', EX_CLOSED_PROJECTS, '기타경비:', EX_MISC_COST);
+      console.log('📊 종료과업:', EX_CLOSED_PROJECTS.length+'개', '기타경비:', JSON.stringify(EX_MISC_COST));
     }catch(e){console.warn('종료과업 시트 없음:',e);EX_CLOSED_PROJECTS=[]}
     
     // 3. 기성금 시트 fetch
@@ -6774,79 +6798,108 @@ function exRenderFeedback(){
   const P=exGetProjects().sort((a,b)=>b.totalCost-a.totalCost);
   if(!EX_SP&&P.length)EX_SP=P[0].nm;
   const sel=P.find(p=>p.nm===EX_SP);
-  const fb=sel?EX_FEEDBACK[sel.nm]||{reason:'',plan:'',risks:[],review:''}:{reason:'',plan:'',risks:[],review:''};
+  if(!EX_FEEDBACK[EX_SP])EX_FEEDBACK[EX_SP]={reason:'',plan:'',risks:[],review:'',perf:[{cat:'리스크관리',content:''},{cat:'표준화적용',content:''}]};
+  const fb=EX_FEEDBACK[EX_SP];
+  if(!fb.risks||!fb.risks.length)fb.risks=[{cat:'과업범위',issue:'',action:'',note:''}];
+  if(!fb.perf)fb.perf=[{cat:'리스크관리',content:''},{cat:'표준화적용',content:''}];
+  const esc=s=>s.replace(/'/g,"\\'");
 
-  let h='<div style="max-width:900px;margin:0 auto">';
-
-  // 과업 선택
-  h+='<select onchange="EX_SP=this.value;exRenderFeedback()" style="width:100%;padding:12px 16px;border:1px solid var(--border-main);border-radius:10px;font-size:15px;font-weight:700;color:var(--text-primary);background:var(--bg-input);font-family:inherit;margin-bottom:16px">';
+  // 과업 선택 + 버튼
+  let h='<div class="rpt-select-wrap"><select onchange="EX_SP=this.value;exRenderFeedback()" style="width:100%;padding:12px 16px;border:1px solid var(--border-main);border-radius:10px;font-size:15px;font-weight:700;color:var(--text-primary);background:var(--bg-input);font-family:inherit">';
   P.forEach(p=>{h+=`<option value="${p.nm}" ${p.nm===EX_SP?'selected':''}>${p.nm}</option>`});
-  h+='</select>';
+  h+='</select></div>';
 
-  if(!sel){h+='<div style="text-align:center;padding:60px;color:var(--text-muted)">과업을 선택하세요</div></div>';document.getElementById('exAnTabFeedback').innerHTML=h;return}
+  h+='<div class="rpt-toolbar">';
+  h+=`<button onclick="exPrintReport()" style="padding:10px 24px;background:var(--sig);color:#FFF;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">📄 PDF 저장 / 인쇄</button>`;
+  h+=`<button onclick="exSaveFeedbackGAS('${sel?esc(sel.nm):''}')" style="padding:10px 24px;background:var(--bg-thead);color:var(--text-secondary);border:1px solid var(--border-main);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">💾 저장</button>`;
+  h+=`<button onclick="exAnTab('project',document.querySelectorAll('#subNavExecAn .nav-tab')[0])" style="padding:10px 20px;background:var(--bg-thead);color:var(--text-secondary);border:1px solid var(--border-main);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">← 과업별 분석</button>`;
+  h+='</div>';
 
-  // 헤더
-  h+=`<div style="text-align:center;margin-bottom:20px"><div style="font-size:20px;font-weight:900;letter-spacing:-0.5px;color:var(--text-primary)">사업 수행 환류 보고서</div><div style="font-size:13px;color:var(--text-tertiary);margin-top:4px">㈜한울씨앤비 전략기획팀</div></div>`;
+  if(!sel){h+='<div style="text-align:center;padding:60px;color:var(--text-muted)">과업을 선택하세요</div>';document.getElementById('exAnTabFeedback').innerHTML=h;return}
 
-  // ── 1. 사업정보 ──
-  const pds=sel.rw.map(r=>r.pd).filter(Boolean);
-  const minPd=pds.length?pds.sort()[0]:'';const maxPd=pds.length?pds.sort()[pds.length-1]:'';
-  const period=minPd&&maxPd&&minPd!==maxPd?minPd+'~'+maxPd:minPd||'-';
-  const mainWorker=sel.rw.sort((a,b)=>b.h-a.h)[0];
-  h+=`<div class="sc-section"><div class="sc-section-title">사업정보</div>
-    <table class="sc-tbl" style="font-size:14px"><tbody>
-      <tr><td style="width:120px;font-weight:600;color:var(--text-secondary)">사업명</td><td style="font-weight:700">${sel.nm}</td></tr>
-      <tr><td style="font-weight:600;color:var(--text-secondary)">수행기간</td><td>${period}</td></tr>
-      <tr><td style="font-weight:600;color:var(--text-secondary)">수행부서</td><td>${mainWorker?mainWorker.tm+' '+mainWorker.nm+' '+mainWorker.g:'-'}</td></tr>
-      <tr><td style="font-weight:600;color:var(--text-secondary)">투입인원</td><td>${sel.rw.length}명 · ${sel.h}h</td></tr>
-      <tr><td style="font-weight:600;color:var(--text-secondary)">원가</td><td>인건비 ${exF(sel.tot)}${sel.misc?' + 기타경비 '+exF(sel.misc)+' = '+exF(sel.totalCost):''}</td></tr>
-      <tr><td style="font-weight:600;color:var(--text-secondary)">기성금</td><td style="color:${sel.pay?'var(--sig)':'var(--text-muted)'}">${sel.pay?exF(sel.pay)+' (실행률 '+(sel.rt*100).toFixed(0)+'%)':'미입금'}</td></tr>
-      <tr><td style="font-weight:600;color:var(--text-secondary)">손익</td><td style="font-weight:700;color:${sel.gap>=0?'var(--kpi-green)':sel.pay?'var(--kpi-red)':'var(--text-muted)'}">${sel.pay?(sel.gap>=0?'+':'')+exF(sel.gap):'-'}</td></tr>
-    </tbody></table></div>`;
+  // ═══ 보고서 본문 ═══
+  h+='<div class="rpt-page" id="rptPrintArea">';
 
-  // ── 2. 주요 이슈 및 피드백(환류) ──
-  const riskCats=['과업범위','참여판단','인력/조직','기술/운영','재무/손익','행정/계약','대외/협력'];
-  if(!fb.risks||!fb.risks.length)fb.risks=[{cat:riskCats[0],issue:'',action:'',note:''}];
-  h+=`<div class="sc-section"><div class="sc-section-title">주요 이슈 및 피드백(환류)</div>`;
-  fb.risks.forEach((r,i)=>{
-    h+=`<div style="padding:14px;border-radius:10px;background:var(--bg-card-hover);border:1px solid var(--border-light);margin-bottom:10px">
-      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
-        <select onchange="exUpdRisk('${sel.nm.replace(/'/g,"\\'")}',${i},'cat',this.value)" style="padding:6px 10px;border:1px solid var(--border-main);border-radius:6px;font-size:13px;font-weight:600;color:var(--sig);background:var(--bg-input);font-family:inherit">
-          ${riskCats.map(c=>`<option value="${c}" ${r.cat===c?'selected':''}>${c}</option>`).join('')}
-        </select>
-        <span style="flex:1"></span>
-        ${fb.risks.length>1?`<button onclick="exRmRisk('${sel.nm.replace(/'/g,"\\'")}',${i})" style="width:28px;height:28px;border:none;background:var(--card-red-bg);color:var(--kpi-red);border-radius:6px;cursor:pointer;font-size:14px">✕</button>`:''}
-      </div>
-      <div style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:var(--text-tertiary);display:block;margin-bottom:3px">발생 문제 및 원인 분석</label>
-        <textarea rows="2" placeholder="수행 중 발생한 문제와 원인을 기술" style="width:100%;padding:8px 12px;border:1px solid var(--border-main);border-radius:8px;font-size:13px;color:var(--text-primary);background:var(--bg-input);font-family:inherit;resize:vertical;line-height:1.5" onchange="exUpdRisk('${sel.nm.replace(/'/g,"\\'")}',${i},'issue',this.value)">${r.issue||''}</textarea></div>
-      <div><label style="font-size:12px;font-weight:600;color:var(--text-tertiary);display:block;margin-bottom:3px">향후 대응 및 기준 수정 제안</label>
-        <textarea rows="2" placeholder="개선 방안, 기준 수정 사항" style="width:100%;padding:8px 12px;border:1px solid var(--border-main);border-radius:8px;font-size:13px;color:var(--text-primary);background:var(--bg-input);font-family:inherit;resize:vertical;line-height:1.5" onchange="exUpdRisk('${sel.nm.replace(/'/g,"\\'")}',${i},'action',this.value)">${r.action||''}</textarea></div>
-    </div>`;
-  });
-  h+=`<button onclick="exAddRisk('${sel.nm.replace(/'/g,"\\'")}')" style="width:100%;padding:9px;background:var(--bg-thead);border:1px dashed var(--border-main);border-radius:8px;font-size:13px;font-weight:600;color:var(--text-tertiary);cursor:pointer;font-family:inherit">+ 리스크 항목 추가</button></div>`;
+  // 제목
+  h+='<div class="rpt-title">㈜한울씨앤비 사업 수행 환류 보고서</div>';
 
-  // ── 3. 실행사유 & 개선대책 (과업별분석에서 작성한 것 표시) ──
-  if(fb.reason||fb.plan||sel.gap<0||!sel.pay){
-    h+=`<div class="sc-section" style="border:1px solid rgba(240,68,82,.15);background:rgba(240,68,82,.02)"><div class="sc-section-title">실행사유 및 개선대책</div>
-      <div style="margin-bottom:10px"><label style="font-size:12px;font-weight:600;color:var(--text-tertiary);display:block;margin-bottom:3px">실행사유</label>
-        <textarea rows="2" style="width:100%;padding:8px 12px;border:1px solid var(--border-main);border-radius:8px;font-size:13px;color:var(--text-primary);background:var(--bg-input);font-family:inherit;resize:vertical;line-height:1.5" placeholder="원가 초과·적자 발생 원인" onchange="exSaveFb('${sel.nm.replace(/'/g,"\\'")}','reason',this.value)">${fb.reason||''}</textarea></div>
-      <div><label style="font-size:12px;font-weight:600;color:var(--text-tertiary);display:block;margin-bottom:3px">개선대책</label>
-        <textarea rows="2" style="width:100%;padding:8px 12px;border:1px solid var(--border-main);border-radius:8px;font-size:13px;color:var(--text-primary);background:var(--bg-input);font-family:inherit;resize:vertical;line-height:1.5" placeholder="향후 대응 방안" onchange="exSaveFb('${sel.nm.replace(/'/g,"\\'")}','plan',this.value)">${fb.plan||''}</textarea></div>
-    </div>`;
-  }
-
-  // ── 4. 전략기획팀 검토 의견 ──
-  h+=`<div class="sc-section"><div class="sc-section-title">전략기획팀 검토 의견</div>
-    <textarea rows="4" placeholder="차기 유사 사업 수주 시 반영할 사항, 리스크 검토 강화 제언 등" style="width:100%;padding:10px 14px;border:1px solid var(--border-main);border-radius:10px;font-size:14px;color:var(--text-primary);background:var(--bg-input);font-family:inherit;resize:vertical;line-height:1.6" onchange="exSaveFb('${sel.nm.replace(/'/g,"\\'")}','review',this.value)">${fb.review||''}</textarea></div>`;
-
-  // 저장 버튼
-  h+=`<div style="display:flex;gap:10px;justify-content:center;margin-top:6px;margin-bottom:20px">
-    <button onclick="exSaveFeedbackGAS('${sel.nm.replace(/'/g,"\\'")}')" style="padding:14px 32px;background:var(--sig);color:#FFF;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">💾 수행환류 저장</button>
-    <button onclick="exAnTab('project',document.querySelectorAll('#subNavExecAn .nav-tab')[0])" style="padding:14px 24px;background:var(--bg-thead);color:var(--text-secondary);border:1px solid var(--border-main);border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">← 과업별 분석</button>
+  // 결재란
+  h+=`<div class="rpt-stamp">
+    <div>결재</div><div class="sh">작성</div><div class="sh">팀장</div><div class="sh">본부장</div>
+    <div style="border:none"></div><div class="sv"></div><div class="sv"></div><div class="sv"></div>
   </div>`;
 
-  h+='</div>';
+  // ── □ 사업정보 ──
+  const pds=sel.rw.map(r=>r.pd).filter(Boolean);
+  const minPd=pds.length?pds.sort()[0]:'';const maxPd=pds.length?pds.sort()[pds.length-1]:'';
+  const period=minPd&&maxPd&&minPd!==maxPd?minPd+' ~ '+maxPd:minPd||'-';
+  const mainW=sel.rw.sort((a,b)=>b.h-a.h)[0];
+
+  h+='<div class="rpt-h">사업정보</div>';
+  h+=`<table class="rpt-tbl"><tbody>
+    <tr><th>사업명</th><td colspan="3" style="font-weight:700">${sel.nm}</td></tr>
+    <tr><th>수행기간</th><td>${period}</td><th>수행부서</th><td>${mainW?mainW.tm+' '+mainW.nm+' '+mainW.g:'-'}</td></tr>
+    <tr><th>인건비</th><td>${exF(sel.tot)} (${sel.rw.length}명, ${sel.h}h)</td><th>기타경비</th><td>${sel.misc?exF(sel.misc):'-'}</td></tr>
+    <tr><th>기성금</th><td style="color:${sel.pay?'':'var(--text-muted)'}">${sel.pay?exF(sel.pay):'미입금'}</td><th>실행률</th><td style="font-weight:700;color:${sel.rt>=1?'var(--kpi-green)':sel.pay?'var(--kpi-red)':'var(--text-muted)'}">${sel.pay?(sel.rt*100).toFixed(0)+'%':'-'} ${sel.pay?'(손익 '+(sel.gap>=0?'+':'')+exF(sel.gap)+')':''}</td></tr>
+  </tbody></table>`;
+
+  // ── □ 프로젝트 수행 성과 ──
+  h+='<div class="rpt-h">프로젝트 수행 성과</div>';
+  h+='<table class="rpt-tbl"><thead><tr><th style="width:110px">구분</th><th>주요 내용(성과)</th></tr></thead><tbody>';
+  fb.perf.forEach((p,i)=>{
+    h+=`<tr><th>${p.cat}</th><td><textarea class="rpt-ta" rows="2" placeholder="수행 성과를 기술하세요" onchange="exUpdPerf('${esc(sel.nm)}',${i},this.value)">${p.content||''}</textarea></td></tr>`;
+  });
+  h+=`</tbody></table>
+    <div style="text-align:right;margin-top:4px"><button onclick="exAddPerf('${esc(sel.nm)}')" style="padding:4px 12px;background:transparent;border:1px dashed var(--border-main);border-radius:4px;font-size:12px;color:var(--text-tertiary);cursor:pointer;font-family:inherit">+ 성과 항목 추가</button></div>`;
+
+  // ── □ 주요 이슈 및 피드백(환류) ──
+  h+='<div class="rpt-h">주요 이슈 및 피드백(환류)</div>';
+  h+='<table class="rpt-tbl"><thead><tr><th style="width:100px">리스크항목</th><th>발생 문제 및 원인 분석</th><th>향후 대응 및 기준 수정 제안</th><th style="width:90px">비고사항</th></tr></thead><tbody>';
+  const riskCats=['과업범위','참여판단','인력/조직','기술/운영','재무/손익','행정/계약','대외/협력'];
+  fb.risks.forEach((r,i)=>{
+    h+=`<tr>
+      <td class="c"><select onchange="exUpdRisk('${esc(sel.nm)}',${i},'cat',this.value)" style="width:100%;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--sig);font-family:inherit;text-align:center;cursor:pointer">${riskCats.map(c=>`<option value="${c}" ${r.cat===c?'selected':''}>${c}</option>`).join('')}</select></td>
+      <td><textarea class="rpt-ta" rows="2" onchange="exUpdRisk('${esc(sel.nm)}',${i},'issue',this.value)" placeholder="발생한 문제와 원인">${r.issue||''}</textarea></td>
+      <td><textarea class="rpt-ta" rows="2" onchange="exUpdRisk('${esc(sel.nm)}',${i},'action',this.value)" placeholder="개선 방안, 기준 수정">${r.action||''}</textarea></td>
+      <td><textarea class="rpt-ta" rows="2" onchange="exUpdRisk('${esc(sel.nm)}',${i},'note',this.value)" placeholder="">${r.note||''}</textarea></td>
+    </tr>`;
+  });
+  h+=`</tbody></table>
+    <div style="text-align:right;margin-top:4px"><button onclick="exAddRisk('${esc(sel.nm)}')" style="padding:4px 12px;background:transparent;border:1px dashed var(--border-main);border-radius:4px;font-size:12px;color:var(--text-tertiary);cursor:pointer;font-family:inherit">+ 리스크 항목 추가</button>
+    ${fb.risks.length>1?`<button onclick="exRmRisk('${esc(sel.nm)}',${fb.risks.length-1})" style="padding:4px 12px;background:transparent;border:1px dashed rgba(240,68,82,.3);border-radius:4px;font-size:12px;color:var(--kpi-red);cursor:pointer;font-family:inherit;margin-left:4px">마지막 행 삭제</button>`:''}</div>`;
+
+  // ── □ 실행사유 및 개선대책 (적자/미입금) ──
+  if(sel.gap<0||!sel.pay||fb.reason||fb.plan){
+    h+='<div class="rpt-h">실행사유 및 개선대책</div>';
+    h+=`<table class="rpt-tbl"><tbody>
+      <tr><th>실행사유</th><td><textarea class="rpt-ta" rows="2" placeholder="원가 초과·적자 발생 원인" onchange="exSaveFb('${esc(sel.nm)}','reason',this.value)">${fb.reason||''}</textarea></td></tr>
+      <tr><th>개선대책</th><td><textarea class="rpt-ta" rows="2" placeholder="향후 대응 방안" onchange="exSaveFb('${esc(sel.nm)}','plan',this.value)">${fb.plan||''}</textarea></td></tr>
+    </tbody></table>`;
+  }
+
+  // ── □ 전략기획팀 검토 의견 ──
+  h+='<div class="rpt-h">전략기획팀 검토 의견</div>';
+  h+=`<table class="rpt-tbl"><tbody>
+    <tr><th>검토의견</th><td><textarea class="rpt-ta" rows="4" placeholder="차기 유사 사업 수주 시 반영할 사항, 리스크 검토 강화 제언 등" onchange="exSaveFb('${esc(sel.nm)}','review',this.value)">${fb.review||''}</textarea></td></tr>
+  </tbody></table>`;
+
+  h+='</div>'; // rpt-page end
   document.getElementById('exAnTabFeedback').innerHTML=h;
+}
+
+// PDF 인쇄
+function exPrintReport(){window.print()}
+
+// 수행성과 CRUD
+function exAddPerf(proj){
+  if(!EX_FEEDBACK[proj])EX_FEEDBACK[proj]={reason:'',plan:'',risks:[],review:'',perf:[]};
+  if(!EX_FEEDBACK[proj].perf)EX_FEEDBACK[proj].perf=[];
+  EX_FEEDBACK[proj].perf.push({cat:'기타',content:''});
+  exRenderFeedback();
+}
+function exUpdPerf(proj,idx,val){
+  if(!EX_FEEDBACK[proj])return;
+  if(EX_FEEDBACK[proj].perf&&EX_FEEDBACK[proj].perf[idx])EX_FEEDBACK[proj].perf[idx].content=val;
 }
 
 // 리스크 항목 CRUD
