@@ -6618,6 +6618,21 @@ async function exAnFetchGS(){
       console.log('📊 인력직급:', Object.keys(EX_STAFF_GRADE).length+'명');
     }catch(e){console.warn('인력직급 시트 없음:',e);EX_STAFF_GRADE={}}
     
+    // 6. 수행환류 시트 fetch (과업별 피드백 데이터)
+    try{
+      const r5=await fetch(url+encodeURIComponent('수행환류'));
+      const t5=await r5.text();const j5=JSON.parse(t5.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+      EX_FEEDBACK={};
+      j5.table.rows.forEach(row=>{
+        if(!row.c)return;
+        const nm=row.c&&row.c[0]?String(row.c[0].v||'').trim():'';
+        if(!nm||nm.startsWith('■')||nm.startsWith('※')||nm==='과업명')return;
+        const jsonStr=row.c[1]?String(row.c[1].v||''):'';
+        if(jsonStr){try{EX_FEEDBACK[nm]=JSON.parse(jsonStr);console.log('📊 수행환류 로드:',nm)}catch(pe){console.warn('수행환류 JSON 파싱 실패:',nm,pe)}}
+      });
+      console.log('📊 수행환류:', Object.keys(EX_FEEDBACK).length+'개 과업');
+    }catch(e){console.warn('수행환류 시트 없음 (정상):',e);if(!Object.keys(EX_FEEDBACK).length)EX_FEEDBACK={}}
+    
     EX_LOADED=true;
     document.getElementById('exAnGuide').style.display='none';
     document.getElementById('exAnMain').style.display='block';
@@ -6923,8 +6938,8 @@ async function exSaveFeedbackGAS(proj){
   const fb=EX_FEEDBACK[proj];if(!fb){showToast('⚠️ 저장할 내용이 없습니다');return}
   showToast('⏳ 수행환류 저장 중...');
   try{
-    const payload=JSON.stringify({project:proj,reason:fb.reason||'',plan:fb.plan||'',risks:fb.risks||[],review:fb.review||''});
-    const url=GAS_WEB_URL+'?action=saveFeedback&data='+encodeURIComponent(payload)+'&_='+Date.now();
+    const payload=JSON.stringify(fb);
+    const url=GAS_WEB_URL+'?action=saveFeedback&project='+encodeURIComponent(proj)+'&data='+encodeURIComponent(payload)+'&_='+Date.now();
     await fetch(url,{mode:'no-cors',redirect:'follow'});
     showToast('✅ 수행환류 저장 완료');
   }catch(e){console.error('수행환류 저장 실패:',e);showToast('⚠️ 저장 실패')}
