@@ -6773,8 +6773,21 @@ function exRenderProject(){
       <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">실행률</div><div class="kpi-num" style="font-size:26px;color:${sel.rt>=1?'var(--kpi-green)':sel.pay?'var(--kpi-red)':'var(--text-muted)'}">${sel.pay?(sel.rt*100).toFixed(0)+'<span>%</span>':'-'}</div></div></div>`;
     // 인력 테이블 + 기타경비 통합
     h+='<div class="sc-section"><div class="sc-section-title">인력별 투입</div><table class="sc-tbl"><thead><tr><th style="text-align:left">인력</th><th>팀</th><th>직급</th><th>기간</th><th>시간</th><th>인건비</th><th>비중</th></tr></thead><tbody>';
-    sel.rw.sort((a,b)=>b.h-a.h).forEach(r=>{const pct=sel.h>0?(r.h/sel.h*100).toFixed(0):0;
-      h+=`<tr><td class="name">${r.nm}</td><td style="font-size:13px">${r.tm}</td><td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td><td style="font-size:13px;color:var(--text-secondary)">${r.pd||'-'}</td><td style="font-weight:700">${r.h}h</td><td class="r">${exN(Math.round(r.tot))}</td><td><div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:var(--bg-thead);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--sig)"></div></div><span style="font-size:11px;color:var(--text-tertiary)">${pct}%</span></div></td></tr>`});
+    // 이름순 정렬 후 동일인 rowspan 병합
+    const sorted=sel.rw.sort((a,b)=>a.nm===b.nm?b.h-a.h:b.h-a.h);
+    // 이름별 행 수 카운트
+    const nameCount={};sorted.forEach(r=>{nameCount[r.nm]=(nameCount[r.nm]||0)+1});
+    const nameUsed={};
+    sorted.sort((a,b)=>{
+      const totalA=sorted.filter(x=>x.nm===a.nm).reduce((s,x)=>s+x.h,0);
+      const totalB=sorted.filter(x=>x.nm===b.nm).reduce((s,x)=>s+x.h,0);
+      if(totalA!==totalB)return totalB-totalA;
+      if(a.nm!==b.nm)return a.nm.localeCompare(b.nm,'ko');
+      return(a.pd||'').localeCompare(b.pd||'');
+    });
+    sorted.forEach(r=>{const pct=sel.h>0?(r.h/sel.h*100).toFixed(0):0;
+      const isFirst=!nameUsed[r.nm];const span=nameCount[r.nm];nameUsed[r.nm]=true;
+      h+=`<tr>${isFirst?`<td class="name" ${span>1?`rowspan="${span}" style="vertical-align:middle"`:''}>${r.nm}</td><td style="font-size:13px${span>1?';vertical-align:middle':''}" ${span>1?`rowspan="${span}"`:''}>${r.tm}</td>`:''}<td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td><td style="font-size:13px;color:var(--text-secondary)">${r.pd||'-'}</td><td style="font-weight:700">${r.h}h</td><td class="r">${exN(Math.round(r.tot))}</td><td><div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:var(--bg-thead);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--sig)"></div></div><span style="font-size:11px;color:var(--text-tertiary)">${pct}%</span></div></td></tr>`});
     h+='</tbody><tfoot>';
     h+=`<tr><td colspan="4" style="text-align:left;font-weight:700">인건비 소계</td><td style="font-weight:800">${sel.h.toLocaleString()}h</td><td class="r" style="font-weight:800">${exN(Math.round(sel.tot))}</td><td></td></tr>`;
     if(sel.misc){
