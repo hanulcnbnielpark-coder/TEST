@@ -6681,24 +6681,22 @@ function exGetData(){
     console.log('📊 매칭된 과업:', matchedProjects);
   }
   
-  // 2단계: 과업+인력별 집계
+  // 2단계: 과업+인력+직급별 집계 (승진 시 별도 행)
   const agg={};
   filtered.forEach(r=>{
-    // 종료과업 목록 기준으로 과업명 통일
     let pName=r.project;
     for(const cp of EX_CLOSED_PROJECTS){
       const a=exNorm(r.project),b=exNorm(cp);
       if(a.includes(b)||b.includes(a)){pName=cp;break}
     }
-    const key=pName+'|'+r.worker;
-    if(!agg[key])agg[key]={p:pName,nm:r.worker,g:'주임',tm:r.team||'',h:0,tot:0,md:0,vs:0,at:0,dc:0,pw:0,cm:0,months:new Set(),years:new Set()};
+    let rowYear=2025;
+    if(r.date){const d=new Date(r.date);if(!isNaN(d))rowYear=d.getFullYear()}
+    const rowGrade=exGetGrade(r.worker,rowYear);
+    const key=pName+'|'+r.worker+'|'+rowGrade;
+    if(!agg[key])agg[key]={p:pName,nm:r.worker,g:rowGrade,tm:r.team||'',h:0,tot:0,md:0,vs:0,at:0,dc:0,pw:0,cm:0,months:new Set(),years:new Set()};
     const a=agg[key];
     const hrs=r.hours||0;
     a.h+=hrs;
-    // 각 행의 날짜→연도→직급→단가로 투입비 산정
-    let rowYear=2025;
-    if(r.date){const d=new Date(r.date);if(!isNaN(d)){rowYear=d.getFullYear();a.months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));a.years.add(d.getFullYear())}}
-    const rowGrade=exGetGrade(r.worker,rowYear);
     const rowRate=EX_GRADE_COST[rowGrade]||18299;
     a.tot+=hrs*rowRate*2.75;
     a.md+=r.mo_hrs||0; a.vs+=r.vi_hrs||0; a.at+=r.au_hrs||0;
@@ -6706,12 +6704,8 @@ function exGetData(){
     if(r.date){const d=new Date(r.date);if(!isNaN(d)){a.months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));a.years.add(d.getFullYear())}}
   });
   
-  // 3단계: 직급 매핑 + 투입비 계산 + 투입기간 생성
-  // 각 행의 날짜→연도→해당 연도 직급→단가 적용 (연도별 정확 산정)
+  // 3단계: 투입기간 생성 (직급+투입비는 2단계에서 이미 정확 산정)
   return Object.values(agg).map(r=>{
-    const years=r.years?[...r.years].sort():[];
-    const refYear=years.length?years[years.length-1]:2025;
-    r.g=exGetGrade(r.nm, refYear); // 표시용 직급 (최신)
     const months=r.months?[...r.months].sort():[];
     const pd=months.length>1?months[0].replace('-','.')+'~'+months[months.length-1].replace('-','.'):months.length===1?months[0].replace('-','.'):'';
     return{...r, pd, months:undefined, years:undefined};
@@ -6766,14 +6760,14 @@ function exRenderProject(){
   let h='<div style="display:grid;grid-template-columns:340px 1fr;gap:14px;align-items:start">';
   h+='<div class="sc-section" style="padding:14px;position:sticky;top:112px"><div style="font-size:14px;font-weight:700;margin-bottom:8px">과업 목록</div><div class="list-panel" style="max-height:calc(100vh - 180px);overflow-y:auto;display:flex;flex-direction:column;gap:4px">';
   P.forEach(p=>{const on=EX_SP===p.nm;const rs=p.pay?(p.rt*100).toFixed(0)+'%':'미입금';const rc=p.rt>=1?'var(--kpi-green)':p.pay?'var(--kpi-red)':'var(--text-muted)';
-    h+=`<div class="list-item ${on?'active':''}" onclick="EX_SP='${p.nm.replace(/'/g,"\\'")}';exRenderProject()"><div style="display:flex;justify-content:space-between;align-items:center"><div class="li-name" title="${p.nm}">${p.nm.length>22?p.nm.slice(0,22)+'…':p.nm}</div><div style="font-size:15px;font-weight:800;color:${rc}">${rs}</div></div><div class="li-meta">${p.rw.length}명 · ${p.h}h · ${exF(p.totalCost)}</div></div>`});
+    h+=`<div class="list-item ${on?'active':''}" onclick="EX_SP='${p.nm.replace(/'/g,"\\'")}';exRenderProject()"><div style="display:flex;justify-content:space-between;align-items:center"><div class="li-name" title="${p.nm}">${p.nm.length>22?p.nm.slice(0,22)+'…':p.nm}</div><div style="font-size:15px;font-weight:800;color:${rc}">${rs}</div></div><div class="li-meta">${new Set(p.rw.map(r=>r.nm)).size}명 · ${p.h}h · ${exF(p.totalCost)}</div></div>`});
   h+='</div></div><div>';
   const sel=P.find(p=>p.nm===EX_SP);
   if(sel){
     // KPI: 인건비 | 기타경비(있으면) | 기성금 | 실행률
     const kpiCols=sel.misc?4:3;
     h+=`<div style="display:grid;grid-template-columns:repeat(${kpiCols},1fr);gap:12px;margin-bottom:14px">
-      <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">인건비</div><div class="kpi-num" style="font-size:26px">${exF(sel.tot)}</div><div class="kpi-sub">${sel.rw.length}명 · ${sel.h}h</div></div>
+      <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">인건비</div><div class="kpi-num" style="font-size:26px">${exF(sel.tot)}</div><div class="kpi-sub">${new Set(sel.rw.map(r=>r.nm)).size}명 · ${sel.h}h</div></div>
       ${sel.misc?`<div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">기타경비</div><div class="kpi-num" style="font-size:26px;color:var(--kpi-amber)">${exF(sel.misc)}</div><div class="kpi-sub">원가 합계 ${exF(sel.totalCost)}</div></div>`:''}
       <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">기성금</div><div class="kpi-num" style="font-size:26px;color:${sel.pay?'var(--sig)':'var(--text-muted)'}">${sel.pay?exF(sel.pay):'미입금'}</div><div class="kpi-sub">${sel.pay?'손익 '+(sel.gap>=0?'+':'')+exF(sel.gap):''}</div></div>
       <div class="kpi" style="padding:18px 20px"><div class="kpi-label" style="font-size:13px">실행률</div><div class="kpi-num" style="font-size:26px;color:${sel.rt>=1?'var(--kpi-green)':sel.pay?'var(--kpi-red)':'var(--text-muted)'}">${sel.pay?(sel.rt*100).toFixed(0)+'<span>%</span>':'-'}</div></div></div>`;
@@ -6801,30 +6795,13 @@ function exRenderProject(){
     } else {
       h+='<div class="sc-section" style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px">기성금 내역 없음 — <span onclick="exOpenPay(EX_SP)" style="color:var(--sig);cursor:pointer;font-weight:600">기성금 추가</span></div>';
     }
-    // ── 실행사유 및 개선대책 (적자 또는 미입금인 경우) ──
-    const fb=EX_FEEDBACK[sel.nm]||{reason:'',plan:''};
-    const isDeficit=sel.gap<0||!sel.pay;
-    h+=`<div class="sc-section" style="border:1px solid ${isDeficit?'rgba(240,68,82,.2)':'var(--border-light)'};${isDeficit?'background:rgba(240,68,82,.02)':''}">
-      <div class="sc-section-title" style="display:flex;align-items:center;gap:8px">실행사유 및 개선대책${isDeficit?`<span style="font-size:11px;font-weight:600;color:var(--kpi-red);background:var(--card-red-bg);padding:2px 8px;border-radius:4px">${sel.pay?'적자 '+exF(Math.abs(sel.gap)):'미입금'}</span>`:''}</div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px">실행사유 <span style="font-weight:400;color:var(--text-muted)">(원가 초과·적자 발생 원인)</span></label>
-        <textarea id="exFbReason" rows="3" placeholder="예: 발주처 추가 요구로 모델링 범위 확대, 인력 추가 투입 불가피" style="width:100%;padding:10px 14px;border:1px solid var(--border-main);border-radius:10px;font-size:14px;color:var(--text-primary);background:var(--bg-input);font-family:inherit;resize:vertical;line-height:1.6" onchange="exSaveFb('${sel.nm.replace(/'/g,"\\'")}','reason',this.value)">${fb.reason||''}</textarea>
-      </div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px">개선대책 <span style="font-weight:400;color:var(--text-muted)">(향후 대응 방안)</span></label>
-        <textarea id="exFbPlan" rows="3" placeholder="예: 계약 시 산출물 목록 표 형태 명시, LOD 기준 사전 확정" style="width:100%;padding:10px 14px;border:1px solid var(--border-main);border-radius:10px;font-size:14px;color:var(--text-primary);background:var(--bg-input);font-family:inherit;resize:vertical;line-height:1.6" onchange="exSaveFb('${sel.nm.replace(/'/g,"\\'")}','plan',this.value)">${fb.plan||''}</textarea>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button onclick="exAnTab('feedback',document.querySelectorAll('#subNavExecAn .nav-tab')[1])" style="padding:8px 16px;background:var(--bg-thead);border:1px solid var(--border-main);border-radius:8px;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;font-family:inherit">수행환류 보고서 →</button>
-      </div>
-    </div>`;
   } else h+='<div class="sc-section" style="text-align:center;padding:50px;color:var(--text-muted)">과업을 선택하세요</div>';
   h+='</div></div>';
   document.getElementById('exAnTabProject').innerHTML=h;
 }
 // 실행사유/개선대책 저장 (메모리)
 function exSaveFb(proj,key,val){
-  if(!EX_FEEDBACK[proj])EX_FEEDBACK[proj]={reason:'',plan:'',risks:[],review:''};
+  if(!EX_FEEDBACK[proj])EX_FEEDBACK[proj]={reason:'',plan:''};
   EX_FEEDBACK[proj][key]=val;
 }
 
@@ -6833,10 +6810,8 @@ function exRenderFeedback(){
   const P=exGetProjects().sort((a,b)=>b.totalCost-a.totalCost);
   if(!EX_SP&&P.length)EX_SP=P[0].nm;
   const sel=P.find(p=>p.nm===EX_SP);
-  if(!EX_FEEDBACK[EX_SP])EX_FEEDBACK[EX_SP]={reason:'',plan:'',risks:[],review:'',perf:[{cat:'리스크관리',content:''},{cat:'표준화적용',content:''}]};
+  if(!EX_FEEDBACK[EX_SP])EX_FEEDBACK[EX_SP]={reason:'',plan:''};
   const fb=EX_FEEDBACK[EX_SP];
-  if(!fb.risks||!fb.risks.length)fb.risks=[{cat:'과업범위',issue:'',action:'',note:''}];
-  if(!fb.perf)fb.perf=[{cat:'리스크관리',content:''},{cat:'표준화적용',content:''}];
   const esc=s=>s.replace(/'/g,"\\'");
 
   // 과업 선택 + 버튼
@@ -6874,48 +6849,15 @@ function exRenderFeedback(){
   h+=`<table class="rpt-tbl"><colgroup><col style="width:80px"><col><col style="width:80px"><col></colgroup><tbody>
     <tr><th>사업명</th><td colspan="3" style="font-weight:700">${sel.nm}</td></tr>
     <tr><th>수행기간</th><td>${period}</td><th>수행부서</th><td>${mainW?mainW.tm+' '+mainW.nm+' '+mainW.g:'-'}</td></tr>
-    <tr><th>인건비</th><td>${exF(sel.tot)} (${sel.rw.length}명, ${sel.h}h)</td><th>기타경비</th><td>${sel.misc?exF(sel.misc):'-'}</td></tr>
+    <tr><th>인건비</th><td>${exF(sel.tot)} (${new Set(sel.rw.map(r=>r.nm)).size}명, ${sel.h}h)</td><th>기타경비</th><td>${sel.misc?exF(sel.misc):'-'}</td></tr>
     <tr><th>기성금</th><td style="color:${sel.pay?'':'var(--text-muted)'}">${sel.pay?exF(sel.pay):'미입금'}</td><th>실행률</th><td style="font-weight:700;color:${sel.rt>=1?'var(--kpi-green)':sel.pay?'var(--kpi-red)':'var(--text-muted)'}">${sel.pay?(sel.rt*100).toFixed(0)+'%':'-'} ${sel.pay?'(손익 '+(sel.gap>=0?'+':'')+exF(sel.gap)+')':''}</td></tr>
   </tbody></table>`;
 
-  // ── □ 프로젝트 수행 성과 ──
-  h+='<div class="rpt-h">프로젝트 수행 성과</div>';
-  h+='<table class="rpt-tbl"><colgroup><col style="width:100px"><col></colgroup><thead><tr><th>구분</th><th>주요 내용(성과)</th></tr></thead><tbody>';
-  fb.perf.forEach((p,i)=>{
-    h+=`<tr><th>${p.cat}</th><td><textarea class="rpt-ta" rows="2" placeholder="수행 성과를 기술하세요" onchange="exUpdPerf('${esc(sel.nm)}',${i},this.value)">${p.content||''}</textarea></td></tr>`;
-  });
-  h+=`</tbody></table>
-    <div style="text-align:right;margin-top:4px"><button onclick="exAddPerf('${esc(sel.nm)}')" style="padding:4px 12px;background:transparent;border:1px dashed var(--border-main);border-radius:4px;font-size:12px;color:var(--text-tertiary);cursor:pointer;font-family:inherit">+ 성과 항목 추가</button></div>`;
-
-  // ── □ 주요 이슈 및 피드백(환류) ──
-  h+='<div class="rpt-h">주요 이슈 및 피드백(환류)</div>';
-  h+='<table class="rpt-tbl"><colgroup><col style="width:110px"><col><col><col style="width:80px"></colgroup><thead><tr><th>리스크항목</th><th>발생 문제 및 원인 분석</th><th>향후 대응 및 기준 수정 제안</th><th>비고사항</th></tr></thead><tbody>';
-  const riskCats=['과업범위','참여판단','인력/조직','기술/운영','재무/손익','행정/계약','대외/협력'];
-  fb.risks.forEach((r,i)=>{
-    h+=`<tr>
-      <td class="c"><select onchange="exUpdRisk('${esc(sel.nm)}',${i},'cat',this.value)" style="width:100%;border:none;background:transparent;font-size:13px;font-weight:700;color:#333;font-family:inherit;text-align:center;cursor:pointer;padding:4px 0">${riskCats.map(c=>`<option value="${c}" ${r.cat===c?'selected':''}>${c}</option>`).join('')}</select></td>
-      <td><textarea class="rpt-ta" rows="2" onchange="exUpdRisk('${esc(sel.nm)}',${i},'issue',this.value)" placeholder="발생한 문제와 원인">${r.issue||''}</textarea></td>
-      <td><textarea class="rpt-ta" rows="2" onchange="exUpdRisk('${esc(sel.nm)}',${i},'action',this.value)" placeholder="개선 방안, 기준 수정">${r.action||''}</textarea></td>
-      <td><textarea class="rpt-ta" rows="2" onchange="exUpdRisk('${esc(sel.nm)}',${i},'note',this.value)" placeholder="">${r.note||''}</textarea></td>
-    </tr>`;
-  });
-  h+=`</tbody></table>
-    <div style="text-align:right;margin-top:4px"><button onclick="exAddRisk('${esc(sel.nm)}')" style="padding:4px 12px;background:transparent;border:1px dashed var(--border-main);border-radius:4px;font-size:12px;color:var(--text-tertiary);cursor:pointer;font-family:inherit">+ 리스크 항목 추가</button>
-    ${fb.risks.length>1?`<button onclick="exRmRisk('${esc(sel.nm)}',${fb.risks.length-1})" style="padding:4px 12px;background:transparent;border:1px dashed rgba(240,68,82,.3);border-radius:4px;font-size:12px;color:var(--kpi-red);cursor:pointer;font-family:inherit;margin-left:4px">마지막 행 삭제</button>`:''}</div>`;
-
-  // ── □ 실행사유 및 개선대책 (적자/미입금) ──
-  if(sel.gap<0||!sel.pay||fb.reason||fb.plan){
-    h+='<div class="rpt-h">실행사유 및 개선대책</div>';
-    h+=`<table class="rpt-tbl"><colgroup><col style="width:90px"><col></colgroup><tbody>
-      <tr><th>실행사유</th><td><textarea class="rpt-ta" rows="2" placeholder="원가 초과·적자 발생 원인" onchange="exSaveFb('${esc(sel.nm)}','reason',this.value)">${fb.reason||''}</textarea></td></tr>
-      <tr><th>개선대책</th><td><textarea class="rpt-ta" rows="2" placeholder="향후 대응 방안" onchange="exSaveFb('${esc(sel.nm)}','plan',this.value)">${fb.plan||''}</textarea></td></tr>
-    </tbody></table>`;
-  }
-
-  // ── □ 전략기획팀 검토 의견 ──
-  h+='<div class="rpt-h">전략기획팀 검토 의견</div>';
+  // ── □ 문제점 및 개선대책 ──
+  h+='<div class="rpt-h">문제점 및 개선대책</div>';
   h+=`<table class="rpt-tbl"><colgroup><col style="width:90px"><col></colgroup><tbody>
-    <tr><th>검토의견</th><td><textarea class="rpt-ta" rows="4" placeholder="차기 유사 사업 수주 시 반영할 사항, 리스크 검토 강화 제언 등" onchange="exSaveFb('${esc(sel.nm)}','review',this.value)">${fb.review||''}</textarea></td></tr>
+    <tr><th>문제점</th><td><textarea class="rpt-ta" rows="5" placeholder="과업 수행 중 발생한 문제점, 원가 초과·적자 발생 원인, 리스크 요인 등을 구체적으로 기술" onchange="exSaveFb('${esc(sel.nm)}','reason',this.value)">${fb.reason||''}</textarea></td></tr>
+    <tr><th>개선대책</th><td><textarea class="rpt-ta" rows="5" placeholder="향후 대응 방안, 기준 수정 사항, 유사 사업 수주 시 반영할 내용 등을 기술" onchange="exSaveFb('${esc(sel.nm)}','plan',this.value)">${fb.plan||''}</textarea></td></tr>
   </tbody></table>`;
 
   h+='</div>'; // rpt-page end
@@ -6926,31 +6868,13 @@ function exRenderFeedback(){
 function exPrintReport(){window.print()}
 
 // 수행성과 CRUD
-function exAddPerf(proj){
-  if(!EX_FEEDBACK[proj])EX_FEEDBACK[proj]={reason:'',plan:'',risks:[],review:'',perf:[]};
-  if(!EX_FEEDBACK[proj].perf)EX_FEEDBACK[proj].perf=[];
-  EX_FEEDBACK[proj].perf.push({cat:'기타',content:''});
-  exRenderFeedback();
-}
-function exUpdPerf(proj,idx,val){
-  if(!EX_FEEDBACK[proj])return;
-  if(EX_FEEDBACK[proj].perf&&EX_FEEDBACK[proj].perf[idx])EX_FEEDBACK[proj].perf[idx].content=val;
-}
+
+
 
 // 리스크 항목 CRUD
-function exAddRisk(proj){
-  if(!EX_FEEDBACK[proj])EX_FEEDBACK[proj]={reason:'',plan:'',risks:[],review:''};
-  EX_FEEDBACK[proj].risks.push({cat:'과업범위',issue:'',action:'',note:''});
-  exRenderFeedback();
-}
-function exRmRisk(proj,idx){
-  if(EX_FEEDBACK[proj]&&EX_FEEDBACK[proj].risks){EX_FEEDBACK[proj].risks.splice(idx,1);if(!EX_FEEDBACK[proj].risks.length)EX_FEEDBACK[proj].risks=[{cat:'과업범위',issue:'',action:'',note:''}]}
-  exRenderFeedback();
-}
-function exUpdRisk(proj,idx,key,val){
-  if(!EX_FEEDBACK[proj])EX_FEEDBACK[proj]={reason:'',plan:'',risks:[{cat:'과업범위',issue:'',action:'',note:''}],review:''};
-  if(EX_FEEDBACK[proj].risks[idx])EX_FEEDBACK[proj].risks[idx][key]=val;
-}
+
+
+
 
 // GAS write-back: 수행환류 저장
 async function exSaveFeedbackGAS(proj){
