@@ -6691,24 +6691,30 @@ function exGetData(){
       if(a.includes(b)||b.includes(a)){pName=cp;break}
     }
     const key=pName+'|'+r.worker;
-    if(!agg[key])agg[key]={p:pName,nm:r.worker,g:'주임',tm:r.team||'',h:0,md:0,vs:0,at:0,dc:0,pw:0,cm:0,months:new Set(),years:new Set()};
+    if(!agg[key])agg[key]={p:pName,nm:r.worker,g:'주임',tm:r.team||'',h:0,tot:0,md:0,vs:0,at:0,dc:0,pw:0,cm:0,months:new Set(),years:new Set()};
     const a=agg[key];
-    a.h+=r.hours||0;
+    const hrs=r.hours||0;
+    a.h+=hrs;
+    // 각 행의 날짜→연도→직급→단가로 투입비 산정
+    let rowYear=2025;
+    if(r.date){const d=new Date(r.date);if(!isNaN(d)){rowYear=d.getFullYear();a.months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));a.years.add(d.getFullYear())}}
+    const rowGrade=exGetGrade(r.worker,rowYear);
+    const rowRate=EX_GRADE_COST[rowGrade]||18299;
+    a.tot+=hrs*rowRate*2.75;
     a.md+=r.mo_hrs||0; a.vs+=r.vi_hrs||0; a.at+=r.au_hrs||0;
     a.dc+=r.doc_hrs||0; a.pw+=r.pw_hrs||0; a.cm+=r.co_hrs||0;
     if(r.date){const d=new Date(r.date);if(!isNaN(d)){a.months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));a.years.add(d.getFullYear())}}
   });
   
   // 3단계: 직급 매핑 + 투입비 계산 + 투입기간 생성
+  // 각 행의 날짜→연도→해당 연도 직급→단가 적용 (연도별 정확 산정)
   return Object.values(agg).map(r=>{
-    // 연도별 직급 매핑: 투입 연도 중 가장 최근 연도 기준
     const years=r.years?[...r.years].sort():[];
     const refYear=years.length?years[years.length-1]:2025;
-    r.g=exGetGrade(r.nm, refYear);
-    const rate=EX_GRADE_COST[r.g]||18299;
+    r.g=exGetGrade(r.nm, refYear); // 표시용 직급 (최신)
     const months=r.months?[...r.months].sort():[];
     const pd=months.length>1?months[0].replace('-','.')+'~'+months[months.length-1].replace('-','.'):months.length===1?months[0].replace('-','.'):'';
-    return{...r, tot:r.h*rate*2.75, pd, months:undefined, years:undefined};
+    return{...r, pd, months:undefined, years:undefined};
   });
 }
 
