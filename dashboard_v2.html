@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <title>(주)한울씨앤비 · KPI Workspace</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -217,6 +217,10 @@ tailwind.config = {
   .person-layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;min-height:520px}
   @media(max-width:1280px){.info-cards-row{grid-template-columns:repeat(2,1fr)}.chart-row{grid-template-columns:1fr}.detail-stat-row{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:1024px){.person-layout{grid-template-columns:1fr}}
+  /* ── Form overrides (ensure compact size) ── */
+  select.form-select,input.form-input,.form-select,.form-input{height:36px!important;padding:0 12px!important;font-size:14px!important;border-radius:8px!important;border:1px solid rgba(115,119,132,.24)!important;background-color:#fff!important}
+  select.form-select{padding-right:28px!important}
+  textarea.form-input{height:auto!important;padding:8px 12px!important}
 </style>
 </head>
 <body class="bg-surface text-on-surface antialiased overflow-hidden">
@@ -226,7 +230,7 @@ tailwind.config = {
 <aside class="fixed left-0 top-0 h-full flex flex-col p-4 bg-slate-100 w-64 border-r-0 z-50" id="sidebar">
   <div class="flex items-center gap-3 px-2 mb-8 cursor-pointer" onclick="goView('overview')">
     <div class="w-10 h-10 sapphire-gradient rounded-xl flex items-center justify-center text-white shadow-lg">
-      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">architecture</span>
+      <img src="data:image/png;base64,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" style="width:24px;height:24px;" alt="logo">
     </div>
     <div>
       <h1 class="font-black text-blue-900 leading-tight text-sm">KPI Workspace</h1>
