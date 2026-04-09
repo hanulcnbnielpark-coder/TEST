@@ -472,8 +472,8 @@ tailwind.config = {
 
 <!-- ═══ Login ═══ -->
 <div id="loginOverlay" style="position:fixed;inset:0;z-index:9999;display:flex;opacity:1;transition:opacity .4s;">
-  <div style="flex:1;position:relative;overflow:hidden;background:linear-gradient(135deg,#001a42 0%,#00327d 50%,#0047ab 100%);">
-    <div style="position:absolute;inset:0;opacity:.08;background-image:radial-gradient(circle at 20% 50%,rgba(255,255,255,.15) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(255,255,255,.1) 0%,transparent 40%);"></div>
+  <div style="flex:1;position:relative;overflow:hidden;background:#0a1628;">
+    <video autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.85;"><source src="login-bg.mp4" type="video/mp4"></video><div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,26,66,0.45),rgba(0,50,125,0.35));"></div>
     <div style="position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:center;padding:60px;">
       <div class="sapphire-gradient" style="width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(0,0,0,.3);margin-bottom:32px;border:1px solid rgba(255,255,255,.1);">
         <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;font-size:32px;color:#fff;">architecture</span>
@@ -500,7 +500,6 @@ tailwind.config = {
 <div class="toast-area" id="toastArea"></div>
 
 <script>
-  <script>
     // ═══════════════════════════════════════════
     // KPI Workspace — Full Feature Set
     const APP_VER = 'v3.5.0';
@@ -2352,6 +2351,5 @@ tailwind.config = {
     function toast(msg,type='info'){const c=document.getElementById('toastArea'),el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`<span class="material-symbols-outlined">${type==='success'?'check_circle':type==='error'?'cancel':'info'}</span>${msg}`;c.appendChild(el);setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),200);},2200);}
     function setCk(n,v,d){const e=new Date();e.setTime(e.getTime()+d*864e5);document.cookie=`${n}=${encodeURIComponent(v)};expires=${e.toUTCString()};path=/`;}
     function getCk(n){const v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return v?decodeURIComponent(v.pop()):'';}
-  </script>
 </script>
 </body></html>
