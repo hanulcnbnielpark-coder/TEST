@@ -7269,13 +7269,14 @@ function exGetData(){
     return{...r, pd, adjH, months:undefined, years:undefined};
   });
   // 수기 전용 인력 추가 (타임시트에 없는 인력)
+  console.log('📋 EX_MANUAL_ADJ keys:', Object.keys(EX_MANUAL_ADJ));
+  console.log('📋 EX_CLOSED_PROJECTS:', EX_CLOSED_PROJECTS);
   Object.entries(EX_MANUAL_ADJ).forEach(([key,adjs])=>{
     const[proj,worker]=key.split('|');
-    if(!proj||!worker)return;
-    // 이미 result에 있으면 스킵
-    if(result.find(r=>r.p===proj&&r.nm===worker))return;
-    // 해당 프로젝트가 종료과업인지 확인
-    if(!EX_CLOSED_PROJECTS.some(cp=>{const a=exNorm(proj),b=exNorm(cp);return a.includes(b)||b.includes(a)}))return;
+    if(!proj||!worker){console.log('⚠️ skip empty',key);return}
+    if(result.find(r=>r.p===proj&&r.nm===worker)){console.log('⚠️ skip exists',worker,proj);return}
+    const matched=EX_CLOSED_PROJECTS.some(cp=>{const a=exNorm(proj),b=exNorm(cp);return a.includes(b)||b.includes(a)});
+    if(!matched){console.log('⚠️ skip no match',proj,'closed:',EX_CLOSED_PROJECTS.map(c=>exNorm(c)));return}
     const totalH=adjs.reduce((s,a)=>s+a.hours,0);
     if(totalH<=0)return;
     const gr=adjs[0].grade||'';
