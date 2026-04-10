@@ -6947,6 +6947,12 @@ async function tsLoadAdj(){
     try{EX_MANUAL_ADJ=JSON.parse(localStorage.getItem('EX_MANUAL_ADJ')||'{}')}catch(x){}
   }
 }
+function tsFmtDate(v){
+  const s=String(v||'').trim();if(!s||s==='-')return'-';
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.substring(0,10);
+  const n=parseFloat(s);if(n>10000&&n<100000){const d=new Date((n-25569)*86400000);if(!isNaN(d))return d.toISOString().split('T')[0]}
+  return s;
+}
 function exShowTimesheetDetail(worker,proj,grade){
   const panel=document.getElementById('tsPanel');
   const overlay=document.getElementById('tsPanelOverlay');
@@ -6984,7 +6990,7 @@ function exShowTimesheetDetail(worker,proj,grade){
   if(adjs.length){
     h+=`<div style="font-size:12px;font-weight:700;color:var(--kpi-amber);margin-bottom:8px">수기 조정 (${adjs.length}건)</div>`;
     adjs.forEach((a,i)=>{
-      h+=`<div class="ts-adj"><div><div style="font-weight:600;font-size:13px">${a.desc||'수기 조정'}</div><div style="font-size:11px;color:var(--text-tertiary)">${a.date||'-'}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="hrs">+${a.hours}h</div><button onclick="tsDeleteAdj('${adjKey.replace(/'/g,"\\\\'")}',${i},'${worker.replace(/'/g,"\\\\'")}','${proj.replace(/'/g,"\\\\'")}','${grade}')" style="width:24px;height:24px;border-radius:6px;border:none;background:var(--bg-thead);color:var(--text-muted);cursor:pointer;font-size:12px">✕</button></div></div>`;
+      h+=`<div class="ts-adj"><div><div style="font-weight:600;font-size:13px">${a.desc||'수기 조정'}</div><div style="font-size:11px;color:var(--text-tertiary)">${tsFmtDate(a.date)}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="hrs">+${a.hours}h</div><button onclick="tsDeleteAdj('${adjKey.replace(/'/g,"\\\\'")}',${i},'${worker.replace(/'/g,"\\\\'")}','${proj.replace(/'/g,"\\\\'")}','${grade}')" style="width:24px;height:24px;border-radius:6px;border:none;background:var(--bg-thead);color:var(--text-muted);cursor:pointer;font-size:12px">✕</button></div></div>`;
     });
   }
   // 수기 추가 폼
