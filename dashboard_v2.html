@@ -3088,15 +3088,21 @@ async function scFetchTargetPlan(){
   if(!gsSheetId) return;
   const names=['연차수행수금계획','목표수금(CM포함)','목표수금','_목표수금(CM포함)','_목표수금'];
   for(const nm of names){
-    try{
-      const url=`https://docs.google.com/spreadsheets/d/${gsSheetId}/export?format=csv&sheet=${encodeURIComponent(nm)}&_=${Date.now()}`;
-      const r=await fetch(url);if(!r.ok)continue;
-      const t=await r.text();
-      if(t&&t.length>50&&!t.trim().startsWith('<')){
-        scParseTargetPlan(t);
-        return;
-      }
-    }catch(e){}
+    const urls=[
+      `https://docs.google.com/spreadsheets/d/${gsSheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(nm)}&_=${Date.now()}`,
+      `https://docs.google.com/spreadsheets/d/${gsSheetId}/export?format=csv&gid=0&sheet=${encodeURIComponent(nm)}&_=${Date.now()}`
+    ];
+    for(const url of urls){
+      try{
+        const r=await fetch(url);if(!r.ok)continue;
+        const t=await r.text();
+        if(t&&t.length>50&&t.includes(',')&&!t.trim().startsWith('<')){
+          scParseTargetPlan(t);
+          if(SC_TARGET_PLAN.length) showToast('📋 연차수행수금계획 '+SC_TARGET_PLAN.length+'건 로드');
+          return;
+        }
+      }catch(e){}
+    }
   }
 }
 
