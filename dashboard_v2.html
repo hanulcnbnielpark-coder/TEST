@@ -7280,7 +7280,7 @@ function exGetData(){
     const gr=adjs[0].grade||'';
     const tm=adjs[0].team||'';
     const rate=EX_GRADE_COST[gr]||18299;
-    result.push({p:proj,nm:worker,g:gr,tm:tm,h:totalH,tot:totalH*rate*2.75,pd:adjs[0].date||'',adjH:totalH,md:0,vs:0,at:0,dc:0,pw:0,cm:0,isManual:true});
+    result.push({p:proj,nm:worker,g:gr,tm:tm,h:totalH,tot:totalH*rate*2.75,pd:tsFmtDate(adjs[0].date)||'',adjH:totalH,md:0,vs:0,at:0,dc:0,pw:0,cm:0,isManual:true});
   });
   return result;
 }
