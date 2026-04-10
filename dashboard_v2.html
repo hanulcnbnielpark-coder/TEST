@@ -5123,7 +5123,7 @@ const EA_PC={Revit:'#3182F6',Civil3D:'#00C471',Fuzor:'#9B59B6',Dynamo:'#F59F00',
 function eaNav(t,el){document.querySelectorAll('#subNavExec .nav-tab').forEach(x=>x.classList.remove('active'));el.classList.add('active')}
 
 function eaInit(){
-  if(EA.length){document.getElementById('eaGuide').style.display='none';document.getElementById('eaMain').style.display='block';eaRender()}
+  if(EA.length){document.getElementById('eaGuide').style.display='none';document.getElementById('eaMain').style.display='block';tsLoadAdj().then(()=>eaRender()).catch(()=>eaRender())}
   else if(gsSheetId){
     document.getElementById('eaGuide').style.display='block';
     document.getElementById('eaGuide').innerHTML='<div style="text-align:center;padding:60px"><div style="font-size:32px;margin-bottom:12px">⏳</div><div style="color:#8B95A1;font-size:14px">타임시트 데이터 불러오는 중...</div></div>';
@@ -6918,10 +6918,34 @@ let EX_MISC_COST={}; // {과업명: 기타경비 금액}
 let EX_MISC_DESC={}; // {과업명: 기타경비 내역 설명}
 let EX_STAFF_GRADE={}; // {이름: 직급} 매핑
 let EX_FEEDBACK={}; // {과업명: {reason:'실행사유', plan:'개선대책', risk:[], review:''}}
-// ── 수기 시간 조정 (localStorage 기반) ──
-let EX_MANUAL_ADJ=JSON.parse(localStorage.getItem('EX_MANUAL_ADJ')||'{}'); // {"proj|worker": [{desc,hours,date}]}
+// ── 수기 시간 조정 (GAS + gviz 연동) ──
+let EX_MANUAL_ADJ={}; // {"proj|worker": [{desc,hours,date}]}
 function tsClosePanel(){document.getElementById('tsPanel').classList.remove('open');document.getElementById('tsPanelOverlay').classList.remove('open')}
-function tsSaveAdj(){localStorage.setItem('EX_MANUAL_ADJ',JSON.stringify(EX_MANUAL_ADJ))}
+function tsSaveAdjLocal(){localStorage.setItem('EX_MANUAL_ADJ',JSON.stringify(EX_MANUAL_ADJ))}
+// gviz에서 _수기조정 시트 로드
+async function tsLoadAdj(){
+  if(!gsSheetId)return;
+  try{
+    const url=`https://docs.google.com/spreadsheets/d/${gsSheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('_수기조정')}&_=${Date.now()}`;
+    const r=await fetch(url);if(!r.ok)return;
+    const t=await r.text();if(!t||t.length<10||t.trim().startsWith('<'))return;
+    const wb=XLSX.read(t,{type:'string'});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+    EX_MANUAL_ADJ={};
+    rows.forEach(r=>{
+      const proj=String(r['과업명']||'').trim();
+      const worker=String(r['인력명']||'').trim();
+      if(!proj&&!worker)return;
+      const key=proj+'|'+worker;
+      if(!EX_MANUAL_ADJ[key])EX_MANUAL_ADJ[key]=[];
+      EX_MANUAL_ADJ[key].push({hours:Number(r['시간'])||0,desc:String(r['사유']||''),date:String(r['날짜']||'')});
+    });
+    tsSaveAdjLocal();
+  }catch(e){
+    // fallback: localStorage
+    try{EX_MANUAL_ADJ=JSON.parse(localStorage.getItem('EX_MANUAL_ADJ')||'{}')}catch(x){}
+  }
+}
 function exShowTimesheetDetail(worker,proj,grade){
   const panel=document.getElementById('tsPanel');
   const overlay=document.getElementById('tsPanelOverlay');
@@ -6948,7 +6972,7 @@ function exShowTimesheetDetail(worker,proj,grade){
   // 타임시트 엔트리
   h+=`<div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px">타임시트 내역 (${entries.length}건)</div>`;
   if(entries.length){
-    h+='<div style="border:1px solid var(--border-light);border-radius:8px;overflow:hidden;margin-bottom:16px">';
+    h+='<div style="border:1px solid var(--border-light);border-radius:8px;overflow:hidden;margin-bottom:16px;max-height:300px;overflow-y:auto">';
     entries.forEach(r=>{
       const cats=Object.entries(r.cats||{}).filter(([,v])=>v.dh>0).map(([k,v])=>k+' '+v.dh+'h').join(', ');
       h+=`<div class="ts-entry"><div class="date">${r.date||'-'}</div><div style="flex:1;padding:0 8px"><span style="color:var(--text-primary)">${r.gubun||''}</span>${cats?' <span class="cat">'+cats+'</span>':''}</div><div class="hrs">${r.hours||0}h</div></div>`;
@@ -6959,7 +6983,7 @@ function exShowTimesheetDetail(worker,proj,grade){
   if(adjs.length){
     h+=`<div style="font-size:12px;font-weight:700;color:var(--kpi-amber);margin-bottom:8px">수기 조정 (${adjs.length}건)</div>`;
     adjs.forEach((a,i)=>{
-      h+=`<div class="ts-adj"><div><div style="font-weight:600;font-size:13px">${a.desc||'수기 조정'}</div><div style="font-size:11px;color:var(--text-tertiary)">${a.date||'-'}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="hrs">+${a.hours}h</div><button onclick="tsDeleteAdj('${adjKey.replace(/'/g,"\\\\'")}',${i})" style="width:24px;height:24px;border-radius:6px;border:none;background:var(--bg-thead);color:var(--text-muted);cursor:pointer;font-size:12px">✕</button></div></div>`;
+      h+=`<div class="ts-adj"><div><div style="font-weight:600;font-size:13px">${a.desc||'수기 조정'}</div><div style="font-size:11px;color:var(--text-tertiary)">${a.date||'-'}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="hrs">+${a.hours}h</div><button onclick="tsDeleteAdj('${adjKey.replace(/'/g,"\\\\'")}',${i},'${worker.replace(/'/g,"\\\\'")}','${proj.replace(/'/g,"\\\\'")}','${grade}')" style="width:24px;height:24px;border-radius:6px;border:none;background:var(--bg-thead);color:var(--text-muted);cursor:pointer;font-size:12px">✕</button></div></div>`;
     });
   }
   // 수기 추가 폼
@@ -6981,22 +7005,22 @@ function tsAddManualAdj(key,worker,proj,grade){
   const date=document.getElementById('tsAdjDate').value;
   if(!EX_MANUAL_ADJ[key])EX_MANUAL_ADJ[key]=[];
   EX_MANUAL_ADJ[key].push({hours:hrs,desc,date});
-  tsSaveAdj();
-  showToast('✅ +'+hrs+'h 추가됨');
-  exShowTimesheetDetail(worker,proj,grade);// refresh panel
-  // refresh 실행분석 if visible
+  tsSaveAdjLocal();
+  // GAS 저장
+  gasCall({action:'tsAdjSave',project:proj,worker:worker,hours:hrs,desc:desc,date:date});
+  showToast('✅ +'+hrs+'h 추가 (시트 저장됨)');
+  exShowTimesheetDetail(worker,proj,grade);
   if(document.getElementById('exAnTabProject')&&document.getElementById('exAnTabProject').innerHTML) exRenderProject();
 }
-function tsDeleteAdj(key,idx){
+function tsDeleteAdj(key,idx,worker,proj,grade){
   if(!EX_MANUAL_ADJ[key])return;
   EX_MANUAL_ADJ[key].splice(idx,1);
   if(!EX_MANUAL_ADJ[key].length)delete EX_MANUAL_ADJ[key];
-  tsSaveAdj();
+  tsSaveAdjLocal();
+  // GAS 삭제
+  gasCall({action:'tsAdjDelete',project:proj,worker:worker,idx:idx});
   showToast('🗑️ 삭제됨');
-  // find worker/proj from key
-  const[proj,worker]=key.split('|');
-  const data=exGetData();const r=data.find(d=>d.p===proj&&d.nm===worker);
-  exShowTimesheetDetail(worker,proj,r?r.g:'');
+  exShowTimesheetDetail(worker,proj,grade);
   exRenderProject();
 }
 let exCharts=[];
