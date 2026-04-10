@@ -3086,7 +3086,7 @@ async function scFetchFromGSheet(silent){
 // ── 목표수금(CM포함) 시트 로드 ──
 async function scFetchTargetPlan(){
   if(!gsSheetId) return;
-  const names=['목표수금(CM포함)','목표수금','_목표수금(CM포함)','_목표수금'];
+  const names=['연차수행수금계획','목표수금(CM포함)','목표수금','_목표수금(CM포함)','_목표수금'];
   for(const nm of names){
     try{
       const url=`https://docs.google.com/spreadsheets/d/${gsSheetId}/export?format=csv&sheet=${encodeURIComponent(nm)}&_=${Date.now()}`;
@@ -3100,50 +3100,65 @@ async function scFetchTargetPlan(){
   }
 }
 
-// ── 목표수금 파서 (컬럼 인덱스 기반, forward-fill) ──
+// ── 목표수금 파서 (컬럼 인덱스 기반, forward-fill, 오프셋 자동감지) ──
 function scParseTargetPlan(csv){
   const wb=XLSX.read(csv,{type:'string'});
   const allRows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:'',raw:true});
-  // 헤더 5행 스킵, 데이터 row 6+
-  const dataRows=allRows.slice(5);
+  // 헤더행 자동감지: "수행팀" 포함 행 찾기
+  let headerRow=-1,colOff=0;
+  for(let i=0;i<Math.min(allRows.length,10);i++){
+    const row=allRows[i];if(!row)continue;
+    const idx=row.findIndex(c=>String(c).includes('수행팀'));
+    if(idx>=0){headerRow=i;colOff=idx;break;}
+  }
+  if(headerRow<0) return;
+  // 데이터 시작: 헤더행 + 2 (서브헤더 건너뜀) 또는 +3 (3줄 헤더)
+  let dataStart=headerRow+2;
+  // 서브헤더가 2줄이면 +3
+  const nextRow=allRows[headerRow+1];
+  const next2=allRows[headerRow+2];
+  if(next2 && String(next2[colOff+8]||'').includes('수량')) dataStart=headerRow+3;
+  if(next2 && !String(next2[colOff]||'').trim() && !Number(next2[colOff+9])) dataStart=headerRow+2;
+  const dataRows=allRows.slice(dataStart);
   if(!dataRows.length) return;
   SC_TARGET_PLAN=[];
+  const C=colOff; // column offset
   let lastTeam='',lastProj='',lastClient='',lastVendor='',lastPeriod='';
   dataRows.forEach(r=>{
-    if(!r||r.length<12) return;
-    const team=String(r[1]||'').trim();
-    const proj=String(r[2]||'').trim();
-    const client=String(r[3]||'').trim();
-    const vendor=String(r[4]||'').trim();
-    const period=String(r[5]||'').trim();
+    if(!r||r.length<C+12) return;
+    const team=String(r[C]||'').trim();
+    const proj=String(r[C+1]||'').trim();
+    const client=String(r[C+2]||'').trim();
+    const vendor=String(r[C+3]||'').trim();
+    const period=String(r[C+4]||'').trim();
     if(team) lastTeam=team;
     if(proj) lastProj=proj;
     if(client) lastClient=client;
     if(vendor) lastVendor=vendor;
     if(period) lastPeriod=period;
-    const task=String(r[6]||'').trim();
-    const spec=String(r[7]||'').trim();
-    const unit=String(r[8]||'').trim();
-    const price=Number(r[9])||0;
-    const qty=Number(r[10])||0;
-    const contract=Number(r[11])||0;
-    const cumQty=Number(r[12])||0;
-    const cumAmt=Number(r[13])||0;
-    const cumRate=Number(r[14])||0;
-    const remQty=Number(r[15])||0;
-    const remAmt=Number(r[16])||0;
-    // 월별 (3~12월) — index 17~36, 쌍: 수량/기성금
+    const task=String(r[C+5]||'').trim();
+    const spec=String(r[C+6]||'').trim();
+    const unit=String(r[C+7]||'').trim();
+    const price=Number(r[C+8])||0;
+    const qty=Number(r[C+9])||0;
+    const contract=Number(r[C+10])||0;
+    const cumQty=Number(r[C+11])||0;
+    const cumAmt=Number(r[C+12])||0;
+    const cumRate=Number(r[C+13])||0;
+    const remQty=Number(r[C+14])||0;
+    const remAmt=Number(r[C+15])||0;
+    // 월별 (3~12월) — 쌍: 수량/기성금
     const months=[];
     for(let m=0;m<10;m++){
-      const mi=17+m*2;
+      const mi=C+16+m*2;
       months.push({qty:Number(r[mi])||0, amt:Number(r[mi+1])||0});
     }
-    const totQty=Number(r[37])||0;
-    const totAmt=Number(r[38])||0;
-    const totRate=Number(r[39])||0;
-    const carryQty=Number(r[40])||0;
-    const carryAmt=Number(r[41])||0;
-    const carryRate=Number(r[42])||0;
+    const totQty=Number(r[C+36])||0;
+    const totAmt=Number(r[C+37])||0;
+    const totRate=Number(r[C+38])||0;
+    const carryQty=Number(r[C+39])||0;
+    const carryAmt=Number(r[C+40])||0;
+    const carryRate=Number(r[C+41])||0;
     // 금액이 전혀 없고 과업도 없으면 스킵
     if(!contract && !price && !task) return;
     SC_TARGET_PLAN.push({
@@ -3158,7 +3173,13 @@ function scParseTargetPlan(csv){
 
 // ── 와이드 모달 열기 ──
 function scOpenProjectPlan(projName){
-  const rows=SC_TARGET_PLAN.filter(r=>r.project===projName);
+  // 프로젝트명 정규화: 괄호(거래처), 설계/시공단계 제거
+  function normProj(s){return s.replace(/\([^)]*\)/g,'').replace(/설계단계|시공단계|설계단계\s*/g,'').replace(/\s+/g,' ').trim();}
+  const pn=normProj(projName);
+  // 1차: 정확 매칭 → 2차: 정규화 매칭 → 3차: 포함 매칭
+  let rows=SC_TARGET_PLAN.filter(r=>r.project===projName);
+  if(!rows.length) rows=SC_TARGET_PLAN.filter(r=>normProj(r.project)===pn);
+  if(!rows.length) rows=SC_TARGET_PLAN.filter(r=>normProj(r.project).includes(pn)||pn.includes(normProj(r.project)));
   if(!rows.length){scOpenProjectDetail(projName);return}
   const modal=document.getElementById('scWideModal');
   const overlay=document.getElementById('scWideOverlay');
