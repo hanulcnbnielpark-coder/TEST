@@ -551,14 +551,14 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .sc-wide-body{flex:1;overflow:auto;padding:20px 28px}
 .sc-wide-kpi{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
 .sc-wide-kpi>div{background:var(--bg-thead);border-radius:10px;padding:14px 16px}
-.sc-wide-kpi .kl{font-size:10px;color:var(--text-tertiary);margin-bottom:4px;font-weight:500}
-.sc-wide-kpi .kv{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.sc-wide-kpi .kl{font-size:11px;color:var(--text-tertiary);margin-bottom:5px;font-weight:500}
+.sc-wide-kpi .kv{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
 .sc-plan-tbl-wrap{overflow-x:auto;border:1px solid var(--border-light);border-radius:10px}
-.sc-plan-tbl{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
-.sc-plan-tbl th{background:var(--bg-thead);color:var(--text-secondary);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border-light);position:sticky;top:0;z-index:2;text-align:center}
+.sc-plan-tbl{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+.sc-plan-tbl th{background:var(--bg-thead);color:var(--text-secondary);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border-light);position:sticky;top:0;z-index:2;text-align:center}
 .sc-plan-tbl th.grp{background:var(--sig);color:#FFF;font-size:11px}
 .sc-plan-tbl th.grp2{background:color-mix(in srgb,var(--sig) 80%,#000);color:#FFF;font-size:11px}
-.sc-plan-tbl td{padding:7px 10px;border-bottom:1px solid var(--border-light);color:var(--text-primary);vertical-align:middle}
+.sc-plan-tbl td{padding:10px 14px;border-bottom:1px solid var(--border-light);color:var(--text-primary);vertical-align:middle}
 .sc-plan-tbl td.r{text-align:right;font-variant-numeric:tabular-nums}
 .sc-plan-tbl td.c{text-align:center}
 .sc-plan-tbl td.name{font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis}
@@ -3215,8 +3215,8 @@ function scOpenProjectPlan(projName){
   const mNames=['3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   h+='<div class="sc-plan-tbl-wrap"><table class="sc-plan-tbl"><thead>';
   // 1st header row
-  h+='<tr><th class="sticky-left" rowspan="2" style="min-width:140px">계약거래처</th>';
-  h+='<th rowspan="2" style="min-width:160px">공종</th>';
+  h+='<tr><th class="sticky-left" rowspan="2" style="min-width:170px">계약거래처</th>';
+  h+='<th rowspan="2" style="min-width:180px">공종</th>';
   h+='<th rowspan="2">단위</th><th rowspan="2" class="r">단가</th><th rowspan="2" class="r">계약금</th>';
   h+='<th colspan="2" class="grp2">총누계 기성</th>';
   h+='<th colspan="2" class="grp2">잔여</th>';
