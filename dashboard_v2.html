@@ -586,11 +586,12 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .ts-entry .date{color:var(--text-secondary);min-width:80px}
 .ts-entry .hrs{font-weight:700;color:var(--sig);min-width:50px;text-align:right}
 .ts-entry .cat{color:var(--text-tertiary);font-size:11px}
-.ts-adj{background:rgba(251,191,36,0.06);border-left:3px solid var(--kpi-amber);padding:10px 12px;margin-bottom:6px;border-radius:0 8px 8px 0;display:flex;justify-content:space-between;align-items:center}
-.ts-adj .hrs{font-weight:700;color:var(--kpi-amber)}
-.ts-add-form{background:var(--bg-thead);border-radius:10px;padding:16px;margin-top:16px}
-.ts-add-form input,.ts-add-form select{width:100%;padding:10px 12px;border:1px solid var(--border-main);border-radius:8px;font-size:13px;background:var(--bg-input);color:var(--text-primary);font-family:inherit;margin-bottom:8px;box-sizing:border-box}
-.ts-add-form button{width:100%;padding:11px;background:var(--sig);color:#FFF;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.ts-adj{background:var(--bg-card-hover);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.ts-adj .hrs{font-weight:700;color:var(--kpi-amber);font-size:14px}
+.ts-add-form{background:var(--bg-card-hover);border-radius:12px;padding:18px;margin-top:16px}
+.ts-add-form input,.ts-add-form select{width:100%;padding:11px 14px;border:1px solid var(--border-main);border-radius:10px;font-size:13px;background:var(--bg-input);color:var(--text-primary);font-family:inherit;margin-bottom:8px;box-sizing:border-box}
+.ts-add-form button{width:100%;padding:12px;background:var(--sig);color:#FFF;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity 0.15s}
+.ts-add-form button:hover{opacity:0.85}
 @media(max-width:900px){.ts-panel{width:100%;right:-100%}}
 @media(max-width:900px){.sc-wide-modal{width:100vw;height:100vh;border-radius:0;max-width:100vw}.sc-wide-kpi{grid-template-columns:repeat(2,1fr)}}
 .sc-tbl tbody tr.clickable{cursor:pointer}
@@ -7310,7 +7311,7 @@ function exRenderProject(){
     });
     sorted.forEach(r=>{const pct=sel.h>0?(r.h/sel.h*100).toFixed(0):0;
       const isFirst=!nameUsed[r.nm];const span=nameCount[r.nm];nameUsed[r.nm]=true;
-      h+=`<tr>${isFirst?`<td class="name" ${span>1?`rowspan="${span}" style="vertical-align:middle"`:''}>${r.nm}</td><td style="font-size:13px${span>1?';vertical-align:middle':''}" ${span>1?`rowspan="${span}"`:''}>${r.tm}</td>`:''}<td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td><td style="font-size:13px;color:var(--text-secondary)">${r.pd||'-'}</td><td style="font-weight:700;cursor:pointer;color:var(--sig);text-decoration:underline dotted var(--sig)" onclick="exShowTimesheetDetail('${r.nm.replace(/'/g,"\\\\'")}','${r.p.replace(/'/g,"\\\\'")}','${r.g}')">${r.h}h${r.adjH?'<span style=\\"font-size:10px;color:var(--kpi-amber);margin-left:3px\\">+'+r.adjH+'</span>':''}</td><td class="r">${exN(Math.round(r.tot))}</td><td><div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:var(--bg-thead);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--sig)"></div></div><span style="font-size:11px;color:var(--text-tertiary)">${pct}%</span></div></td></tr>`});
+      h+=`<tr>${isFirst?`<td class="name" ${span>1?`rowspan="${span}" style="vertical-align:middle"`:''}>${r.nm}</td><td style="font-size:13px${span>1?';vertical-align:middle':''}" ${span>1?`rowspan="${span}"`:''}>${r.tm}</td>`:''}<td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td><td style="font-size:13px;color:var(--text-secondary)">${r.pd||'-'}</td><td style="font-weight:700;cursor:pointer" onclick="exShowTimesheetDetail('${r.nm.replace(/'/g,"\\\\'")}','${r.p.replace(/'/g,"\\\\'")}','${r.g}')">${r.h}h</td><td class="r">${exN(Math.round(r.tot))}</td><td><div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:var(--bg-thead);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--sig)"></div></div><span style="font-size:11px;color:var(--text-tertiary)">${pct}%</span></div></td></tr>`});
     h+='</tbody><tfoot>';
     h+=`<tr><td colspan="4" style="text-align:left;font-weight:700">인건비 소계</td><td style="font-weight:800">${sel.h.toLocaleString()}h</td><td class="r" style="font-weight:800">${exN(Math.round(sel.tot))}</td><td></td></tr>`;
     if(sel.misc){
