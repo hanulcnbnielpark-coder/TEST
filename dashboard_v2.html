@@ -555,10 +555,10 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .sc-wide-kpi .kv{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
 .sc-plan-tbl-wrap{overflow-x:auto;border:1px solid var(--border-light);border-radius:10px}
 .sc-plan-tbl{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
-.sc-plan-tbl th{background:var(--bg-thead);color:var(--text-secondary);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border-light);position:sticky;top:0;z-index:2;text-align:center}
-.sc-plan-tbl th.grp{background:var(--sig);color:#FFF;font-size:11px}
-.sc-plan-tbl th.grp2{background:color-mix(in srgb,var(--sig) 80%,#000);color:#FFF;font-size:11px}
-.sc-plan-tbl td{padding:10px 14px;border-bottom:1px solid var(--border-light);color:var(--text-primary);vertical-align:middle}
+.sc-plan-tbl th{background:var(--bg-thead);color:var(--text-secondary);font-weight:600;padding:11px 14px;border:1px solid var(--border-light);position:sticky;top:0;z-index:2;text-align:center}
+.sc-plan-tbl th.grp{background:var(--sig);color:#FFF;font-size:11px;border-color:rgba(255,255,255,0.2)}
+.sc-plan-tbl th.grp2{background:color-mix(in srgb,var(--sig) 80%,#000);color:#FFF;font-size:11px;border-color:rgba(255,255,255,0.2)}
+.sc-plan-tbl td{padding:10px 14px;border:1px solid var(--border-light);color:var(--text-primary);vertical-align:middle}
 .sc-plan-tbl td.r{text-align:right;font-variant-numeric:tabular-nums}
 .sc-plan-tbl td.c{text-align:center}
 .sc-plan-tbl td.name{font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis}
@@ -572,6 +572,26 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .sc-plan-tbl thead .sticky-left{z-index:3;background:var(--bg-thead)}
 .sc-plan-tbl tbody tr:hover .sticky-left{background:var(--bg-card-hover)}
 .sc-plan-tbl tfoot .sticky-left{background:var(--bg-thead)}
+/* ── 타임시트 상세 패널 ── */
+.ts-panel-overlay{position:fixed;inset:0;background:var(--overlay);backdrop-filter:blur(2px);z-index:940;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.ts-panel-overlay.open{opacity:1;pointer-events:auto}
+.ts-panel{position:fixed;top:0;right:-520px;width:500px;max-width:95vw;height:100%;background:var(--bg-elevated);z-index:950;transition:right 0.35s cubic-bezier(0.16,1,0.3,1);overflow-y:auto;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,0.12)}
+.ts-panel.open{right:0}
+.ts-panel-head{padding:20px 24px;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.ts-panel-head .title{font-size:16px;font-weight:700;color:var(--text-primary)}
+.ts-panel-head .sub{font-size:12px;color:var(--text-tertiary);margin-top:2px}
+.ts-panel-body{flex:1;padding:20px 24px;overflow-y:auto}
+.ts-entry{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border-light);font-size:13px}
+.ts-entry:hover{background:var(--bg-card-hover)}
+.ts-entry .date{color:var(--text-secondary);min-width:80px}
+.ts-entry .hrs{font-weight:700;color:var(--sig);min-width:50px;text-align:right}
+.ts-entry .cat{color:var(--text-tertiary);font-size:11px}
+.ts-adj{background:rgba(251,191,36,0.06);border-left:3px solid var(--kpi-amber);padding:10px 12px;margin-bottom:6px;border-radius:0 8px 8px 0;display:flex;justify-content:space-between;align-items:center}
+.ts-adj .hrs{font-weight:700;color:var(--kpi-amber)}
+.ts-add-form{background:var(--bg-thead);border-radius:10px;padding:16px;margin-top:16px}
+.ts-add-form input,.ts-add-form select{width:100%;padding:10px 12px;border:1px solid var(--border-main);border-radius:8px;font-size:13px;background:var(--bg-input);color:var(--text-primary);font-family:inherit;margin-bottom:8px;box-sizing:border-box}
+.ts-add-form button{width:100%;padding:11px;background:var(--sig);color:#FFF;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+@media(max-width:900px){.ts-panel{width:100%;right:-100%}}
 @media(max-width:900px){.sc-wide-modal{width:100vw;height:100vh;border-radius:0;max-width:100vw}.sc-wide-kpi{grid-template-columns:repeat(2,1fr)}}
 .sc-tbl tbody tr.clickable{cursor:pointer}
 .sc-tbl tbody tr.clickable:hover{background:var(--bg-card-hover)}
@@ -6283,6 +6303,16 @@ function ctDelProject(){
   <div class="sc-wide-body" id="scWideBody"></div>
 </div>
 
+<!-- ═══ 타임시트 상세 패널 ═══ -->
+<div class="ts-panel-overlay" id="tsPanelOverlay" onclick="tsClosePanel()"></div>
+<div class="ts-panel" id="tsPanel">
+  <div class="ts-panel-head">
+    <div><div class="title" id="tsPanelTitle">타임시트 상세</div><div class="sub" id="tsPanelSub"></div></div>
+    <button class="close" onclick="tsClosePanel()" style="width:36px;height:36px;border-radius:10px;border:none;background:var(--bg-thead);color:var(--text-secondary);font-size:18px;cursor:pointer">✕</button>
+  </div>
+  <div class="ts-panel-body" id="tsPanelBody"></div>
+</div>
+
 <!-- ═══ PAGE: 계약현황 ═══ -->
 <div class="page" id="pageContract">
   <div style="padding:0;max-width:1400px;margin:0 auto">
@@ -6888,6 +6918,87 @@ let EX_MISC_COST={}; // {과업명: 기타경비 금액}
 let EX_MISC_DESC={}; // {과업명: 기타경비 내역 설명}
 let EX_STAFF_GRADE={}; // {이름: 직급} 매핑
 let EX_FEEDBACK={}; // {과업명: {reason:'실행사유', plan:'개선대책', risk:[], review:''}}
+// ── 수기 시간 조정 (localStorage 기반) ──
+let EX_MANUAL_ADJ=JSON.parse(localStorage.getItem('EX_MANUAL_ADJ')||'{}'); // {"proj|worker": [{desc,hours,date}]}
+function tsClosePanel(){document.getElementById('tsPanel').classList.remove('open');document.getElementById('tsPanelOverlay').classList.remove('open')}
+function tsSaveAdj(){localStorage.setItem('EX_MANUAL_ADJ',JSON.stringify(EX_MANUAL_ADJ))}
+function exShowTimesheetDetail(worker,proj,grade){
+  const panel=document.getElementById('tsPanel');
+  const overlay=document.getElementById('tsPanelOverlay');
+  const body=document.getElementById('tsPanelBody');
+  document.getElementById('tsPanelTitle').textContent=worker;
+  document.getElementById('tsPanelSub').textContent=proj+' · '+grade;
+  // EA에서 해당 인력+과업 개별 엔트리 필터
+  const entries=EA.filter(r=>{
+    if(r.worker!==worker)return false;
+    const a=exNorm(r.project),b=exNorm(proj);
+    return a.includes(b)||b.includes(a)||a===b;
+  }).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const adjKey=proj+'|'+worker;
+  const adjs=EX_MANUAL_ADJ[adjKey]||[];
+  const tsTotal=entries.reduce((s,r)=>s+(r.hours||0),0);
+  const adjTotal=adjs.reduce((s,a)=>s+a.hours,0);
+  let h='';
+  // KPI
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px">
+    <div style="background:var(--bg-thead);border-radius:8px;padding:12px"><div style="font-size:10px;color:var(--text-tertiary);margin-bottom:3px">타임시트</div><div style="font-size:18px;font-weight:700">${tsTotal}h</div></div>
+    <div style="background:rgba(251,191,36,0.06);border-radius:8px;padding:12px"><div style="font-size:10px;color:var(--kpi-amber);margin-bottom:3px">수기 조정</div><div style="font-size:18px;font-weight:700;color:var(--kpi-amber)">${adjTotal?'+'+adjTotal+'h':'-'}</div></div>
+    <div style="background:var(--bg-thead);border-radius:8px;padding:12px"><div style="font-size:10px;color:var(--text-tertiary);margin-bottom:3px">합계</div><div style="font-size:18px;font-weight:700;color:var(--sig)">${tsTotal+adjTotal}h</div></div>
+  </div>`;
+  // 타임시트 엔트리
+  h+=`<div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px">타임시트 내역 (${entries.length}건)</div>`;
+  if(entries.length){
+    h+='<div style="border:1px solid var(--border-light);border-radius:8px;overflow:hidden;margin-bottom:16px">';
+    entries.forEach(r=>{
+      const cats=Object.entries(r.cats||{}).filter(([,v])=>v.dh>0).map(([k,v])=>k+' '+v.dh+'h').join(', ');
+      h+=`<div class="ts-entry"><div class="date">${r.date||'-'}</div><div style="flex:1;padding:0 8px"><span style="color:var(--text-primary)">${r.gubun||''}</span>${cats?' <span class="cat">'+cats+'</span>':''}</div><div class="hrs">${r.hours||0}h</div></div>`;
+    });
+    h+='</div>';
+  } else h+='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;margin-bottom:16px">타임시트 데이터 없음</div>';
+  // 수기 조정 내역
+  if(adjs.length){
+    h+=`<div style="font-size:12px;font-weight:700;color:var(--kpi-amber);margin-bottom:8px">수기 조정 (${adjs.length}건)</div>`;
+    adjs.forEach((a,i)=>{
+      h+=`<div class="ts-adj"><div><div style="font-weight:600;font-size:13px">${a.desc||'수기 조정'}</div><div style="font-size:11px;color:var(--text-tertiary)">${a.date||'-'}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="hrs">+${a.hours}h</div><button onclick="tsDeleteAdj('${adjKey.replace(/'/g,"\\\\'")}',${i})" style="width:24px;height:24px;border-radius:6px;border:none;background:var(--bg-thead);color:var(--text-muted);cursor:pointer;font-size:12px">✕</button></div></div>`;
+    });
+  }
+  // 수기 추가 폼
+  h+=`<div class="ts-add-form">
+    <div style="font-size:12px;font-weight:700;margin-bottom:10px">수기 시간 추가</div>
+    <input type="number" id="tsAdjHours" placeholder="시간 (예: 50)" step="0.5" min="0">
+    <input type="text" id="tsAdjDesc" placeholder="사유 (예: 야근 미반영분)">
+    <input type="date" id="tsAdjDate" value="${new Date().toISOString().split('T')[0]}">
+    <button onclick="tsAddManualAdj('${adjKey.replace(/'/g,"\\\\'")}','${worker.replace(/'/g,"\\\\'")}','${proj.replace(/'/g,"\\\\'")}','${grade}')">+ 추가</button>
+  </div>`;
+  body.innerHTML=h;
+  overlay.classList.add('open');
+  panel.classList.add('open');
+}
+function tsAddManualAdj(key,worker,proj,grade){
+  const hrs=parseFloat(document.getElementById('tsAdjHours').value);
+  if(!hrs||hrs<=0){showToast('⚠️ 시간을 입력하세요');return}
+  const desc=document.getElementById('tsAdjDesc').value.trim()||'수기 조정';
+  const date=document.getElementById('tsAdjDate').value;
+  if(!EX_MANUAL_ADJ[key])EX_MANUAL_ADJ[key]=[];
+  EX_MANUAL_ADJ[key].push({hours:hrs,desc,date});
+  tsSaveAdj();
+  showToast('✅ +'+hrs+'h 추가됨');
+  exShowTimesheetDetail(worker,proj,grade);// refresh panel
+  // refresh 실행분석 if visible
+  if(document.getElementById('exAnTabProject')&&document.getElementById('exAnTabProject').innerHTML) exRenderProject();
+}
+function tsDeleteAdj(key,idx){
+  if(!EX_MANUAL_ADJ[key])return;
+  EX_MANUAL_ADJ[key].splice(idx,1);
+  if(!EX_MANUAL_ADJ[key].length)delete EX_MANUAL_ADJ[key];
+  tsSaveAdj();
+  showToast('🗑️ 삭제됨');
+  // find worker/proj from key
+  const[proj,worker]=key.split('|');
+  const data=exGetData();const r=data.find(d=>d.p===proj&&d.nm===worker);
+  exShowTimesheetDetail(worker,proj,r?r.g:'');
+  exRenderProject();
+}
 let exCharts=[];
 
 // 과업명 정규화 (공백, 특수문자, 제/~/-_ 등 제거)
@@ -7082,7 +7193,15 @@ function exGetData(){
   return Object.values(agg).map(r=>{
     const months=r.months?[...r.months].sort():[];
     const pd=months.length>1?months[0].replace('-','.')+'~'+months[months.length-1].replace('-','.'):months.length===1?months[0].replace('-','.'):'';
-    return{...r, pd, months:undefined, years:undefined};
+    // 수기 조정 반영
+    const adjKey=r.p+'|'+r.nm;
+    const adjs=EX_MANUAL_ADJ[adjKey]||[];
+    const adjH=adjs.reduce((s,a)=>s+a.hours,0);
+    if(adjH>0){
+      const rate=EX_GRADE_COST[r.g]||18299;
+      r.h+=adjH;r.tot+=adjH*rate*2.75;
+    }
+    return{...r, pd, adjH, months:undefined, years:undefined};
   });
 }
 
@@ -7167,7 +7286,7 @@ function exRenderProject(){
     });
     sorted.forEach(r=>{const pct=sel.h>0?(r.h/sel.h*100).toFixed(0):0;
       const isFirst=!nameUsed[r.nm];const span=nameCount[r.nm];nameUsed[r.nm]=true;
-      h+=`<tr>${isFirst?`<td class="name" ${span>1?`rowspan="${span}" style="vertical-align:middle"`:''}>${r.nm}</td><td style="font-size:13px${span>1?';vertical-align:middle':''}" ${span>1?`rowspan="${span}"`:''}>${r.tm}</td>`:''}<td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td><td style="font-size:13px;color:var(--text-secondary)">${r.pd||'-'}</td><td style="font-weight:700">${r.h}h</td><td class="r">${exN(Math.round(r.tot))}</td><td><div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:var(--bg-thead);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--sig)"></div></div><span style="font-size:11px;color:var(--text-tertiary)">${pct}%</span></div></td></tr>`});
+      h+=`<tr>${isFirst?`<td class="name" ${span>1?`rowspan="${span}" style="vertical-align:middle"`:''}>${r.nm}</td><td style="font-size:13px${span>1?';vertical-align:middle':''}" ${span>1?`rowspan="${span}"`:''}>${r.tm}</td>`:''}<td><span class="badge" style="background:var(--bg-thead);color:var(--text-secondary)">${r.g}</span></td><td style="font-size:13px;color:var(--text-secondary)">${r.pd||'-'}</td><td style="font-weight:700;cursor:pointer;color:var(--sig);text-decoration:underline dotted var(--sig)" onclick="exShowTimesheetDetail('${r.nm.replace(/'/g,"\\\\'")}','${r.p.replace(/'/g,"\\\\'")}','${r.g}')">${r.h}h${r.adjH?'<span style=\\"font-size:10px;color:var(--kpi-amber);margin-left:3px\\">+'+r.adjH+'</span>':''}</td><td class="r">${exN(Math.round(r.tot))}</td><td><div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:var(--bg-thead);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--sig)"></div></div><span style="font-size:11px;color:var(--text-tertiary)">${pct}%</span></div></td></tr>`});
     h+='</tbody><tfoot>';
     h+=`<tr><td colspan="4" style="text-align:left;font-weight:700">인건비 소계</td><td style="font-weight:800">${sel.h.toLocaleString()}h</td><td class="r" style="font-weight:800">${exN(Math.round(sel.tot))}</td><td></td></tr>`;
     if(sel.misc){
