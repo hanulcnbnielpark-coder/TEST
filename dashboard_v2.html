@@ -6939,7 +6939,7 @@ async function tsLoadAdj(){
       if(!proj&&!worker)return;
       const key=proj+'|'+worker;
       if(!EX_MANUAL_ADJ[key])EX_MANUAL_ADJ[key]=[];
-      EX_MANUAL_ADJ[key].push({hours:Number(r['시간'])||0,desc:String(r['사유']||''),date:String(r['날짜']||'')});
+      EX_MANUAL_ADJ[key].push({hours:Number(r['시간'])||0,desc:String(r['사유']||''),date:String(r['날짜']||''),team:String(r['팀']||''),grade:String(r['직급']||'')});
     });
     tsSaveAdjLocal();
   }catch(e){
@@ -7005,20 +7005,21 @@ function exShowTimesheetDetail(worker,proj,grade){
   overlay.classList.add('open');
   panel.classList.add('open');
 }
-function tsAddManualAdj(key,worker,proj,grade){
+function tsAddManualAdj(key,worker,proj,grade,team){
   const hrs=parseFloat(document.getElementById('tsAdjHours').value);
   if(!hrs||hrs<=0){showToast('⚠️ 시간을 입력하세요');return}
   const desc=document.getElementById('tsAdjDesc').value.trim()||'수기 조정';
   const date=document.getElementById('tsAdjDate').value;
+  const tm=team||(document.getElementById('tsAdjTeam')?document.getElementById('tsAdjTeam').value.trim():'');
+  const gr=grade||(document.getElementById('tsAdjGrade')?document.getElementById('tsAdjGrade').value.trim():'');
   if(!EX_MANUAL_ADJ[key])EX_MANUAL_ADJ[key]=[];
-  EX_MANUAL_ADJ[key].push({hours:hrs,desc,date});
+  EX_MANUAL_ADJ[key].push({hours:hrs,desc,date,team:tm,grade:gr});
   tsSaveAdjLocal();
-  // GAS 저장 (Image 방식 — CORS 우회)
-  const saveUrl=GAS_WEB_URL+'?action=tsAdjSave&project='+encodeURIComponent(proj)+'&worker='+encodeURIComponent(worker)+'&hours='+hrs+'&desc='+encodeURIComponent(desc)+'&date='+encodeURIComponent(date)+'&_='+Date.now();
+  const saveUrl=GAS_WEB_URL+'?action=tsAdjSave&project='+encodeURIComponent(proj)+'&worker='+encodeURIComponent(worker)+'&hours='+hrs+'&desc='+encodeURIComponent(desc)+'&date='+encodeURIComponent(date)+'&team='+encodeURIComponent(tm)+'&grade='+encodeURIComponent(gr)+'&_='+Date.now();
   new Image().src=saveUrl;
   showToast('✅ +'+hrs+'h 추가 (시트 저장됨)');
-  exShowTimesheetDetail(worker,proj,grade);
-  if(document.getElementById('exAnTabProject')&&document.getElementById('exAnTabProject').innerHTML) exRenderProject();
+  if(document.getElementById('tsAdjWorkerName')){tsClosePanel();exRenderProject();}
+  else{exShowTimesheetDetail(worker,proj,gr||grade);if(document.getElementById('exAnTabProject')&&document.getElementById('exAnTabProject').innerHTML) exRenderProject();}
 }
 function tsDeleteAdj(key,idx,worker,proj,grade){
   if(!EX_MANUAL_ADJ[key])return;
@@ -7031,6 +7032,37 @@ function tsDeleteAdj(key,idx,worker,proj,grade){
   showToast('🗑️ 삭제됨');
   exShowTimesheetDetail(worker,proj,grade);
   exRenderProject();
+}
+// ── 새 인력 수기 추가 ──
+function tsOpenNewWorker(){
+  const proj=EX_SP;if(!proj){showToast('⚠️ 과업을 먼저 선택하세요');return}
+  const panel=document.getElementById('tsPanel');
+  const overlay=document.getElementById('tsPanelOverlay');
+  const body=document.getElementById('tsPanelBody');
+  document.getElementById('tsPanelTitle').textContent='새 인력 추가';
+  document.getElementById('tsPanelSub').textContent=proj;
+  const grades=Object.keys(EX_GRADE_COST).length?Object.keys(EX_GRADE_COST):['사원','선임','주임','책임','수석'];
+  let h=`<div class="ts-add-form" style="margin-top:0">
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px">인력 정보</div>
+    <input type="text" id="tsAdjWorkerName" placeholder="이름">
+    <input type="text" id="tsAdjTeam" placeholder="팀 (예: BIM1팀)">
+    <select id="tsAdjGrade"><option value="">직급 선택</option>${grades.map(g=>'<option value="'+g+'">'+g+'</option>').join('')}</select>
+    <input type="number" id="tsAdjHours" placeholder="시간 (예: 120)" step="0.5" min="0">
+    <input type="text" id="tsAdjDesc" placeholder="사유 (예: 외주 투입)">
+    <input type="date" id="tsAdjDate" value="${new Date().toISOString().split('T')[0]}">
+    <button onclick="tsAddNewWorker('${proj.replace(/'/g,"\\\\'")}')">+ 인력 추가</button>
+  </div>`;
+  body.innerHTML=h;
+  overlay.classList.add('open');
+  panel.classList.add('open');
+}
+function tsAddNewWorker(proj){
+  const name=document.getElementById('tsAdjWorkerName').value.trim();
+  if(!name){showToast('⚠️ 이름을 입력하세요');return}
+  const key=proj+'|'+name;
+  const grade=document.getElementById('tsAdjGrade').value;
+  const team=document.getElementById('tsAdjTeam').value.trim();
+  tsAddManualAdj(key,name,proj,grade,team);
 }
 let exCharts=[];
 
@@ -7236,6 +7268,22 @@ function exGetData(){
     }
     return{...r, pd, adjH, months:undefined, years:undefined};
   });
+  // 수기 전용 인력 추가 (타임시트에 없는 인력)
+  Object.entries(EX_MANUAL_ADJ).forEach(([key,adjs])=>{
+    const[proj,worker]=key.split('|');
+    if(!proj||!worker)return;
+    // 이미 result에 있으면 스킵
+    if(result.find(r=>r.p===proj&&r.nm===worker))return;
+    // 해당 프로젝트가 종료과업인지 확인
+    if(!EX_CLOSED_PROJECTS.some(cp=>{const a=exNorm(proj),b=exNorm(cp);return a.includes(b)||b.includes(a)}))return;
+    const totalH=adjs.reduce((s,a)=>s+a.hours,0);
+    if(totalH<=0)return;
+    const gr=adjs[0].grade||'';
+    const tm=adjs[0].team||'';
+    const rate=EX_GRADE_COST[gr]||18299;
+    result.push({p:proj,nm:worker,g:gr,tm:tm,h:totalH,tot:totalH*rate*2.75,pd:adjs[0].date||'',adjH:totalH,md:0,vs:0,at:0,dc:0,pw:0,cm:0,isManual:true});
+  });
+  return result;
 }
 
 function exPayTotal(proj){return(EX_PAY_MAP[proj]||[]).reduce((s,e)=>s+e.amt,0)}
@@ -7326,7 +7374,7 @@ function exRenderProject(){
       h+=`<tr style="background:rgba(251,191,36,.04)"><td colspan="4" style="text-align:left;font-weight:600;color:var(--kpi-amber)">기타경비 <span style="font-weight:400;color:var(--text-tertiary)">${sel.miscDesc||''}</span></td><td></td><td class="r" style="font-weight:700;color:var(--kpi-amber)">${exN(sel.misc)}</td><td></td></tr>`;
       h+=`<tr><td colspan="4" style="text-align:left;font-weight:800">원가 합계</td><td></td><td class="r" style="font-weight:900;font-size:15px">${exN(Math.round(sel.totalCost))}</td><td></td></tr>`;
     }
-    h+='</tfoot></table></div>';
+    h+='</tfoot></table><div style="text-align:center;margin-top:10px"><button onclick="tsOpenNewWorker()" style="padding:7px 16px;background:var(--bg-thead);border:1px dashed var(--border-main);border-radius:8px;font-size:13px;font-weight:600;color:var(--text-tertiary);cursor:pointer;font-family:inherit">+ 인력 추가</button></div></div>';
     // 기성금 내역
     if(sel.payEntries&&sel.payEntries.length){
       h+='<div class="sc-section"><div class="sc-section-title">기성금 입금 내역</div><table class="sc-tbl"><thead><tr><th>#</th><th>입금일</th><th>금액</th><th>누적</th></tr></thead><tbody>';
