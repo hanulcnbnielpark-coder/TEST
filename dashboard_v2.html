@@ -7255,7 +7255,7 @@ function exGetData(){
   });
   
   // 3단계: 투입기간 생성 (직급+투입비는 2단계에서 이미 정확 산정)
-  return Object.values(agg).map(r=>{
+  const result=Object.values(agg).map(r=>{
     const months=r.months?[...r.months].sort():[];
     const pd=months.length>1?months[0].replace('-','.')+'~'+months[months.length-1].replace('-','.'):months.length===1?months[0].replace('-','.'):'';
     // 수기 조정 반영
@@ -7269,14 +7269,12 @@ function exGetData(){
     return{...r, pd, adjH, months:undefined, years:undefined};
   });
   // 수기 전용 인력 추가 (타임시트에 없는 인력)
-  console.log('📋 EX_MANUAL_ADJ keys:', Object.keys(EX_MANUAL_ADJ));
-  console.log('📋 EX_CLOSED_PROJECTS:', EX_CLOSED_PROJECTS);
   Object.entries(EX_MANUAL_ADJ).forEach(([key,adjs])=>{
     const[proj,worker]=key.split('|');
-    if(!proj||!worker){console.log('⚠️ skip empty',key);return}
-    if(result.find(r=>r.p===proj&&r.nm===worker)){console.log('⚠️ skip exists',worker,proj);return}
+    if(!proj||!worker)return;
+    if(result.find(r=>r.p===proj&&r.nm===worker))return;
     const matched=EX_CLOSED_PROJECTS.some(cp=>{const a=exNorm(proj),b=exNorm(cp);return a.includes(b)||b.includes(a)});
-    if(!matched){console.log('⚠️ skip no match',proj,'closed:',EX_CLOSED_PROJECTS.map(c=>exNorm(c)));return}
+    if(!matched)return;
     const totalH=adjs.reduce((s,a)=>s+a.hours,0);
     if(totalH<=0)return;
     const gr=adjs[0].grade||'';
