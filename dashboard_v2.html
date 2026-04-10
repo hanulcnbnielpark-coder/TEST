@@ -7013,8 +7013,9 @@ function tsAddManualAdj(key,worker,proj,grade){
   if(!EX_MANUAL_ADJ[key])EX_MANUAL_ADJ[key]=[];
   EX_MANUAL_ADJ[key].push({hours:hrs,desc,date});
   tsSaveAdjLocal();
-  // GAS 저장
-  gasCall({action:'tsAdjSave',project:proj,worker:worker,hours:hrs,desc:desc,date:date});
+  // GAS 저장 (Image 방식 — CORS 우회)
+  const saveUrl=GAS_WEB_URL+'?action=tsAdjSave&project='+encodeURIComponent(proj)+'&worker='+encodeURIComponent(worker)+'&hours='+hrs+'&desc='+encodeURIComponent(desc)+'&date='+encodeURIComponent(date)+'&_='+Date.now();
+  new Image().src=saveUrl;
   showToast('✅ +'+hrs+'h 추가 (시트 저장됨)');
   exShowTimesheetDetail(worker,proj,grade);
   if(document.getElementById('exAnTabProject')&&document.getElementById('exAnTabProject').innerHTML) exRenderProject();
@@ -7024,8 +7025,9 @@ function tsDeleteAdj(key,idx,worker,proj,grade){
   EX_MANUAL_ADJ[key].splice(idx,1);
   if(!EX_MANUAL_ADJ[key].length)delete EX_MANUAL_ADJ[key];
   tsSaveAdjLocal();
-  // GAS 삭제
-  gasCall({action:'tsAdjDelete',project:proj,worker:worker,idx:idx});
+  // GAS 삭제 (Image 방식 — CORS 우회)
+  const delUrl=GAS_WEB_URL+'?action=tsAdjDelete&project='+encodeURIComponent(proj)+'&worker='+encodeURIComponent(worker)+'&idx='+idx+'&_='+Date.now();
+  new Image().src=delUrl;
   showToast('🗑️ 삭제됨');
   exShowTimesheetDetail(worker,proj,grade);
   exRenderProject();
