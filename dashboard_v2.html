@@ -7857,8 +7857,14 @@ function bmApplyFilters(){
   const search=(document.getElementById('bmSearchInput')||{}).value||'';
   const org=(document.getElementById('bmOrgFilter')||{}).value||'';
   const verdict=(document.getElementById('bmVerdictFilter')||{}).value||'';
+  const selDate=(document.getElementById('bmDateInput')||{}).value||new Date().toISOString().slice(0,10);
+  const realToday=new Date().toISOString().slice(0,10);
   const sl=search.toLowerCase();
   let f=BM_DATA_ALL.filter(d=>{
+    // 마감일 지난 건 숨기기
+    if(d.deadline&&d.deadline<realToday)return false;
+    // 선택 날짜 이후 공고는 숨기기 (미래 데이터)
+    if(d.noticeDate&&d.noticeDate>selDate)return false;
     if(bmCurrentType&&d.type!==bmCurrentType)return false;
     if(org&&d.org!==org)return false;
     if(verdict==='미분석'){if(d.verdict)return false}else if(verdict&&d.verdict!==verdict)return false;
@@ -7866,7 +7872,7 @@ function bmApplyFilters(){
     return true;
   });
   f.sort((a,b)=>{let va=a[bmSortKey]||'',vb=b[bmSortKey]||'';if(bmSortKey==='amount'){va=parseFloat(va)||0;vb=parseFloat(vb)||0}if(va<vb)return -1*bmSortDir;if(va>vb)return 1*bmSortDir;return 0});
-  BM_FILTERED=f;bmRenderKPI(f);bmRenderTable(f);
+  BM_FILTERED=f;bmRenderKPI(f,selDate);bmRenderTable(f);
   const fc=document.getElementById('bmFilterCount');if(fc)fc.innerHTML=`<b>${f.length}</b> / ${BM_DATA_ALL.length}건`;
   const st=document.getElementById('bmStatTotal');if(st)st.textContent=BM_DATA_ALL.length;
 }
@@ -7875,17 +7881,17 @@ function bmApplyFilters(){
 function bmSort(key){if(bmSortKey===key)bmSortDir*=-1;else{bmSortKey=key;bmSortDir=-1}bmApplyFilters()}
 
 // ── KPI ──
-function bmRenderKPI(data){
-  const today=new Date().toISOString().slice(0,10);
-  const d3=new Date();d3.setDate(d3.getDate()+3);const d3s=d3.toISOString().slice(0,10);
-  const newToday=data.filter(d=>(d.noticeDate||'').startsWith(today)).length;
-  const deadlineSoon=data.filter(d=>d.deadline&&d.deadline>=today&&d.deadline<=d3s).length;
+function bmRenderKPI(data,selDate){
+  const refDate=selDate||new Date().toISOString().slice(0,10);
+  const d3=new Date(refDate);d3.setDate(d3.getDate()+3);const d3s=d3.toISOString().slice(0,10);
+  const newToday=data.filter(d=>(d.noticeDate||'')===refDate).length;
+  const deadlineSoon=data.filter(d=>d.deadline&&d.deadline>=refDate&&d.deadline<=d3s).length;
   const eligible=data.filter(d=>d.verdict==='적격').length;
   const review=data.filter(d=>d.verdict==='검토필요').length;
   const tracked=data.filter(d=>bmTrackedIds.has(d.bidNo)).length;
   const el=document.getElementById('bmKpiRow');if(!el)return;
   el.innerHTML=`
-    <div class="bm-kpi"><div class="bm-kpi-label"><span class="bm-kpi-icon">📋</span> 오늘 신규</div><div class="bm-kpi-num">${newToday}<span>건</span></div>${newToday>0?'<div class="bm-kpi-delta up">+'+newToday+'</div>':''}</div>
+    <div class="bm-kpi"><div class="bm-kpi-label"><span class="bm-kpi-icon">📋</span> 당일 신규</div><div class="bm-kpi-num">${newToday}<span>건</span></div>${newToday>0?'<div class="bm-kpi-delta up">+'+newToday+'</div>':''}</div>
     <div class="bm-kpi"><div class="bm-kpi-label"><span class="bm-kpi-icon">⏰</span> 마감 임박 (3일)</div><div class="bm-kpi-num ${deadlineSoon>0?'red':''}">${deadlineSoon}<span>건</span></div></div>
     <div class="bm-kpi"><div class="bm-kpi-label"><span class="bm-kpi-icon">✅</span> 적격 판정</div><div class="bm-kpi-num green">${eligible}<span>건</span></div></div>
     <div class="bm-kpi"><div class="bm-kpi-label"><span class="bm-kpi-icon">🔍</span> 검토필요</div><div class="bm-kpi-num amber">${review}<span>건</span></div></div>
@@ -7962,11 +7968,39 @@ async function bmTrackItem(bidNo){
   const d=BM_DATA_ALL.find(x=>x.bidNo===bidNo);if(!d||bmTrackedIds.has(bidNo))return;
   bmTrackedIds.add(bidNo);
   localStorage.setItem('hanul_bm_tracked',JSON.stringify([...bmTrackedIds]));
-  bmShowToast('📌 추적 등록 — '+d.name.substring(0,25)+(d.name.length>25?'...':''));
-  bmApplyFilters();
+
+  // 발주정보(BIDS) 탭으로 데이터 이관
+  const today=new Date();
+  const todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const catMap={'입찰공고':'본공고','사전규격':'사전','발주계획':'추적'};
+  const bidEntry={
+    rdate:todayStr,
+    adate:d.noticeDate||'',
+    cat:catMap[d.type]||'추적',
+    client:d.org||'',
+    name:d.name||'',
+    amount:parseFloat(d.amount)||0,
+    status:'정보수집',
+    desc:'[입찰모니터링 이관] '+(d.reason||d.keyword||'')+(d.deadline?' / 마감:'+d.deadline:''),
+    qual:'-',
+    mgr:'-',
+    fileUrl:d.link||''
+  };
+  BIDS.push(bidEntry);
+
+  // GAS에도 발주정보 추가
+  if(typeof gasCall==='function'){
+    gasCall({action:'addBid',rdate:bidEntry.rdate,adate:bidEntry.adate,cat:bidEntry.cat,client:bidEntry.client,bidname:bidEntry.name,amount:String(bidEntry.amount),status:bidEntry.status,desc:bidEntry.desc,qual:bidEntry.qual,mgr:bidEntry.mgr,fileUrl:bidEntry.fileUrl});
+  }
+
+  // 모니터링 시트에도 추적 등록
   try{
     await fetch(BM_GAS_URL+'?action=trackBid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
   }catch(err){try{new Image().src=BM_GAS_URL+'?action=trackBid&data='+encodeURIComponent(JSON.stringify(d))}catch(e2){}}
+
+  bmApplyFilters();
+  bmShowToast('📌 발주정보에 이관 완료 — 탭 이동 중...');
+  setTimeout(()=>{goPage('bidinfo')},800);
 }
 
 // ── Utils ──
