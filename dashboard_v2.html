@@ -1562,7 +1562,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
     <div class="bm-head">
       <div>
         <div class="bm-title">나라장터 입찰모니터링</div>
-        <div class="bm-sub">자동 수집된 입찰공고 · 사전규격 · 발주계획 — 유의미한 건을 발주정보로 이관</div>
+        <div class="bm-sub">조달청 API를 통한 자동화 수집 — 입찰공고 · 사전규격 · 발주계획</div>
         <div class="bm-last-sync" id="bmLastSync"></div>
       </div>
       <div class="bm-head-right">
@@ -4578,73 +4578,12 @@ function scRenderPlan(){
   const grandPlan=groups.reduce((s,g)=>s+g.plan,0);
   const grandActual=groups.reduce((s,g)=>s+g.actual,0);
 
-  h+='<div class="sc-section">';
-  h+=`<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
-    <div>
-      <div class="sc-section-title" style="margin:0">${chartTitle}</div>
-      <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">${isAll?'팀 필터를 선택하면 해당 팀의 과업별 상세를 볼 수 있습니다':'위 필터에서 전체 팀을 선택하면 팀 비교로 돌아갑니다'}</div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:14px;color:var(--text-tertiary)">목표 <strong style="color:var(--text-primary);font-size:16px">${scFmtAmt(grandPlan)}</strong></div>
-      <div style="font-size:13px;color:var(--text-tertiary);margin-top:2px">실적 <strong style="color:var(--sig);font-size:15px">${scFmtAmt(grandActual)}</strong> <span style="font-size:12px;color:${grandPlan>0&&grandActual/grandPlan>=0.5?'var(--kpi-green)':'var(--kpi-red)'}">(${grandPlan>0?(grandActual/grandPlan*100).toFixed(1):0}%)</span></div>
-    </div>
-  </div>`;
-
-  // Legend
-  h+=`<div style="display:flex;gap:16px;margin-bottom:16px;font-size:12px;color:var(--text-tertiary)">
-    <span><span style="display:inline-block;width:12px;height:12px;background:var(--sig-pale);border:1.5px solid var(--sig);border-radius:3px;vertical-align:middle;margin-right:4px"></span>수금 목표</span>
-    <span><span style="display:inline-block;width:12px;height:12px;background:var(--sig);border-radius:3px;vertical-align:middle;margin-right:4px"></span>수금 실적</span>
-  </div>`;
-
-  groups.forEach((g,i)=>{
-    const planPct=maxVal>0?(g.plan/maxVal*100):0;
-    const actualPct=g.plan>0?(g.actual/g.plan*100):0;
-    const achRate=g.plan>0?(g.actual/g.plan*100):0;
-    const rateColor=achRate>=80?'var(--kpi-green)':achRate>=30?'var(--kpi-amber)':'var(--kpi-red)';
-    h+=`<div style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-        <div style="font-size:14px;font-weight:600;color:var(--text-primary)">${g.label}</div>
-        <div style="display:flex;align-items:baseline;gap:12px">
-          <span style="font-size:13px;color:var(--text-tertiary)">목표 <strong style="color:var(--text-primary)">${scFmtAmt(g.plan)}</strong></span>
-          <span style="font-size:13px;color:var(--text-tertiary)">실적 <strong style="color:var(--sig)">${g.actual?scFmtAmt(g.actual):'-'}</strong></span>
-          <span style="font-size:12px;font-weight:700;color:${rateColor};background:color-mix(in srgb,${rateColor} 10%,transparent);padding:2px 8px;border-radius:6px">${achRate.toFixed(0)}%</span>
-        </div>
-      </div>
-      <div style="height:28px;background:var(--sig-pale);border-radius:8px;overflow:hidden;position:relative;width:${planPct}%;min-width:40px">
-        <div style="height:100%;width:${Math.min(actualPct,100)}%;background:var(--sig);border-radius:8px;transition:width 0.4s ease"></div>
-      </div>
-    </div>`;
-  });
-  h+='</div>';
-
-  // ═══ Monthly Heatmap Table ═══
-  const byProj={};data.forEach(r=>{
-    const k=r.project+'|'+r.item;
-    if(!byProj[k])byProj[k]={project:r.project,item:r.item,team:r.team,months:{},total:0};
-    const m=r.dueMonth;if(m){byProj[k].months[m]=(byProj[k].months[m]||0)+r.amount;byProj[k].total+=r.amount}
-  });
-  const projArr=Object.values(byProj).sort((a,b)=>b.total-a.total);
-
-  h+='<div class="sc-section"><div class="sc-section-title">월별 입금 예정</div><div class="sc-tbl-wrap"><table class="sc-tbl"><thead><tr><th>프로젝트</th><th>공종</th>';
-  for(let m=1;m<=12;m++)h+=`<th class="r" style="min-width:60px">${m}월</th>`;
-  h+='<th class="r" style="border-left:1px solid var(--border-main)">합계</th></tr></thead><tbody>';
-  projArr.forEach(p=>{
-    h+=`<tr><td class="name" title="${p.project}">${p.project}</td><td class="sub">${p.item}</td>`;
-    for(let m=1;m<=12;m++){const v=p.months[m]||0;h+=`<td class="r" style="color:${v?'var(--text-primary)':'var(--text-muted)'}">${v?scFmtAmt(v):'-'}</td>`}
-    h+=`<td class="r" style="font-weight:700;border-left:1px solid var(--border-main)">${scFmtAmt(p.total)}</td></tr>`;
-  });
-  h+='</tbody><tfoot><tr><td>합계</td><td></td>';
-  for(let m=1;m<=12;m++){const v=data.filter(r=>r.dueMonth===m).reduce((s,r)=>s+r.amount,0);h+=`<td class="r">${v?scFmtAmt(v):'-'}</td>`}
-  h+=`<td class="r" style="border-left:1px solid var(--border-main)">${scFmtAmt(data.reduce((s,r)=>s+r.amount,0))}</td></tr></tfoot>`;
-  h+='</table></div></div>';
-
-  // ═══ Detail list ═══
   h+='<div class="sc-section"><div class="sc-section-title">상세 목록</div><div class="sc-tbl-wrap"><table class="sc-tbl"><thead><tr>';
-  h+='<th>담당팀</th><th>프로젝트</th><th>공종</th><th>청구예정일</th><th>입금예정일</th><th class="r">수금목표액</th></tr></thead><tbody>';
+  h+='<th>담당팀</th><th style="text-align:center">프로젝트</th><th>공종</th><th>청구예정일</th><th>입금예정일</th><th class="r">수금목표액</th></tr></thead><tbody>';
   data.forEach((r,i)=>{
     const origIdx=SC_PLAN.indexOf(r);
     const isPast=r.dueDate&&new Date(r.dueDate)<new Date();
-    h+=`<tr class="clickable" onclick="scOpenEdit('plan',${origIdx})"><td class="sub">${r.team}</td><td class="name">${r.project}</td><td class="sub">${r.item}</td>
+    h+=`<tr class="clickable" onclick="scOpenEdit('plan',${origIdx})"><td class="sub">${r.team}</td><td style="text-align:center;font-weight:700;color:var(--text-primary)">${r.project}</td><td class="sub">${r.item}</td>
       <td class="sub">${scFmtDate(r.invoiceDate)}</td>
       <td style="color:${isPast?'var(--kpi-red)':'var(--text-secondary)'};font-size:12px">${scFmtDate(r.dueDate)}</td>
       <td class="r">${r.amount.toLocaleString()}</td></tr>`;
@@ -4689,35 +4628,36 @@ function scRenderAnalysis(){
   // For projects only in analysis without plan, target stays 0
   const projs=Object.values(byProj).sort((a,b)=>b.target-a.target);
 
+  // Detail with status + reason (상세 내역 먼저)
+  h+='<div class="sc-section"><div class="sc-section-title">상세 내역</div><div class="sc-tbl-wrap"><table class="sc-tbl"><thead><tr>';
+  h+='<th>입금완료일</th><th>담당팀</th><th style="text-align:center">프로젝트</th><th class="r">목표</th><th class="r">실적</th><th style="text-align:center">상태</th><th>미수금사유</th></tr></thead><tbody>';
+  data.forEach((r,i)=>{
+    const origIdx=SC_ANALYSIS.indexOf(r);
+    const sc=r.status==='수금완료'?'green':r.status==='부분수금'?'amber':r.status==='미수금'?'red':'gray';
+    h+=`<tr class="clickable" onclick="scOpenEdit('analysis',${origIdx})"><td class="sub">${scFmtDate(r.date||r.paidDate||r.dueDate)}</td><td class="sub">${r.team}</td><td style="text-align:center;font-weight:700;color:var(--text-primary)">${r.project}</td>
+      <td class="r">${r.target.toLocaleString()}</td><td class="r" style="color:${r.actual?'var(--sig)':'var(--text-muted)'}">${r.actual?r.actual.toLocaleString():'-'}</td>
+      <td style="text-align:center"><span class="sc-badge ${sc}">${r.status||'-'}</span></td>
+      <td class="sub" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${r.reason?'var(--kpi-red)':'var(--text-muted)'}" title="${r.reason||''}">${r.reason||'-'}</td></tr>`;
+  });
+  h+='</tbody></table></div></div>';
+
+  // 프로젝트별 목표 달성
   h+='<div class="sc-section"><div class="sc-section-title">프로젝트별 목표 달성</div><div class="sc-tbl-wrap"><table class="sc-tbl"><thead><tr>';
-  h+='<th>프로젝트</th><th>담당팀</th><th class="r">목표수금액</th><th class="r">수금실적</th><th class="r">미수금</th><th class="r">달성률</th></tr></thead><tbody>';
+  h+='<th style="text-align:center">프로젝트</th><th>담당팀</th><th class="r">목표수금액</th><th class="r">수금실적</th><th class="r">미수금</th><th class="r">달성률</th></tr></thead><tbody>';
   projs.forEach(p=>{
     const gap=p.target-p.actual;
     const rate=p.target>0?(p.actual/p.target*100):0;
-    h+=`<tr><td class="name">${p.name}</td><td class="sub">${p.team}</td>
+    h+=`<tr><td style="text-align:center;font-weight:700;color:var(--text-primary)">${p.name}</td><td class="sub">${p.team}</td>
       <td class="r">${p.target.toLocaleString()}</td>
       <td class="r" style="color:${p.actual?'var(--sig)':'var(--text-muted)'}">${p.actual?p.actual.toLocaleString():'-'}</td>
       <td class="r" style="color:${gap>0?'var(--kpi-red)':'var(--text-muted)'}">${gap>0?gap.toLocaleString():'-'}</td>
       <td class="r"><span class="sc-badge ${rate>=100?'green':rate>0?'amber':'gray'}">${rate.toFixed(0)}%</span></td></tr>`;
   });
   const tT=projs.reduce((s,p)=>s+p.target,0),tA=projs.reduce((s,p)=>s+p.actual,0);
-  h+=`</tbody><tfoot><tr><td>합계</td><td></td><td class="r">${tT.toLocaleString()}</td><td class="r" style="color:var(--sig)">${tA.toLocaleString()}</td>
+  h+=`</tbody><tfoot><tr><td style="text-align:center">합계</td><td></td><td class="r">${tT.toLocaleString()}</td><td class="r" style="color:var(--sig)">${tA.toLocaleString()}</td>
     <td class="r" style="color:var(--kpi-red)">${(tT-tA)>0?(tT-tA).toLocaleString():'-'}</td>
     <td class="r"><span class="sc-badge ${tT>0&&tA/tT>=0.8?'green':'amber'}">${tT>0?(tA/tT*100).toFixed(0):0}%</span></td></tr></tfoot>`;
   h+='</table></div></div>';
-
-  // Detail with status + reason
-  h+='<div class="sc-section"><div class="sc-section-title">상세 내역</div><div class="sc-tbl-wrap"><table class="sc-tbl"><thead><tr>';
-  h+='<th>입금완료일</th><th>담당팀</th><th>프로젝트</th><th class="r">목표</th><th class="r">실적</th><th>상태</th><th>미수금사유</th></tr></thead><tbody>';
-  data.forEach((r,i)=>{
-    const origIdx=SC_ANALYSIS.indexOf(r);
-    const sc=r.status==='수금완료'?'green':r.status==='부분수금'?'amber':r.status==='미수금'?'red':'gray';
-    h+=`<tr class="clickable" onclick="scOpenEdit('analysis',${origIdx})"><td class="sub">${scFmtDate(r.date||r.paidDate||r.dueDate)}</td><td class="sub">${r.team}</td><td class="name">${r.project}</td>
-      <td class="r">${r.target.toLocaleString()}</td><td class="r" style="color:${r.actual?'var(--sig)':'var(--text-muted)'}">${r.actual?r.actual.toLocaleString():'-'}</td>
-      <td><span class="sc-badge ${sc}">${r.status||'-'}</span></td>
-      <td class="sub" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${r.reason?'var(--kpi-red)':'var(--text-muted)'}" title="${r.reason||''}">${r.reason||'-'}</td></tr>`;
-  });
-  h+='</tbody></table></div></div>';
   document.getElementById('scTabAnalysis').innerHTML=h;
 }
 
@@ -7833,7 +7773,6 @@ function bmAfterLoad(fetchedAt,lastRun){
   const el=document.getElementById('bmLastSync');
   if(el){
     el.textContent='최종 동기화: '+(fetchedAt||'—');
-    if(lastRun)el.textContent+=' · 수집: '+lastRun.date+' ('+lastRun.bidCount+'/'+lastRun.specCount+'/'+lastRun.planCount+')';
   }
 }
 
