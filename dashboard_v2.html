@@ -7966,6 +7966,8 @@ function bmUntrack(bidNo){
   if(d){
     const idx=BIDS.findIndex(b=>b.name===d.name&&b.client===d.org);
     if(idx>=0)BIDS.splice(idx,1);
+    // GAS 발주정보 시트에서도 삭제
+    if(typeof gasCall==='function')gasCall({action:'deleteBid',bidname:d.name,client:d.org});
   }
   bmShowToast('🔓 추적 해제 · 발주정보에서 삭제됨');
   bmApplyFilters();
