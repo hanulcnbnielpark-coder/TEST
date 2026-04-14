@@ -1237,7 +1237,8 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 @keyframes bm-pulse{0%,100%{opacity:1}50%{opacity:0.6}}
 .bm-btn-track{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border-main);background:var(--bg-card);color:var(--text-secondary);transition:all 0.15s;white-space:nowrap}
 .bm-btn-track:hover{border-color:var(--sig);color:var(--sig);background:var(--sig-pale)}
-.bm-btn-track.tracked{border-color:var(--kpi-green);color:var(--kpi-green);background:var(--card-green-bg);cursor:default;pointer-events:none}
+.bm-btn-track.tracked{border-color:var(--kpi-green);color:var(--kpi-green);background:var(--card-green-bg)}
+.bm-btn-track.tracked:hover{border-color:var(--kpi-red);color:var(--kpi-red);background:var(--card-red-bg)}
 .bm-modal-overlay{position:fixed;inset:0;background:var(--overlay);z-index:200;display:none;align-items:center;justify-content:center;animation:bm-fadeIn 0.2s ease}
 .bm-modal-overlay.show{display:flex}
 @keyframes bm-fadeIn{from{opacity:0}to{opacity:1}}
@@ -7862,7 +7863,7 @@ function bmRenderTable(data){
     }
     const isT=bmTrackedIds.has(d.bidNo);
     const rc=isT?' bm-row-tracked':'';
-    const tBtn=isT?'<button class="bm-btn-track tracked">추적중 ✓</button>':`<button class="bm-btn-track" onclick="event.stopPropagation();bmTrackItem('${bmE(d.bidNo)}')">추적 등록</button>`;
+    const tBtn=isT?`<button class="bm-btn-track tracked" onclick="event.stopPropagation();bmUntrack('${bmE(d.bidNo)}')">추적중 ✓</button>`:`<button class="bm-btn-track" onclick="event.stopPropagation();bmTrackItem('${bmE(d.bidNo)}')">추적 등록</button>`;
     h+=`<tr class="${rc}" style="cursor:pointer" onclick="bmShowDetail('${bmE(d.bidNo)}')">
       <td style="color:var(--text-muted);font-size:12px">${i+1}</td>
       <td><span class="bm-tag ${typeTag}">${d.type}</span></td>
@@ -7901,7 +7902,7 @@ function bmShowDetail(bidNo){
   document.getElementById('bmModalBody').innerHTML=body;
   const isT=bmTrackedIds.has(d.bidNo);
   document.getElementById('bmModalActions').innerHTML=isT
-    ?'<button class="bm-modal-btn secondary" disabled style="opacity:0.6">✓ 추적 등록 완료</button><button class="bm-modal-btn secondary" onclick="bmCloseModal()">닫기</button>'
+    ?`<button class="bm-modal-btn secondary" onclick="bmUntrack('${bmE(d.bidNo)}');bmCloseModal()">🔓 추적 해제</button><button class="bm-modal-btn secondary" onclick="bmCloseModal()">닫기</button>`
     :`<button class="bm-modal-btn primary" onclick="bmTrackItem('${bmE(d.bidNo)}');bmCloseModal()">📌 발주정보에 추적 등록</button><button class="bm-modal-btn secondary" onclick="bmCloseModal()">닫기</button>`;
   document.getElementById('bmModal').classList.add('show');document.body.style.overflow='hidden';
 }
@@ -7955,6 +7956,20 @@ async function bmTrackItem(bidNo){
 }
 
 // ── Utils ──
+function bmUntrack(bidNo){
+  if(!bmTrackedIds.has(bidNo))return;
+  if(!confirm('추적 해제하시겠습니까?\n발주정보에서도 삭제됩니다.'))return;
+  bmTrackedIds.delete(bidNo);
+  localStorage.setItem('hanul_bm_tracked',JSON.stringify([...bmTrackedIds]));
+  // 발주정보(BIDS)에서도 제거
+  const d=BM_DATA_ALL.find(x=>x.bidNo===bidNo);
+  if(d){
+    const idx=BIDS.findIndex(b=>b.name===d.name&&b.client===d.org);
+    if(idx>=0)BIDS.splice(idx,1);
+  }
+  bmShowToast('🔓 추적 해제 · 발주정보에서 삭제됨');
+  bmApplyFilters();
+}
 function bmFmtAmt(n){n=parseFloat(n)||0;if(n>=1e8)return(n/1e8).toFixed(1).replace(/\.0$/,'')+'억';if(n>=1e4)return Math.round(n/1e4).toLocaleString()+'만';return n.toLocaleString()}
 function bmH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function bmE(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
