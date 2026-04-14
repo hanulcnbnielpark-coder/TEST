@@ -1180,7 +1180,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .bm-btn-refresh.loading .bm-spin{animation:bm-spin 0.8s linear infinite}
 @keyframes bm-spin{to{transform:rotate(360deg)}}
 .bm-last-sync{font-size:11px;color:var(--text-muted);margin-top:2px}
-.bm-kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.bm-kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px}
 .bm-kpi{border-radius:14px;padding:20px 22px;background:var(--bg-card);transition:var(--transition-theme),transform 0.15s;box-shadow:var(--shadow-sm);cursor:pointer;border:1.5px solid transparent;position:relative;overflow:hidden}
 .bm-kpi:hover{background:var(--bg-card-hover);transform:translateY(-2px);box-shadow:var(--shadow-md)}
 .bm-kpi.sel{border-color:var(--sig);background:var(--sig-pale)}
@@ -1266,7 +1266,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .bm-empty-text{font-weight:600;margin-bottom:4px;color:var(--text-tertiary)}
 .bm-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg-nav);color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;transition:transform 0.3s ease;pointer-events:none;display:flex;align-items:center;gap:8px}
 .bm-toast.show{transform:translateX(-50%) translateY(0)}
-@media(max-width:1100px){.bm-kpi-row{grid-template-columns:repeat(3,1fr);gap:8px}}
+@media(max-width:1100px){.bm-kpi-row{grid-template-columns:repeat(2,1fr);gap:8px}}
 @media(max-width:900px){.bm-container{padding:16px 14px}.bm-kpi-row{grid-template-columns:repeat(3,1fr);gap:8px}.bm-kpi{padding:16px}.bm-kpi-num{font-size:24px}.bm-head{flex-direction:column}.bm-filter-bar{flex-direction:column;align-items:stretch}.bm-f-search{width:100%}.bm-tw table{font-size:12px}.bm-tw th,.bm-tw td{padding:10px 12px}.bm-td-name{max-width:200px}}
 @media(max-width:480px){.bm-kpi-row{grid-template-columns:repeat(2,1fr)}.bm-kpi-num{font-size:20px}}
 </style>
@@ -7854,27 +7854,8 @@ function bmBuildOrgFilter(){
   orgs.forEach(o=>{const opt=document.createElement('option');opt.value=o;opt.textContent=o;sel.appendChild(opt)});
 }
 function bmApplyFilters(){
-  const search=(document.getElementById('bmSearchInput')||{}).value||'';
-  const org=(document.getElementById('bmOrgFilter')||{}).value||'';
-  const verdict=(document.getElementById('bmVerdictFilter')||{}).value||'';
-  const selDate=(document.getElementById('bmDateInput')||{}).value||new Date().toISOString().slice(0,10);
-  const realToday=new Date().toISOString().slice(0,10);
-  const sl=search.toLowerCase();
-  let f=BM_DATA_ALL.filter(d=>{
-    // 마감일 지난 건 숨기기
-    if(d.deadline&&d.deadline<realToday)return false;
-    // 선택 날짜 이후 공고는 숨기기 (미래 데이터)
-    if(d.noticeDate&&d.noticeDate>selDate)return false;
-    if(bmCurrentType&&d.type!==bmCurrentType)return false;
-    if(org&&d.org!==org)return false;
-    if(verdict==='미분석'){if(d.verdict)return false}else if(verdict&&d.verdict!==verdict)return false;
-    if(sl){const hay=(d.name+' '+d.keyword+' '+d.org+' '+(d.demandOrg||'')+' '+d.bidNo).toLowerCase();if(!hay.includes(sl))return false}
-    return true;
-  });
-  f.sort((a,b)=>{let va=a[bmSortKey]||'',vb=b[bmSortKey]||'';if(bmSortKey==='amount'){va=parseFloat(va)||0;vb=parseFloat(vb)||0}if(va<vb)return -1*bmSortDir;if(va>vb)return 1*bmSortDir;return 0});
-  BM_FILTERED=f;bmRenderKPI(f,selDate);bmRenderTable(f);
-  const fc=document.getElementById('bmFilterCount');if(fc)fc.innerHTML=`<b>${f.length}</b> / ${BM_DATA_ALL.length}건`;
-  const st=document.getElementById('bmStatTotal');if(st)st.textContent=BM_DATA_ALL.length;
+  bmKpiMode='';
+  bmApplyFiltersWithKpi();
 }
 
 // ── Sort ──
@@ -7886,16 +7867,41 @@ function bmRenderKPI(data,selDate){
   const d3=new Date(refDate);d3.setDate(d3.getDate()+3);const d3s=d3.toISOString().slice(0,10);
   const newToday=data.filter(d=>(d.noticeDate||'')===refDate).length;
   const deadlineSoon=data.filter(d=>d.deadline&&d.deadline>=refDate&&d.deadline<=d3s).length;
-  const eligible=data.filter(d=>d.verdict==='적격').length;
-  const review=data.filter(d=>d.verdict==='검토필요').length;
-  const tracked=data.filter(d=>bmTrackedIds.has(d.bidNo)).length;
   const el=document.getElementById('bmKpiRow');if(!el)return;
   el.innerHTML=`
-    <div class="bm-kpi"><div class="bm-kpi-label"><span class="bm-kpi-icon">📋</span> 당일 신규</div><div class="bm-kpi-num">${newToday}<span>건</span></div>${newToday>0?'<div class="bm-kpi-delta up">+'+newToday+'</div>':''}</div>
-    <div class="bm-kpi"><div class="bm-kpi-label"><span class="bm-kpi-icon">⏰</span> 마감 임박 (3일)</div><div class="bm-kpi-num ${deadlineSoon>0?'red':''}">${deadlineSoon}<span>건</span></div></div>
-    <div class="bm-kpi"><div class="bm-kpi-label"><span class="bm-kpi-icon">✅</span> 적격 판정</div><div class="bm-kpi-num green">${eligible}<span>건</span></div></div>
-    <div class="bm-kpi"><div class="bm-kpi-label"><span class="bm-kpi-icon">🔍</span> 검토필요</div><div class="bm-kpi-num amber">${review}<span>건</span></div></div>
-    <div class="bm-kpi"><div class="bm-kpi-label"><span class="bm-kpi-icon">📌</span> 추적 등록</div><div class="bm-kpi-num blue">${tracked}<span>건</span></div></div>`;
+    <div class="bm-kpi${bmKpiMode==='new'?' sel':''}" onclick="bmKpiFilter('new')"><div class="bm-kpi-label"><span class="bm-kpi-icon">📋</span> 당일 신규</div><div class="bm-kpi-num">${newToday}<span>건</span></div>${newToday>0?'<div class="bm-kpi-delta up">+'+newToday+'</div>':''}</div>
+    <div class="bm-kpi${bmKpiMode==='urgent'?' sel':''}" onclick="bmKpiFilter('urgent')"><div class="bm-kpi-label"><span class="bm-kpi-icon">⏰</span> 마감 임박 (3일)</div><div class="bm-kpi-num ${deadlineSoon>0?'red':''}">${deadlineSoon}<span>건</span></div></div>`;
+}
+let bmKpiMode='';
+function bmKpiFilter(mode){
+  bmKpiMode=bmKpiMode===mode?'':mode;
+  bmApplyFiltersWithKpi();
+}
+function bmApplyFiltersWithKpi(){
+  const search=(document.getElementById('bmSearchInput')||{}).value||'';
+  const org=(document.getElementById('bmOrgFilter')||{}).value||'';
+  const verdict=(document.getElementById('bmVerdictFilter')||{}).value||'';
+  const selDate=(document.getElementById('bmDateInput')||{}).value||new Date().toISOString().slice(0,10);
+  const realToday=new Date().toISOString().slice(0,10);
+  const d3=new Date(selDate);d3.setDate(d3.getDate()+3);const d3s=d3.toISOString().slice(0,10);
+  const sl=search.toLowerCase();
+  let f=BM_DATA_ALL.filter(d=>{
+    if(d.deadline&&d.deadline<realToday)return false;
+    if(d.noticeDate&&d.noticeDate>selDate)return false;
+    if(bmCurrentType&&d.type!==bmCurrentType)return false;
+    if(org&&d.org!==org)return false;
+    if(verdict==='미분석'){if(d.verdict)return false}else if(verdict&&d.verdict!==verdict)return false;
+    if(sl){const hay=(d.name+' '+d.keyword+' '+d.org+' '+(d.demandOrg||'')+' '+d.bidNo).toLowerCase();if(!hay.includes(sl))return false}
+    // KPI 카드 필터
+    if(bmKpiMode==='new'&&(d.noticeDate||'')!==selDate)return false;
+    if(bmKpiMode==='urgent'&&!(d.deadline&&d.deadline>=selDate&&d.deadline<=d3s))return false;
+    return true;
+  });
+  f.sort((a,b)=>{let va=a[bmSortKey]||'',vb=b[bmSortKey]||'';if(bmSortKey==='amount'){va=parseFloat(va)||0;vb=parseFloat(vb)||0}if(va<vb)return -1*bmSortDir;if(va>vb)return 1*bmSortDir;return 0});
+  BM_FILTERED=f;bmRenderKPI(BM_FILTERED.length?f:BM_DATA_ALL.filter(d=>!(d.deadline&&d.deadline<realToday)&&!(d.noticeDate&&d.noticeDate>selDate)),selDate);bmRenderTable(f);
+  const total=BM_DATA_ALL.filter(d=>!(d.deadline&&d.deadline<realToday)).length;
+  const fc=document.getElementById('bmFilterCount');if(fc)fc.innerHTML=`<b>${f.length}</b> / ${total}건`;
+  const st=document.getElementById('bmStatTotal');if(st)st.textContent=total;
 }
 
 // ── Table ──
@@ -7988,19 +7994,25 @@ async function bmTrackItem(bidNo){
   };
   BIDS.push(bidEntry);
 
-  // GAS에도 발주정보 추가
-  if(typeof gasCall==='function'){
+  // 메인 GAS에 발주정보 추가
+  if(typeof gasCall==='function'&&typeof GAS_WEB_URL!=='undefined'&&GAS_WEB_URL){
     gasCall({action:'addBid',rdate:bidEntry.rdate,adate:bidEntry.adate,cat:bidEntry.cat,client:bidEntry.client,bidname:bidEntry.name,amount:String(bidEntry.amount),status:bidEntry.status,desc:bidEntry.desc,qual:bidEntry.qual,mgr:bidEntry.mgr,fileUrl:bidEntry.fileUrl});
   }
 
   // 모니터링 시트에도 추적 등록
   try{
-    await fetch(BM_GAS_URL+'?action=trackBid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
-  }catch(err){try{new Image().src=BM_GAS_URL+'?action=trackBid&data='+encodeURIComponent(JSON.stringify(d))}catch(e2){}}
+    fetch(BM_GAS_URL+'?action=trackBid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).catch(()=>{});
+  }catch(err){}
 
   bmApplyFilters();
-  bmShowToast('📌 발주정보에 이관 완료 — 탭 이동 중...');
-  setTimeout(()=>{goPage('bidinfo')},800);
+  bmShowToast('📌 발주정보에 이관 완료');
+
+  // 발주정보 탭으로 이동 + 오늘 날짜 강제 + 렌더
+  setTimeout(()=>{
+    const df=document.getElementById('bidDateFilter');
+    if(df)df.value=todayStr;
+    goPage('bidinfo');
+  },600);
 }
 
 // ── Utils ──
