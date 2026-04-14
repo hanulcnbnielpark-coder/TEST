@@ -1,7 +1,14 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<script>/* session check disabled for standalone use */</script>
+<script>
+/* ═══ 세션 체크 — 로그인 안 됐으면 index.html로 리다이렉트 ═══ */
+(function(){
+  var s=sessionStorage.getItem('hanul_session');
+  if(!s){location.replace('index.html');return}
+  try{var d=JSON.parse(s);if(!d.email){location.replace('index.html');return}}catch(e){location.replace('index.html')}
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HANUL CNB 통합관리 대시보드 v2.0.1</title>
@@ -352,6 +359,7 @@ select.lot-edit{cursor:pointer;padding-right:24px;appearance:auto}
 
 /* ── Data Entry Page ── */
 .entry-container{padding:20px 24px 0;max-width:1400px;margin:0 auto}
+#pageEntry .entry-container{max-width:100%;padding:20px 24px 0}
 .entry-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
 .entry-title{font-size:20px;font-weight:800;color:var(--text-primary);letter-spacing:-0.3px}
 .entry-actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -1270,6 +1278,44 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 @media(max-width:1100px){.bm-kpi-row{grid-template-columns:repeat(2,1fr);gap:8px}}
 @media(max-width:900px){.bm-container{padding:16px 14px}.bm-kpi-row{grid-template-columns:repeat(3,1fr);gap:8px}.bm-kpi{padding:16px}.bm-kpi-num{font-size:24px}.bm-head{flex-direction:column}.bm-filter-bar{flex-direction:column;align-items:stretch}.bm-f-search{width:100%}.bm-tw table{font-size:12px}.bm-tw th,.bm-tw td{padding:10px 12px}.bm-td-name{max-width:200px}}
 @media(max-width:480px){.bm-kpi-row{grid-template-columns:repeat(2,1fr)}.bm-kpi-num{font-size:20px}}
+
+/* ═══ 업데이트 이력 ═══ */
+.notice-wrap{max-width:820px;margin:0 auto;padding:32px 0}
+.notice-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.notice-header h2{font-size:22px;font-weight:800;color:var(--text-primary);letter-spacing:-0.5px}
+.notice-header h2 span{color:var(--sig);margin-right:8px}
+.notice-admin-btn{background:var(--sig);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;display:none}
+.notice-admin-btn:hover{opacity:0.85}
+.notice-card{background:var(--bg-card);border:1px solid var(--border-main);border-radius:16px;padding:0;margin-bottom:20px;overflow:hidden;transition:var(--transition-theme)}
+.notice-card-head{padding:20px 24px 16px;border-bottom:1px solid var(--border-light);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.notice-ver{display:inline-flex;align-items:center;gap:8px}
+.notice-ver-badge{background:var(--sig);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.3px}
+.notice-ver-title{font-size:17px;font-weight:700;color:var(--text-primary);letter-spacing:-0.3px}
+.notice-meta{font-size:12px;color:var(--text-tertiary);white-space:nowrap;margin-top:4px}
+.notice-card-body{padding:20px 24px 24px}
+.notice-item{display:flex;gap:14px;margin-bottom:18px}
+.notice-item:last-child{margin-bottom:0}
+.notice-num{width:26px;height:26px;min-width:26px;border-radius:50%;background:var(--sig);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.notice-item-content{flex:1}
+.notice-item-title{font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+.notice-item-desc{font-size:13px;color:var(--text-secondary);line-height:1.65}
+.notice-callout{background:var(--bg-hover);border-left:3px solid var(--sig);border-radius:0 8px 8px 0;padding:10px 14px;margin-top:8px;font-size:12px;color:var(--text-tertiary);line-height:1.6}
+.notice-empty{text-align:center;padding:60px 20px;color:var(--text-tertiary);font-size:14px}
+
+/* 공지 작성 모달 */
+.notice-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2000;display:none;align-items:center;justify-content:center}
+.notice-modal-bg.open{display:flex}
+.notice-modal{background:var(--bg-card);border-radius:16px;width:min(560px,92vw);max-height:85vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.notice-modal h3{font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:20px}
+.notice-field{margin-bottom:14px}
+.notice-field label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px}
+.notice-field input,.notice-field textarea{width:100%;background:var(--bg-hover);border:1px solid var(--border-main);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text-primary);font-family:inherit;resize:vertical}
+.notice-field textarea{min-height:180px;line-height:1.7}
+.notice-modal-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.notice-modal-btns button{padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none}
+.notice-modal-btns .nm-save{background:var(--sig);color:#fff}
+.notice-modal-btns .nm-cancel{background:var(--bg-hover);color:var(--text-secondary);border:1px solid var(--border-main)}
+@media(max-width:600px){.notice-wrap{padding:16px 0}.notice-card-head{padding:16px 18px 14px;flex-direction:column}.notice-card-body{padding:16px 18px 20px}.notice-item{gap:10px}.notice-ver-title{font-size:15px}}
 </style>
 </head>
 <body>
@@ -1285,6 +1331,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
     <div class="nav-main" id="mainTabExecAn" onclick="switchTrack('execAn')" style="color:var(--text-on-nav)">실행분석</div>
     <div class="nav-main ba-purple" id="mainTabBid" onclick="switchTrack('bid')">투찰분석</div>
     <div class="nav-main" id="mainTabEntry" onclick="switchTrack('entry')" style="color:#64748B;font-weight:600;font-size:13px">데이터 편집</div>
+    <div class="nav-main" id="mainTabNotice" onclick="switchTrack('notice')" style="color:var(--text-on-nav);position:relative">📢 업데이트<span id="noticeDot" style="display:none;width:7px;height:7px;background:#EF4444;border-radius:50%;position:absolute;top:10px;right:2px"></span></div>
   </div>
   <div class="nav-right">
     <span id="userGreeting" style="color:rgba(255,255,255,0.65);font-size:12px;font-weight:400;letter-spacing:-0.2px;white-space:nowrap"></span>
@@ -1292,7 +1339,9 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
     <div class="sync-badge" id="syncBadge" style="display:none"></div>
     <button class="nav-btn green" id="refreshBtn" onclick="refreshGSheet()" style="display:none">🔄 새로고침</button>
     <button class="nav-btn" id="clearBtn" onclick="clearFilters()" style="display:none">✕ 필터 해제</button>
+    <button class="nav-btn" id="adminBtn" onclick="adminOpen()" style="display:none;border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7)" title="계정관리">⚙️</button>
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="테마 전환">🌙</button>
+    <button class="theme-toggle" onclick="doLogout()" title="로그아웃" style="font-size:12px">🚪</button>
   </div>
 </div>
 <!-- Sub-nav: 수주관리 -->
@@ -1623,6 +1672,30 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
     <div class="bm-modal-actions" id="bmModalActions"></div>
   </div>
 </div>
+<!-- Admin Modal -->
+<div class="bm-modal-overlay" id="adminModal" onclick="if(event.target===this)adminClose()">
+  <div class="bm-modal" style="width:560px">
+    <div class="bm-modal-header">
+      <div><div style="font-size:17px;font-weight:700">⚙️ 계정관리</div><div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">admin 전용 — 계정 추가/삭제/비밀번호 변경</div></div>
+      <button class="bm-modal-close" onclick="adminClose()">✕</button>
+    </div>
+    <div class="bm-modal-body" style="max-height:60vh;overflow-y:auto">
+      <div id="adminAccountList" style="margin-bottom:20px"><div style="color:var(--text-muted);padding:20px;text-align:center">불러오는 중...</div></div>
+      <div style="border-top:1px solid var(--border-main);padding-top:16px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--text-primary)">➕ 새 계정 추가</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <input id="admNewId" placeholder="계정 ID" style="padding:8px 12px;border:1.5px solid var(--border-main);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-size:13px;font-family:inherit">
+          <input id="admNewPw" placeholder="비밀번호" type="password" style="padding:8px 12px;border:1.5px solid var(--border-main);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-size:13px;font-family:inherit">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:8px">
+          <input id="admNewName" placeholder="이름" style="padding:8px 12px;border:1.5px solid var(--border-main);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-size:13px;font-family:inherit">
+          <select id="admNewRole" style="padding:8px 12px;border:1.5px solid var(--border-main);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-size:13px;font-family:inherit"><option value="user">user</option><option value="admin">admin</option></select>
+          <button onclick="adminAdd()" style="padding:8px;border:none;border-radius:8px;background:var(--sig);color:#fff;font-size:13px;font-weight:700;cursor:pointer">추가</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="bm-toast" id="bmToast"></div>
 
 
@@ -1661,6 +1734,7 @@ function switchTrack(track){
   document.getElementById('mainTabExec').classList.toggle('active',track==='exec');
   document.getElementById('mainTabExecAn').classList.toggle('active',track==='execAn');
   document.getElementById('mainTabBid').classList.toggle('active',track==='bid');
+  document.getElementById('mainTabNotice').classList.toggle('active',track==='notice');
   document.getElementById('mainTabEntry').classList.toggle('active',track==='entry');
   document.getElementById('subNavSales').classList.toggle('sub-nav-hide',track!=='sales');
   document.getElementById('subNavCollect').classList.toggle('sub-nav-hide',track!=='collect');
@@ -1671,7 +1745,7 @@ function switchTrack(track){
   if(track==='contract'){
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('pageContract').classList.add('active');
-    if(!CT_DATA.length && gsSheetId) ctFetchGS();
+    if(!CT_DATA.length && GAS_WEB_URL) ctFetchGS();
     else ctRender();
   } else if(track==='sales'){
     if(wasEntry&&gsSheetId) refreshGSheet();
@@ -1698,6 +1772,13 @@ function switchTrack(track){
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('pageBid').classList.add('active');
     setTimeout(()=>baGo(),100);
+  } else if(track==='notice'){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('pageNotice').classList.add('active');
+    ntFetch();
+    // admin만 작성 버튼 표시
+    var wr=document.getElementById('noticeWriteBtn');
+    if(wr){try{var ns=JSON.parse(sessionStorage.getItem('hanul_session')||'{}');wr.style.display=(ns.role==='admin')?'block':'none'}catch(e){wr.style.display='none'}}
   } else if(track==='entry'){
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.querySelectorAll('#subNavSales .nav-tab').forEach(t=>t.classList.remove('active'));
@@ -1724,6 +1805,7 @@ function goPage(id){
     document.getElementById('mainTabExec').classList.remove('active');
     document.getElementById('mainTabExecAn').classList.remove('active');
     document.getElementById('mainTabBid').classList.remove('active');
+    document.getElementById('mainTabNotice').classList.remove('active');
     document.getElementById('mainTabEntry').classList.remove('active');
     document.getElementById('subNavSales').classList.remove('sub-nav-hide');
     document.getElementById('subNavCollect').classList.add('sub-nav-hide');
@@ -2504,7 +2586,7 @@ async function lotSaveToSheet(idx){
   const p=encodeURIComponent(r.p||'');
   const l=encodeURIComponent(r.l||'');
   const d=encodeURIComponent(JSON.stringify(payload));
-  const url=GAS_WEB_URL+'?action=editProject&client='+c+'&project='+p+'&lot='+l+'&data='+d+'&_='+Date.now();
+  const url=GAS_WEB_URL+'?action=editProject&token='+GAS_TOKEN+'&client='+c+'&project='+p+'&lot='+l+'&data='+d+'&_='+Date.now();
   // debug removed
   try{
     await fetch(url,{mode:'no-cors',redirect:'follow'});
@@ -2574,8 +2656,10 @@ function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 const GAS_WEB_URL='https://script.google.com/macros/s/AKfycbzo4e9IkpijP7arJEJv1v42yuD5ixyN63NyvnepnslMfmaG4WT_Htr8_7iTwXbzxvovYA/exec';
 
 // GAS에 데이터 전송 (CORS 우회: Image GET 방식)
+const GAS_TOKEN='hanul_cnb_2026_sec';
 function gasCall(params){
   if(!GAS_WEB_URL){return}
+  params.token=GAS_TOKEN;
   const qs=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(String(v||''))).join('&');
   const url=GAS_WEB_URL+'?'+qs+'&_='+Date.now();
   
@@ -6143,37 +6227,28 @@ function ctDateYear(d){const m=(d||'').match(/(\d{4})/);return m?m[1]:''}
 
 let CT_FETCHING=false;
 async function ctFetchGS(){
-  if(!gsSheetId||CT_FETCHING)return;
+  if(!GAS_WEB_URL||CT_FETCHING)return;
   CT_FETCHING=true;
-  const sheetNames=['계약현황','계약 현황'];
   CT_DATA=[];
-  for(const sn of sheetNames){
-    try{
-      const u='https://docs.google.com/spreadsheets/d/'+gsSheetId+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(sn);
-      const r=await fetch(u+'&_='+Date.now());if(!r.ok)continue;
-      const txt=await r.text();
-      const rows=txt.trim().split('\n').map(l=>{const m=[];let c='',q=false;for(let i=0;i<l.length;i++){if(l[i]==='"')q=!q;else if(l[i]===','&&!q){m.push(c.replace(/^"|"$/g,''));c=''}else c+=l[i]}m.push(c.replace(/^"|"$/g,''));return m});
-      if(rows.length<2)continue;
-      const h=rows[0].map(x=>x.trim());
-      const ci=n=>h.findIndex(x=>x.includes(n));
-      const iG=ci('구분'),iDT=ci('계약일자'),iN=ci('과업'),iC=(ci('발주')>=0?ci('발주'):ci('계약자')),iA=ci('계약금'),iCo=ci('수금'),iT=ci('담당'),iRt=ci('비율'),iB=ci('비고'),iNF=ci('첨부자료')>=0?ci('첨부자료'):ci('기성폴더');
-      const iTY=ci('목표연도'),iTK=ci('목표금액');
-      if(iN<0)continue;
-      // 목표연도/목표금액 매핑 읽기
-      if(iTY>=0 && iTK>=0){
-        CT_TARGETS={};
-        for(let i=1;i<rows.length;i++){
-          const yr=(rows[i][iTY]||'').trim();const amt=parseFloat(String(rows[i][iTK]).replace(/,/g,''));
-          if(yr && !isNaN(amt)) CT_TARGETS[yr]=amt;
-        }
-      }
-      for(let i=1;i<rows.length;i++){
-        const v=rows[i];const name=(iN>=0?v[iN]||'':'').trim();if(!name)continue;
-        if(CT_DELETED_ROWS.has(i+1))continue;
-        CT_DATA.push({_row:i+1,gubun:iG>=0?v[iG]||'':'',date:iDT>=0?(v[iDT]||'').trim():'',name:name,contractor:iC>=0?(v[iC]||'').trim():'',amount:iA>=0?parseFloat(String(v[iA]).replace(/,/g,''))||0:0,collect:iCo>=0?parseFloat(String(v[iCo]).replace(/,/g,''))||0:0,team:iT>=0?(v[iT]||'').trim():'',ratio:iRt>=0?(v[iRt]||'').trim():'',note:iB>=0?(v[iB]||'').trim():'',nasFolder:iNF>=0?(v[iNF]||'').trim():''});
-      }
-      if(CT_DATA.length)break;
-    }catch(e){}
+  try{
+    const url=GAS_WEB_URL+'?action=getContractData&token='+GAS_TOKEN+'&_='+Date.now();
+    const r=await fetch(url);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const json=await r.json();
+    if(!json.ok){showToast('⚠️ 계약현황: '+(json.error||'오류'));CT_FETCHING=false;return}
+    // 목표 매핑
+    if(json.targets&&Object.keys(json.targets).length){
+      CT_TARGETS={};
+      for(const yr in json.targets) CT_TARGETS[yr]=json.targets[yr];
+    }
+    // 데이터 — 삭제된 행 제외
+    (json.rows||[]).forEach(row=>{
+      if(CT_DELETED_ROWS.has(row._row))return;
+      CT_DATA.push(row);
+    });
+  }catch(e){
+    console.error('ctFetchGS error:',e);
+    showToast('⚠️ 계약현황 로드 실패');
   }
   if(CT_DATA.length)showToast('✅ 계약현황 '+CT_DATA.length+'건 로드');
   CT_FETCHING=false;
@@ -7043,6 +7118,33 @@ function ctDelProject(){
   </div>
 </div>
 
+<!-- ═══ 업데이트 이력 페이지 ═══ -->
+<div class="page" id="pageNotice">
+  <div class="container">
+    <div class="notice-wrap">
+      <div class="notice-header">
+        <h2><span>📢</span>업데이트 이력</h2>
+        <button class="notice-admin-btn" id="noticeWriteBtn" onclick="ntOpenModal()">+ 새 공지 작성</button>
+      </div>
+      <div id="noticeList"><div class="notice-empty">불러오는 중...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 공지 작성 모달 -->
+<div class="notice-modal-bg" id="ntModalBg" onclick="if(event.target===this)ntCloseModal()">
+  <div class="notice-modal">
+    <h3>업데이트 공지 작성</h3>
+    <div class="notice-field"><label>버전</label><input id="ntVer" placeholder="예: v2.0.4"></div>
+    <div class="notice-field"><label>제목</label><input id="ntTitle" placeholder="예: 수금관리 리뉴얼 및 버그 수정"></div>
+    <div class="notice-field"><label>내용 (항목별 줄바꿈 — 첫 줄이 제목, 나머지가 설명)</label><textarea id="ntBody" placeholder="수금관리 전월분석 순서 변경&#10;상세내역 → 목표달성 순서로 변경했습니다.&#10;&#10;입찰모니터링 탭 추가&#10;나라장터 공고 수집 연동 + 추적등록 기능이 추가되었습니다.&#10;&#10;※ 중요: 줄머리에 ※를 붙이면 강조 박스로 표시됩니다."></textarea></div>
+    <div class="notice-modal-btns">
+      <button class="nm-cancel" onclick="ntCloseModal()">취소</button>
+      <button class="nm-save" onclick="ntSave()">저장</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════
 // 실행분석 모듈 (exec_analysis)
@@ -7149,7 +7251,7 @@ function tsAddManualAdj(key,worker,proj,grade,team){
   if(!EX_MANUAL_ADJ[key])EX_MANUAL_ADJ[key]=[];
   EX_MANUAL_ADJ[key].push({hours:hrs,desc,date,team:tm,grade:gr});
   tsSaveAdjLocal();
-  const saveUrl=GAS_WEB_URL+'?action=tsAdjSave&project='+encodeURIComponent(proj)+'&worker='+encodeURIComponent(worker)+'&hours='+hrs+'&desc='+encodeURIComponent(desc)+'&date='+encodeURIComponent(date)+'&team='+encodeURIComponent(tm)+'&grade='+encodeURIComponent(gr)+'&_='+Date.now();
+  const saveUrl=GAS_WEB_URL+'?action=tsAdjSave&token='+GAS_TOKEN+'&project='+encodeURIComponent(proj)+'&worker='+encodeURIComponent(worker)+'&hours='+hrs+'&desc='+encodeURIComponent(desc)+'&date='+encodeURIComponent(date)+'&team='+encodeURIComponent(tm)+'&grade='+encodeURIComponent(gr)+'&_='+Date.now();
   new Image().src=saveUrl;
   showToast('✅ +'+hrs+'h 추가 (시트 저장됨)');
   if(document.getElementById('tsAdjWorkerName')){tsClosePanel();exRenderProject();}
@@ -7161,7 +7263,7 @@ function tsDeleteAdj(key,idx,worker,proj,grade){
   if(!EX_MANUAL_ADJ[key].length)delete EX_MANUAL_ADJ[key];
   tsSaveAdjLocal();
   // GAS 삭제 (Image 방식 — CORS 우회)
-  const delUrl=GAS_WEB_URL+'?action=tsAdjDelete&project='+encodeURIComponent(proj)+'&worker='+encodeURIComponent(worker)+'&idx='+idx+'&_='+Date.now();
+  const delUrl=GAS_WEB_URL+'?action=tsAdjDelete&token='+GAS_TOKEN+'&project='+encodeURIComponent(proj)+'&worker='+encodeURIComponent(worker)+'&idx='+idx+'&_='+Date.now();
   new Image().src=delUrl;
   showToast('🗑️ 삭제됨');
   exShowTimesheetDetail(worker,proj,grade);
@@ -7197,7 +7299,7 @@ function exSaveMiscCost(proj){
   if(!EX_MISC_COST[proj])EX_MISC_COST[proj]=[];
   EX_MISC_COST[proj].push({amt,desc});
   // GAS로 종료과업 시트에 행 추가
-  const saveUrl=GAS_WEB_URL+'?action=addMiscCost&project='+encodeURIComponent(proj)+'&amount='+amt+'&year='+year+'&desc='+encodeURIComponent(desc)+'&_='+Date.now();
+  const saveUrl=GAS_WEB_URL+'?action=addMiscCost&token='+GAS_TOKEN+'&project='+encodeURIComponent(proj)+'&amount='+amt+'&year='+year+'&desc='+encodeURIComponent(desc)+'&_='+Date.now();
   new Image().src=saveUrl;
   showToast('✅ 기타경비 '+exF(amt)+' 추가됨');
   tsClosePanel();
@@ -7645,7 +7747,7 @@ function exSaveFeedbackGAS(proj){
   if(!GAS_WEB_URL){showToast('⚠️ GAS 연결이 필요합니다');return}
   const fb=EX_FEEDBACK[proj];if(!fb){showToast('⚠️ 저장할 내용이 없습니다');return}
   const payload=JSON.stringify(fb);
-  const url=GAS_WEB_URL+'?action=saveFeedback&project='+encodeURIComponent(proj)+'&data='+encodeURIComponent(payload)+'&_='+Date.now();
+  const url=GAS_WEB_URL+'?action=saveFeedback&token='+GAS_TOKEN+'&project='+encodeURIComponent(proj)+'&data='+encodeURIComponent(payload)+'&_='+Date.now();
   new Image().src=url;
   showToast('✅ 수행환류 저장 완료');
 }
@@ -7693,7 +7795,7 @@ async function exSavePay(){
   try{
     // 기존 과업 기성금 삭제 후 재입력 방식
     const data=entries.map(e=>e.ym+'|'+e.amt).join(';;');
-    const url=GAS_WEB_URL+'?action=savePayment&project='+encodeURIComponent(EX_PE_PROJ)+'&entries='+encodeURIComponent(data)+'&_='+Date.now();
+    const url=GAS_WEB_URL+'?action=savePayment&token='+GAS_TOKEN+'&project='+encodeURIComponent(EX_PE_PROJ)+'&entries='+encodeURIComponent(data)+'&_='+Date.now();
     await fetch(url,{mode:'no-cors',redirect:'follow'});
     showToast('✅ 기성금 저장 완료');
     exClosePay();exAnRender();
@@ -7941,7 +8043,7 @@ async function bmTrackItem(bidNo){
 
   // 모니터링 시트에도 추적 등록
   try{
-    fetch(BM_GAS_URL+'?action=trackBid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).catch(()=>{});
+    fetch(BM_GAS_URL+'?action=trackBid&token='+GAS_TOKEN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).catch(()=>{});
   }catch(err){}
 
   bmApplyFilters();
@@ -7978,6 +8080,236 @@ function bmE(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
 function bmShowToast(msg){const t=document.getElementById('bmToast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),3000)}
 function bmShiftDate(d){const inp=document.getElementById('bmDateInput');const dt=new Date(inp.value);dt.setDate(dt.getDate()+d);inp.value=dt.toISOString().slice(0,10);bmApplyFilters()}
 function bmGoToday(){document.getElementById('bmDateInput').value=new Date().toISOString().slice(0,10);bmApplyFilters()}
+
+// ═══════════════════════════════════════════════════════════════
+//  로그아웃 + 관리자 패널
+// ═══════════════════════════════════════════════════════════════
+function doLogout(){
+  if(!confirm('로그아웃 하시겠습니까?'))return;
+  sessionStorage.removeItem('hanul_session');
+  location.replace('index.html');
+}
+
+// admin 버튼 표시 (로그인 사용자가 admin일 때만)
+(function(){
+  try{
+    var s=JSON.parse(sessionStorage.getItem('hanul_session')||'{}');
+    if(s.role==='admin'){var b=document.getElementById('adminBtn');if(b)b.style.display=''}
+  }catch(e){}
+})();
+
+function adminOpen(){
+  document.getElementById('adminModal').classList.add('show');
+  document.body.style.overflow='hidden';
+  adminLoadAccounts();
+}
+function adminClose(){
+  document.getElementById('adminModal').classList.remove('show');
+  document.body.style.overflow='';
+}
+
+async function adminLoadAccounts(){
+  const el=document.getElementById('adminAccountList');
+  try{
+    const res=await fetch(GAS_WEB_URL+'?action=getAccounts&token='+GAS_TOKEN);
+    const json=await res.json();
+    if(!json.ok){el.innerHTML='<div style="color:var(--kpi-red);padding:12px">오류: '+(json.error||'')+'</div>';return}
+    let h='<table style="width:100%;font-size:13px;border-collapse:collapse">';
+    h+='<tr style="border-bottom:1px solid var(--border-main)"><th style="text-align:left;padding:8px;color:var(--text-tertiary)">계정</th><th style="text-align:left;padding:8px;color:var(--text-tertiary)">이름</th><th style="text-align:center;padding:8px;color:var(--text-tertiary)">권한</th><th style="text-align:center;padding:8px;color:var(--text-tertiary)">상태</th><th style="padding:8px;color:var(--text-tertiary)">최종접속</th><th style="padding:8px"></th></tr>';
+    json.accounts.forEach(a=>{
+      h+=`<tr style="border-bottom:1px solid var(--border-light)">
+        <td style="padding:8px;font-weight:600;color:var(--text-primary)">${a.email}</td>
+        <td style="padding:8px;color:var(--text-secondary)">${a.name}</td>
+        <td style="padding:8px;text-align:center"><span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${a.role==='admin'?'var(--sig-pale)':'var(--bg-thead)'};color:${a.role==='admin'?'var(--sig)':'var(--text-tertiary)'};font-weight:600">${a.role}</span></td>
+        <td style="padding:8px;text-align:center;color:${a.status==='활성'?'var(--kpi-green)':'var(--text-muted)'}">${a.status}</td>
+        <td style="padding:8px;font-size:11px;color:var(--text-muted)">${a.lastLogin?a.lastLogin.slice(5):'—'}</td>
+        <td style="padding:8px;text-align:right;white-space:nowrap">${a.email!=='admin'?`<button onclick="adminResetPw('${a.email}')" style="font-size:11px;padding:3px 8px;border:1px solid var(--border-main);border-radius:6px;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;margin-right:4px">PW</button><button onclick="adminDel('${a.email}')" style="font-size:11px;padding:3px 8px;border:1px solid var(--card-red-border);border-radius:6px;background:var(--card-red-bg);color:var(--kpi-red);cursor:pointer">삭제</button>`:''}</td>
+      </tr>`;
+    });
+    h+='</table>';
+    el.innerHTML=h;
+  }catch(err){el.innerHTML='<div style="color:var(--kpi-red);padding:12px">연결 실패</div>'}
+}
+
+function adminAdd(){
+  const id=document.getElementById('admNewId').value.trim();
+  const pw=document.getElementById('admNewPw').value.trim();
+  const name=document.getElementById('admNewName').value.trim();
+  const role=document.getElementById('admNewRole').value;
+  if(!id||!pw){bmShowToast('⚠️ 계정ID와 비밀번호 필수');return}
+  gasCall({action:'addAccount',email:id,pw:pw,name:name||id,role:role});
+  bmShowToast('✅ 계정 추가: '+id);
+  document.getElementById('admNewId').value='';
+  document.getElementById('admNewPw').value='';
+  document.getElementById('admNewName').value='';
+  setTimeout(adminLoadAccounts,1500);
+}
+
+function adminDel(email){
+  if(!confirm(email+' 계정을 삭제하시겠습니까?'))return;
+  gasCall({action:'deleteAccount',email:email});
+  bmShowToast('🗑️ 삭제: '+email);
+  setTimeout(adminLoadAccounts,1500);
+}
+
+function adminResetPw(email){
+  const pw=prompt(email+' 새 비밀번호 입력:');
+  if(!pw)return;
+  gasCall({action:'changePw',email:email,newpw:pw});
+  bmShowToast('🔑 비밀번호 변경: '+email);
+}
+
+// ═══════════════════════════════════════
+// 업데이트 이력 (Notices) 모듈
+// ═══════════════════════════════════════
+let NT_DATA=[],NT_LOADED=false;
+
+// 페이지 로드 시 알림 체크 (조용히)
+(function(){
+  setTimeout(ntCheckNew,3000);
+})();
+
+async function ntCheckNew(){
+  try{
+    const res=await fetch(BM_GAS_URL+'?action=getNotices&_='+Date.now());
+    const json=await res.json();
+    if(json.ok&&json.notices&&json.notices.length){
+      NT_DATA=json.notices;NT_LOADED=true;
+      // 최신 공지 날짜 확인
+      const sorted=[...NT_DATA].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      const latest=sorted[0];
+      if(latest&&latest.date){
+        const latestDate=new Date(latest.date+'T00:00:00');
+        const now=new Date();
+        const diffH=(now-latestDate)/(1000*60*60);
+        const lastSeen=localStorage.getItem('nt_last_seen')||'';
+        // 24시간 이내 + 아직 안 본 경우
+        if(diffH<24&&(!lastSeen||lastSeen<latest.date)){
+          const dot=document.getElementById('noticeDot');
+          if(dot)dot.style.display='inline-block';
+        }
+      }
+    }
+  }catch(e){}
+}
+
+async function ntFetch(){
+  // 탭 클릭 시 → 본 것으로 처리, 빨간 점 제거
+  const dot=document.getElementById('noticeDot');
+  if(dot)dot.style.display='none';
+  const today=new Date().toISOString().slice(0,10);
+  localStorage.setItem('nt_last_seen',today);
+
+  if(NT_LOADED&&NT_DATA.length){ntRender();return}
+  document.getElementById('noticeList').innerHTML='<div class="notice-empty">불러오는 중...</div>';
+  try{
+    const res=await fetch(BM_GAS_URL+'?action=getNotices&_='+Date.now());
+    const json=await res.json();
+    if(json.ok&&json.notices){
+      NT_DATA=json.notices;
+      NT_LOADED=true;
+    } else {
+      NT_DATA=[];
+    }
+  }catch(e){
+    console.error('공지 로드 실패:',e);
+    NT_DATA=[];
+  }
+  ntRender();
+}
+
+function ntRender(){
+  const wrap=document.getElementById('noticeList');
+  if(!NT_DATA.length){wrap.innerHTML='<div class="notice-empty">등록된 업데이트 이력이 없습니다.</div>';return}
+
+  // 최신순 정렬
+  const sorted=[...NT_DATA].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+  let html='';
+  sorted.forEach(n=>{
+    // 내용 파싱: 빈 줄로 항목 구분, 각 항목의 첫줄=제목 나머지=설명
+    const items=ntParseBody(n.body||'');
+    html+=`<div class="notice-card">
+      <div class="notice-card-head">
+        <div class="notice-ver">
+          <span class="notice-ver-badge">${ntEsc(n.version||'')}</span>
+          <span class="notice-ver-title">${ntEsc(n.title||'')}</span>
+        </div>
+        <div class="notice-meta">${ntEsc(n.date||'')}${n.author?' · '+ntEsc(n.author):''}</div>
+      </div>
+      <div class="notice-card-body">`;
+    items.forEach((item,i)=>{
+      if(item.type==='callout'){
+        html+=`<div class="notice-callout">${ntEsc(item.text)}</div>`;
+      } else {
+        html+=`<div class="notice-item">
+          <div class="notice-num">${i+1-items.slice(0,i).filter(x=>x.type==='callout').length}</div>
+          <div class="notice-item-content">
+            <div class="notice-item-title">${ntEsc(item.title)}</div>
+            ${item.desc?'<div class="notice-item-desc">'+ntEsc(item.desc).replace(/\n/g,'<br>')+'</div>':''}
+          </div>
+        </div>`;
+      }
+    });
+    html+=`</div></div>`;
+  });
+  wrap.innerHTML=html;
+}
+
+function ntParseBody(body){
+  // 빈 줄(또는 이중 줄바꿈)로 항목 분리
+  const blocks=body.split(/\n\s*\n/).filter(b=>b.trim());
+  const items=[];
+  blocks.forEach(block=>{
+    const lines=block.trim().split('\n');
+    const first=lines[0].trim();
+    if(first.startsWith('※')){
+      // 강조 콜아웃
+      items.push({type:'callout',text:lines.join('\n')});
+    } else {
+      items.push({type:'item',title:first,desc:lines.slice(1).join('\n').trim()});
+    }
+  });
+  return items;
+}
+
+function ntEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function ntOpenModal(){document.getElementById('ntModalBg').classList.add('open')}
+function ntCloseModal(){
+  document.getElementById('ntModalBg').classList.remove('open');
+  document.getElementById('ntVer').value='';
+  document.getElementById('ntTitle').value='';
+  document.getElementById('ntBody').value='';
+}
+
+async function ntSave(){
+  const ver=document.getElementById('ntVer').value.trim();
+  const title=document.getElementById('ntTitle').value.trim();
+  const body=document.getElementById('ntBody').value.trim();
+  if(!ver||!title||!body){bmShowToast('⚠️ 모든 항목을 입력하세요');return}
+  const author=(function(){try{return JSON.parse(sessionStorage.getItem('hanul_session')||'{}').name||'admin'}catch(e){return 'admin'}}());
+  const url=BM_GAS_URL+'?action=saveNotice&token='+GAS_TOKEN
+    +'&version='+encodeURIComponent(ver)
+    +'&title='+encodeURIComponent(title)
+    +'&body='+encodeURIComponent(body)
+    +'&author='+encodeURIComponent(author)
+    +'&_='+Date.now();
+  try{
+    const res=await fetch(url);
+    const json=await res.json();
+    if(json.ok){
+      bmShowToast('✅ 공지 저장 완료');
+      ntCloseModal();
+      NT_LOADED=false;
+      ntFetch();
+    } else {
+      bmShowToast('❌ 저장 실패: '+(json.error||''));
+    }
+  }catch(e){
+    bmShowToast('❌ 저장 오류: '+e.message);
+  }
+}
 </script>
 </body>
 </html>
