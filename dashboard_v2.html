@@ -3465,7 +3465,6 @@ function scOpenProjectPlan(projName){
   h+='</div>';
 
   h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:10px 14px;background:var(--sig-pale);border-radius:8px;font-size:12px;color:var(--sig);font-weight:600">✏️ 모든 셀을 직접 수정할 수 있습니다. 변경 후 하단 저장 버튼을 눌러주세요.</div>';
-  h+='<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button onclick="scTpToggleAll()" id="scTpToggleAllBtn" style="padding:6px 14px;border:1px solid var(--border-main);border-radius:6px;background:var(--bg-card);color:var(--text-secondary);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">📂 섹션 모두 접기</button></div>';
 
   const mNames=['3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   h+='<div class="sc-plan-tbl-wrap"><table class="sc-plan-tbl"><thead>';
@@ -3487,11 +3486,15 @@ function scOpenProjectPlan(projName){
   h+='<th class="r">수량</th><th class="r">기성금</th>';
   h+='</tr></thead><tbody>';
 
-  var lastVendor='',lastTeamDisp='',secIdx=0;
+  var lastVendor='',lastTeamDisp='';
   rows.forEach(function(r){
     if(r.isHeader){
-      secIdx++;
-      h+='<tr class="sec-head" data-sec="'+secIdx+'" onclick="scTpToggleSec(this)" style="background:var(--bg-thead)"><td class="sticky-left" colspan="31" style="font-weight:600;color:var(--text-secondary);background:var(--bg-thead)"><span class="sec-arrow">▼</span>'+r.task+'</td></tr>';
+      // 엑셀과 동일: 공종 셀에만 볼드 텍스트, 나머지 빈 셀
+      h+='<tr style="background:var(--bg-thead)">';
+      h+='<td class="sticky-left" style="background:var(--bg-thead)"></td>';
+      h+='<td style="background:var(--bg-thead)"></td>';
+      h+='<td colspan="29" style="font-weight:700;color:var(--text-secondary);background:var(--bg-thead);padding-left:4px;white-space:nowrap">'+r.task+'</td>';
+      h+='</tr>';
       return;
     }
     var showV=(r.vendor||'')!==(lastVendor||'');
@@ -3499,7 +3502,7 @@ function scOpenProjectPlan(projName){
     var showTeam=(r.team||'')!==(lastTeamDisp||'');
     if(r.team) lastTeamDisp=r.team;
     var displayTask=r.task?r.task.replace(/^\s+/,''):'';
-    h+='<tr class="sec-data" data-sec="'+secIdx+'">';
+    h+='<tr>';
     h+='<td class="sticky-left" style="font-size:12px;color:var(--text-secondary);font-weight:600">'+(showTeam?r.team:'')+'</td>';
     h+='<td class="sc-edit-cell">'+(showV?tpI(r._sheetRow,C+3,r.vendor,'t','거래처'):'<span style="display:block;min-height:28px"></span>')+'</td>';
     h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+5,displayTask,'t','공종명')+'</td>';
