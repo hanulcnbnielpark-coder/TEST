@@ -3462,8 +3462,7 @@ function scOpenProjectPlan(projName){
   var lastVendor='';
   rows.forEach(function(r){
     if(r.isHeader){
-      h+='<tr style="background:var(--bg-thead)"><td class="sticky-left" style="font-weight:600;color:var(--text-secondary);background:var(--bg-thead)">'+(r.vendor||'')+'</td><td colspan="29" style="font-weight:600;color:var(--text-secondary)">'+r.task+'</td></tr>';
-      lastVendor='';
+      h+='<tr style="background:var(--bg-thead)"><td class="sticky-left" colspan="30" style="font-weight:600;color:var(--text-secondary);background:var(--bg-thead);padding-left:16px">'+r.task+'</td></tr>';
       return;
     }
     var showV=r.vendor!==lastVendor;
