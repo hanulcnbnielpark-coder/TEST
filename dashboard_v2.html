@@ -575,6 +575,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .sc-edit-input:focus{border-color:var(--sig);background:var(--bg-card);outline:none;box-shadow:0 0 0 2px rgba(58,76,168,0.12)}
 .sc-edit-input.changed{background:rgba(58,76,168,0.06);border-color:var(--sig-light);font-weight:600}
 .sc-edit-input.sc-text{text-align:left;width:auto;min-width:100px}
+.sc-edit-input::placeholder{color:var(--text-muted);font-weight:400;opacity:0.6}
 .sc-row-del{width:24px;height:24px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;font-size:14px;border-radius:4px;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
 .sc-row-del:hover{background:#FEE2E2;color:#EF4444}
 .sc-save-bar{display:none;position:sticky;bottom:0;left:0;right:0;background:var(--bg-elevated);border-top:2px solid var(--sig);padding:14px 28px;align-items:center;justify-content:space-between;gap:12px;z-index:5}
@@ -3413,12 +3414,13 @@ function scOpenProjectPlan(projName){
 
   const C=SC_TP_COL_OFF;
   // ── 인풋 헬퍼: ci=allRows 0-based col, type='n'|'t' ──
-  const tpI=(row,ci,val,type)=>{
+  const tpI=(row,ci,val,type,ph)=>{
     const isNum=type!=='t';
     const display=isNum?(val?val.toLocaleString():''):(val||'');
     const orig=isNum?(val||0):(val||'');
     const cls='sc-edit-input'+(type==='t'?' sc-text':'');
-    return '<input class="'+cls+'" data-row="'+row+'" data-col="'+(ci+1)+'" data-orig="'+String(orig).replace(/"/g,'&quot;')+'" data-type="'+(isNum?'n':'t')+'" value="'+String(display).replace(/"/g,'&quot;')+'"'+(isNum?' onfocus="scTpFocus(this)" onblur="scTpBlur(this)"':'')+' onchange="scTpEdit(this)">';
+    const placeholder=ph||( isNum?'0':'');
+    return '<input class="'+cls+'" data-row="'+row+'" data-col="'+(ci+1)+'" data-orig="'+String(orig).replace(/"/g,'&quot;')+'" data-type="'+(isNum?'n':'t')+'" value="'+String(display).replace(/"/g,'&quot;')+'" placeholder="'+placeholder+'"'+(isNum?' onfocus="scTpFocus(this)" onblur="scTpBlur(this)"':'')+' onchange="scTpEdit(this)">';
   };
 
   const fRows=rows.filter(r=>!r.isHeader);
@@ -3442,8 +3444,9 @@ function scOpenProjectPlan(projName){
 
   const mNames=['3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   h+='<div class="sc-plan-tbl-wrap"><table class="sc-plan-tbl"><thead>';
-  h+='<tr><th class="sticky-left" rowspan="2" style="min-width:120px">거래처</th>';
-  h+='<th rowspan="2" style="min-width:160px">공종</th>';
+  h+='<tr><th class="sticky-left" style="min-width:70px">수행팀</th>';
+  h+='<th style="min-width:120px">거래처</th>';
+  h+='<th style="min-width:160px">공종</th>';
   h+='<th rowspan="2">단위</th><th rowspan="2" class="r">단가</th><th rowspan="2" class="r">계약금</th>';
   h+='<th colspan="2" class="grp2">총누계 기성</th>';
   h+='<th colspan="2" class="grp2">잔여</th>';
@@ -3452,6 +3455,7 @@ function scOpenProjectPlan(projName){
   h+='<th colspan="2" class="grp2">이월</th>';
   h+='<th rowspan="2" style="width:36px"></th>';
   h+='</tr><tr>';
+  h+='<th></th><th></th><th></th>';
   h+='<th class="r">기수금</th><th class="r">기성률</th>';
   h+='<th class="r">수량</th><th class="r">잔금</th>';
   for(var i=0;i<10;i++) h+='<th class="r">수량</th><th class="r">기성금</th>';
@@ -3459,19 +3463,22 @@ function scOpenProjectPlan(projName){
   h+='<th class="r">수량</th><th class="r">기성금</th>';
   h+='</tr></thead><tbody>';
 
-  var lastVendor='';
+  var lastVendor='',lastTeamDisp='';
   rows.forEach(function(r){
     if(r.isHeader){
-      h+='<tr style="background:var(--bg-thead)"><td class="sticky-left" colspan="30" style="font-weight:600;color:var(--text-secondary);background:var(--bg-thead);padding-left:16px">'+r.task+'</td></tr>';
+      h+='<tr style="background:var(--bg-thead)"><td class="sticky-left" colspan="31" style="font-weight:600;color:var(--text-secondary);background:var(--bg-thead);padding-left:16px">'+r.task+'</td></tr>';
       return;
     }
-    var showV=r.vendor!==lastVendor;
+    var showV=(r.vendor||'')!==(lastVendor||'');
     if(r.vendor)lastVendor=r.vendor;
+    var showTeam=(r.team||'')!==(lastTeamDisp||'');
+    if(r.team) lastTeamDisp=r.team;
     var displayTask=r.task?r.task.replace(/^\s+/,''):'';
     h+='<tr>';
-    h+='<td class="sticky-left sc-edit-cell">'+tpI(r._sheetRow,C+3,showV?r.vendor:'','t')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+5,displayTask,'t')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+7,r.unit,'t')+'</td>';
+    h+='<td class="sticky-left" style="font-size:12px;color:var(--text-secondary);font-weight:600">'+(showTeam?r.team:'')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+3,showV?r.vendor:'','t','거래처')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+5,displayTask,'t','공종명')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+7,r.unit,'t','단위')+'</td>';
     h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+8,r.price,'n')+'</td>';
     h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+10,r.contract,'n')+'</td>';
     h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+12,r.cumAmt,'n')+'</td>';
@@ -3491,7 +3498,7 @@ function scOpenProjectPlan(projName){
   });
 
   // Footer
-  h+='<tr class="foot"><td class="sticky-left">합계</td><td></td><td></td><td></td>';
+  h+='<tr class="foot"><td class="sticky-left">합계</td><td></td><td></td><td></td><td></td>';
   h+='<td class="r">'+totalContract.toLocaleString()+'</td>';
   h+='<td class="r">'+totalCum.toLocaleString()+'</td>';
   h+='<td class="r">'+avgRate.toFixed(0)+'%</td>';
@@ -3584,6 +3591,21 @@ async function scTpAddRow(afterRow){
     var url=GAS_WEB_URL+'?action=insertTargetPlanRow&token='+GAS_TOKEN+'&row='+afterRow+'&_='+Date.now();
     var resp=await fetch(url);var json=await resp.json();
     if(!json.ok)throw new Error(json.error||'추가 실패');
+    // 팀/프로젝트/발주처/거래처 자동입력
+    var projRows=SC_TARGET_PLAN.filter(function(r){return r.project===SC_TP_CURRENT_PROJ&&!r.isHeader});
+    if(projRows.length){
+      var ref=projRows[0];var C=SC_TP_COL_OFF;var newRow=afterRow+1;
+      var autoCells=[
+        {r:newRow,c:C+1,v:ref.team},
+        {r:newRow,c:C+2,v:ref.project},
+        {r:newRow,c:C+3,v:ref.client},
+        {r:newRow,c:C+4,v:ref.vendor}
+      ].filter(function(c){return !!c.v});
+      if(autoCells.length){
+        var sUrl=GAS_WEB_URL+'?action=saveTargetPlanCells&token='+GAS_TOKEN+'&cells='+encodeURIComponent(JSON.stringify(autoCells))+'&_='+Date.now();
+        await fetch(sUrl);
+      }
+    }
     showToast('✅ 행 추가 완료');
     await scFetchTargetPlan();
     if(SC_TP_CURRENT_PROJ) scOpenProjectPlan(SC_TP_CURRENT_PROJ);
