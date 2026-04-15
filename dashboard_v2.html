@@ -576,12 +576,8 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .sc-edit-input.changed{background:rgba(58,76,168,0.06);border-color:var(--sig-light);font-weight:600}
 .sc-edit-input.sc-text{text-align:left;width:auto;min-width:100px}
 .sc-edit-input::placeholder{color:var(--text-muted);font-weight:400;opacity:0.6}
-.sc-plan-tbl .sec-head{cursor:pointer;user-select:none;transition:background 0.15s}
-.sc-plan-tbl .sec-head:hover{filter:brightness(0.95)}
-.sc-plan-tbl .sec-head td{padding-left:12px}
-.sc-plan-tbl .sec-head .sec-arrow{display:inline-block;width:18px;font-size:10px;transition:transform 0.2s;color:var(--text-muted)}
-.sc-plan-tbl .sec-head.collapsed .sec-arrow{transform:rotate(-90deg)}
-.sc-plan-tbl tr.sec-row-hidden{display:none}
+.sc-plan-tbl td.vendor-merge{border-top-color:transparent}
+.sc-plan-tbl td.team-merge{border-top-color:transparent}
 .sc-row-del{width:24px;height:24px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;font-size:14px;border-radius:4px;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
 .sc-row-del:hover{background:#FEE2E2;color:#EF4444}
 .sc-save-bar{display:none;position:sticky;bottom:0;left:0;right:0;background:var(--bg-elevated);border-top:2px solid var(--sig);padding:14px 28px;align-items:center;justify-content:space-between;gap:12px;z-index:5}
@@ -3488,40 +3484,40 @@ function scOpenProjectPlan(projName){
 
   var lastVendor='',lastTeamDisp='';
   rows.forEach(function(r){
-    if(r.isHeader){
-      // 엑셀과 동일: 공종 셀에만 볼드 텍스트, 나머지 빈 셀
-      h+='<tr style="background:var(--bg-thead)">';
-      h+='<td class="sticky-left" style="background:var(--bg-thead)"></td>';
-      h+='<td style="background:var(--bg-thead)"></td>';
-      h+='<td colspan="29" style="font-weight:700;color:var(--text-secondary);background:var(--bg-thead);padding-left:4px;white-space:nowrap">'+r.task+'</td>';
-      h+='</tr>';
-      return;
-    }
-    var showV=(r.vendor||'')!==(lastVendor||'');
+    var sameVendor=(r.vendor||'')===(lastVendor||'')&&lastVendor!=='';
+    var sameTeam=(r.team||'')===(lastTeamDisp||'')&&lastTeamDisp!=='';
     if(r.vendor)lastVendor=r.vendor;
-    var showTeam=(r.team||'')!==(lastTeamDisp||'');
-    if(r.team) lastTeamDisp=r.team;
+    if(r.team)lastTeamDisp=r.team;
     var displayTask=r.task?r.task.replace(/^\s+/,''):'';
-    h+='<tr>';
-    h+='<td class="sticky-left" style="font-size:12px;color:var(--text-secondary);font-weight:600">'+(showTeam?r.team:'')+'</td>';
-    h+='<td class="sc-edit-cell">'+(showV?tpI(r._sheetRow,C+3,r.vendor,'t','거래처'):'<span style="display:block;min-height:28px"></span>')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+5,displayTask,'t','공종명')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+7,r.unit,'t','단위')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+8,r.price,'n')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+10,r.contract,'n')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+12,r.cumAmt,'n')+'</td>';
-    h+='<td class="r">'+(r.cumRate?(r.cumRate*100).toFixed(0)+'%':'-')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+14,r.remQty,'n')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+15,r.remAmt,'n')+'</td>';
+    var isH=r.isHeader;
+    var rowBg=isH?' style="background:var(--bg-thead)"':'';
+    h+='<tr'+rowBg+'>';
+    // 수행팀: 중복 시 빈칸 + 경계 제거
+    h+='<td class="sticky-left'+(sameTeam?' team-merge':'')+'" style="font-size:12px;color:var(--text-secondary);font-weight:600'+(isH?';background:var(--bg-thead)':'')+'">'+(sameTeam?'':r.team)+'</td>';
+    // 거래처: 중복 시 빈칸 + 경계 제거 (시각적 병합)
+    if(sameVendor){
+      h+='<td class="vendor-merge"'+(isH?' style="background:var(--bg-thead)"':'')+'></td>';
+    }else{
+      h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+3,r.vendor||'','t','거래처')+'</td>';
+    }
+    // 공종: 헤더행은 볼드
+    h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+5,displayTask,'t',isH?'':'공종명')+'</td>';
+    h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+7,r.unit,'t','단위')+'</td>';
+    h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+8,r.price,'n')+'</td>';
+    h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+10,r.contract,'n')+'</td>';
+    h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+12,r.cumAmt,'n')+'</td>';
+    h+='<td class="r"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+(r.cumRate?(r.cumRate*100).toFixed(0)+'%':'-')+'</td>';
+    h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+14,r.remQty,'n')+'</td>';
+    h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+15,r.remAmt,'n')+'</td>';
     r.months.forEach(function(m,mi){
-      h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+16+mi*2,m.qty,'n')+'</td>';
-      h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+16+mi*2+1,m.amt,'n')+'</td>';
+      h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+16+mi*2,m.qty,'n')+'</td>';
+      h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+16+mi*2+1,m.amt,'n')+'</td>';
     });
-    h+='<td class="r">'+(r.totQty||'-')+'</td>';
-    h+='<td class="r" style="font-weight:600">'+(r.totAmt?r.totAmt.toLocaleString():'-')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+39,r.carryQty,'n')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+40,r.carryAmt,'n')+'</td>';
-    h+='<td class="c"><button class="sc-row-del" onclick="scTpDeleteRow('+r._sheetRow+')" title="행 삭제">✕</button></td>';
+    h+='<td class="r"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+(r.totQty||'-')+'</td>';
+    h+='<td class="r" style="font-weight:600'+(isH?';background:var(--bg-thead)':'')+'">'+(r.totAmt?r.totAmt.toLocaleString():'-')+'</td>';
+    h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+39,r.carryQty,'n')+'</td>';
+    h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+40,r.carryAmt,'n')+'</td>';
+    h+='<td class="c"'+(isH?' style="background:var(--bg-thead)"':'')+'><button class="sc-row-del" onclick="scTpDeleteRow('+r._sheetRow+')" title="행 삭제">✕</button></td>';
     h+='</tr>';
   });
 
