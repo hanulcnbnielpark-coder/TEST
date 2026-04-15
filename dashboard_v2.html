@@ -3475,7 +3475,7 @@ function scOpenProjectPlan(projName){
     var displayTask=r.task?r.task.replace(/^\s+/,''):'';
     h+='<tr>';
     h+='<td class="sticky-left" style="font-size:12px;color:var(--text-secondary);font-weight:600">'+(showTeam?r.team:'')+'</td>';
-    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+3,showV?r.vendor:'','t','거래처')+'</td>';
+    h+='<td class="sc-edit-cell">'+(showV?tpI(r._sheetRow,C+3,r.vendor,'t','거래처'):'<span style="display:block;min-height:28px"></span>')+'</td>';
     h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+5,displayTask,'t','공종명')+'</td>';
     h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+7,r.unit,'t','단위')+'</td>';
     h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+8,r.price,'n')+'</td>';
