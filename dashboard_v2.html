@@ -576,6 +576,12 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .sc-edit-input.changed{background:rgba(58,76,168,0.06);border-color:var(--sig-light);font-weight:600}
 .sc-edit-input.sc-text{text-align:left;width:auto;min-width:100px}
 .sc-edit-input::placeholder{color:var(--text-muted);font-weight:400;opacity:0.6}
+.sc-plan-tbl .sec-head{cursor:pointer;user-select:none;transition:background 0.15s}
+.sc-plan-tbl .sec-head:hover{filter:brightness(0.95)}
+.sc-plan-tbl .sec-head td{padding-left:12px}
+.sc-plan-tbl .sec-head .sec-arrow{display:inline-block;width:18px;font-size:10px;transition:transform 0.2s;color:var(--text-muted)}
+.sc-plan-tbl .sec-head.collapsed .sec-arrow{transform:rotate(-90deg)}
+.sc-plan-tbl tr.sec-row-hidden{display:none}
 .sc-row-del{width:24px;height:24px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;font-size:14px;border-radius:4px;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
 .sc-row-del:hover{background:#FEE2E2;color:#EF4444}
 .sc-save-bar{display:none;position:sticky;bottom:0;left:0;right:0;background:var(--bg-elevated);border-top:2px solid var(--sig);padding:14px 28px;align-items:center;justify-content:space-between;gap:12px;z-index:5}
@@ -3398,11 +3404,29 @@ function scParseTargetPlanRows(allRows){
 
 // ── 와이드 모달 열기 ──
 function scOpenProjectPlan(projName){
-  function normProj(s){return s.replace(/\([^)]*\)/g,'').replace(/설계단계|시공단계|설계단계\s*/g,'').replace(/\s+/g,' ').trim();}
+  function normProj(s){return s.replace(/\([^)]*\)/g,'').replace(/설계단계|시공단계/g,'').replace(/\s+/g,' ').trim();}
   const pn=normProj(projName);
   let rows=SC_TARGET_PLAN.filter(r=>r.project===projName);
   if(!rows.length) rows=SC_TARGET_PLAN.filter(r=>normProj(r.project)===pn);
-  if(!rows.length) rows=SC_TARGET_PLAN.filter(r=>normProj(r.project).includes(pn)||pn.includes(normProj(r.project)));
+  // 3단계: includes 매칭 — 가장 유사한 단일 프로젝트만 선택
+  if(!rows.length){
+    const projGroups={};
+    SC_TARGET_PLAN.forEach(r=>{
+      const np=normProj(r.project);
+      if(np.includes(pn)||pn.includes(np)){
+        if(!projGroups[r.project])projGroups[r.project]=[];
+        projGroups[r.project].push(r);
+      }
+    });
+    const keys=Object.keys(projGroups);
+    if(keys.length===1){rows=projGroups[keys[0]];}
+    else if(keys.length>1){
+      // 가장 짧은 이름 차이 = 가장 유사한 프로젝트
+      let best=keys[0],bestDiff=Math.abs(normProj(keys[0]).length-pn.length);
+      keys.forEach(k=>{const d=Math.abs(normProj(k).length-pn.length);if(d<bestDiff){bestDiff=d;best=k;}});
+      rows=projGroups[best];
+    }
+  }
   if(!rows.length){scOpenProjectDetail(projName);return}
   SC_TP_CURRENT_PROJ=projName;
   const modal=document.getElementById('scWideModal');
@@ -3441,6 +3465,7 @@ function scOpenProjectPlan(projName){
   h+='</div>';
 
   h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:10px 14px;background:var(--sig-pale);border-radius:8px;font-size:12px;color:var(--sig);font-weight:600">✏️ 모든 셀을 직접 수정할 수 있습니다. 변경 후 하단 저장 버튼을 눌러주세요.</div>';
+  h+='<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button onclick="scTpToggleAll()" id="scTpToggleAllBtn" style="padding:6px 14px;border:1px solid var(--border-main);border-radius:6px;background:var(--bg-card);color:var(--text-secondary);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">📂 섹션 모두 접기</button></div>';
 
   const mNames=['3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   h+='<div class="sc-plan-tbl-wrap"><table class="sc-plan-tbl"><thead>';
@@ -3462,10 +3487,11 @@ function scOpenProjectPlan(projName){
   h+='<th class="r">수량</th><th class="r">기성금</th>';
   h+='</tr></thead><tbody>';
 
-  var lastVendor='',lastTeamDisp='';
+  var lastVendor='',lastTeamDisp='',secIdx=0;
   rows.forEach(function(r){
     if(r.isHeader){
-      h+='<tr style="background:var(--bg-thead)"><td class="sticky-left" colspan="31" style="font-weight:600;color:var(--text-secondary);background:var(--bg-thead);padding-left:16px">'+r.task+'</td></tr>';
+      secIdx++;
+      h+='<tr class="sec-head" data-sec="'+secIdx+'" onclick="scTpToggleSec(this)" style="background:var(--bg-thead)"><td class="sticky-left" colspan="31" style="font-weight:600;color:var(--text-secondary);background:var(--bg-thead)"><span class="sec-arrow">▼</span>'+r.task+'</td></tr>';
       return;
     }
     var showV=(r.vendor||'')!==(lastVendor||'');
@@ -3473,7 +3499,7 @@ function scOpenProjectPlan(projName){
     var showTeam=(r.team||'')!==(lastTeamDisp||'');
     if(r.team) lastTeamDisp=r.team;
     var displayTask=r.task?r.task.replace(/^\s+/,''):'';
-    h+='<tr>';
+    h+='<tr class="sec-data" data-sec="'+secIdx+'">';
     h+='<td class="sticky-left" style="font-size:12px;color:var(--text-secondary);font-weight:600">'+(showTeam?r.team:'')+'</td>';
     h+='<td class="sc-edit-cell">'+(showV?tpI(r._sheetRow,C+3,r.vendor,'t','거래처'):'<span style="display:block;min-height:28px"></span>')+'</td>';
     h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+5,displayTask,'t','공종명')+'</td>';
@@ -3626,6 +3652,28 @@ function fmtW(v){if(!v)return'0';if(v>=100000000)return(v/100000000).toFixed(1).
 function scCloseWide(){
   document.getElementById('scWideModal').classList.remove('open');
   document.getElementById('scWideOverlay').classList.remove('open');
+}
+function scTpToggleSec(headTr){
+  var sec=headTr.dataset.sec;
+  var collapsed=headTr.classList.toggle('collapsed');
+  document.querySelectorAll('#scWideBody .sec-data[data-sec="'+sec+'"]').forEach(function(tr){
+    tr.classList.toggle('sec-row-hidden',collapsed);
+  });
+}
+function scTpToggleAll(){
+  var heads=document.querySelectorAll('#scWideBody .sec-head');
+  // 하나라도 펼쳐져 있으면 모두 접기, 아니면 모두 펼치기
+  var anyOpen=false;
+  heads.forEach(function(h){if(!h.classList.contains('collapsed'))anyOpen=true;});
+  heads.forEach(function(h){
+    var sec=h.dataset.sec;
+    if(anyOpen){h.classList.add('collapsed');}else{h.classList.remove('collapsed');}
+    document.querySelectorAll('#scWideBody .sec-data[data-sec="'+sec+'"]').forEach(function(tr){
+      tr.classList.toggle('sec-row-hidden',anyOpen);
+    });
+  });
+  var btn=document.getElementById('scTpToggleAllBtn');
+  if(btn) btn.textContent=anyOpen?'📂 섹션 모두 펼치기':'📂 섹션 모두 접기';
 }
 
 // ── CSV → 타입별 파싱 라우터 ──
