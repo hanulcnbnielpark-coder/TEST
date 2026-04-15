@@ -569,8 +569,8 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .sc-plan-tbl tbody tr:hover{background:var(--bg-card-hover)}
 .sc-plan-tbl tfoot td{background:var(--bg-thead);font-weight:700;border-top:2px solid var(--border-main)}
 .sc-plan-tbl .sticky-left{position:sticky;left:0;z-index:1;background:var(--bg-elevated)}
-.sc-edit-cell{padding:2px 4px!important}
-.sc-edit-input{width:74px;padding:5px 6px;border:1px solid transparent;border-radius:4px;font-size:12px;text-align:right;background:transparent;color:var(--text-primary);font-family:inherit;font-variant-numeric:tabular-nums;transition:all 0.15s}
+.sc-edit-cell{padding:2px 4px!important;background:rgba(58,76,168,0.03)}
+.sc-edit-input{width:74px;padding:5px 6px;border:1px dashed var(--border-main);border-radius:4px;font-size:12px;text-align:right;background:transparent;color:var(--text-primary);font-family:inherit;font-variant-numeric:tabular-nums;transition:all 0.15s}
 .sc-edit-input:hover{border-color:var(--border-main);background:var(--bg-card)}
 .sc-edit-input:focus{border-color:var(--sig);background:var(--bg-card);outline:none;box-shadow:0 0 0 2px rgba(58,76,168,0.12)}
 .sc-edit-input.changed{background:rgba(58,76,168,0.06);border-color:var(--sig-light);font-weight:600}
@@ -3425,6 +3425,7 @@ function scOpenProjectPlan(projName){
 
   const mNames=['3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   const C=SC_TP_COL_OFF;
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:10px 14px;background:var(--sig-pale);border-radius:8px;font-size:12px;color:var(--sig);font-weight:600">✏️ 월별 수량/기성금 셀을 클릭하여 직접 수정할 수 있습니다. 변경 후 하단 저장 버튼을 눌러주세요.</div>';
   h+='<div class="sc-plan-tbl-wrap"><table class="sc-plan-tbl"><thead>';
   h+='<tr><th class="sticky-left" rowspan="2" style="min-width:170px">계약거래처</th>';
   h+='<th rowspan="2" style="min-width:180px">공종</th>';
