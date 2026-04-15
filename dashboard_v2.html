@@ -3364,13 +3364,17 @@ function scParseTargetPlanRows(allRows){
   SC_TP_DATA_START=dataStart;
   const C=colOff;
   let lastTeam='',lastProj='',lastClient='',lastVendor='',lastPeriod='';
+  let lastTeamRow=0,lastVendorRow=0;
   dataRows.forEach((r,j)=>{
     if(!r||r.length<C+12) return;
     const team=String(r[C]||'').trim();const proj=String(r[C+1]||'').trim();
     const client=String(r[C+2]||'').trim();const vendor=String(r[C+3]||'').trim();
     const period=String(r[C+4]||'').trim();
-    if(team) lastTeam=team;if(proj) lastProj=proj;if(client) lastClient=client;
-    if(vendor) lastVendor=vendor;if(period) lastPeriod=period;
+    const sheetRow=dataStart+j+1;
+    if(team){lastTeam=team;lastTeamRow=sheetRow;}
+    if(proj) lastProj=proj;if(client) lastClient=client;
+    if(vendor){lastVendor=vendor;lastVendorRow=sheetRow;}
+    if(period) lastPeriod=period;
     const task=String(r[C+5]||'').trim();const spec=String(r[C+6]||'').trim();
     const unit=String(r[C+7]||'').trim();
     const price=Number(String(r[C+8]||'').replace(/,/g,''))||0;
@@ -3390,7 +3394,7 @@ function scParseTargetPlanRows(allRows){
     const carryAmt=Number(String(r[C+40]||'').replace(/,/g,''))||0;
     const carryRate=Number(String(r[C+41]||'').replace(/,/g,''))||0;
     if(!contract && !price && !task) return;
-    SC_TARGET_PLAN.push({_sheetRow:dataStart+j+1,
+    SC_TARGET_PLAN.push({_sheetRow:dataStart+j+1,_vendorSheetRow:lastVendorRow,_teamSheetRow:lastTeamRow,
       team:lastTeam,project:lastProj,client:lastClient,vendor:lastVendor,period:lastPeriod,
       task,spec,unit,price,qty,contract,cumQty,cumAmt,cumRate,remQty,remAmt,
       months,totQty,totAmt,totRate,carryQty,carryAmt,carryRate,
@@ -3504,11 +3508,12 @@ function scOpenProjectPlan(projName){
     h+='<tr'+rowBg+'>';
     // 수행팀: rowspan 병합
     if(teamSpan[ri]>0){
-      h+='<td class="sticky-left" rowspan="'+teamSpan[ri]+'" style="font-size:12px;color:var(--text-secondary);font-weight:600;vertical-align:top;padding-top:14px">'+r.team+'</td>';
+      h+='<td class="sticky-left" rowspan="'+teamSpan[ri]+'" style="font-size:12px;color:var(--text-secondary);font-weight:600;vertical-align:top;padding-top:14px">'+(r.team||'')+'</td>';
     }
-    // 거래처: rowspan 병합
+    // 거래처: rowspan 병합 — _vendorSheetRow로 실제 시트 행 참조
     if(vendorSpan[ri]>0){
-      h+='<td rowspan="'+vendorSpan[ri]+'" style="vertical-align:top;padding-top:10px" class="sc-edit-cell">'+tpI(r._sheetRow,C+3,r.vendor||'','t','거래처')+'</td>';
+      var vSheetRow=r._vendorSheetRow||r._sheetRow;
+      h+='<td rowspan="'+vendorSpan[ri]+'" style="vertical-align:top;padding-top:10px" class="sc-edit-cell">'+tpI(vSheetRow,C+3,r.vendor||'','t','거래처')+'</td>';
     }
     // 공종
     h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+5,displayTask,'t',isH?'':'공종명')+'</td>';
