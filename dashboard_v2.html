@@ -3482,25 +3482,35 @@ function scOpenProjectPlan(projName){
   h+='<th class="r">수량</th><th class="r">기성금</th>';
   h+='</tr></thead><tbody>';
 
-  var lastVendor='',lastTeamDisp='';
-  rows.forEach(function(r){
-    var sameVendor=(r.vendor||'')===(lastVendor||'')&&lastVendor!=='';
-    var sameTeam=(r.team||'')===(lastTeamDisp||'')&&lastTeamDisp!=='';
-    if(r.vendor)lastVendor=r.vendor;
-    if(r.team)lastTeamDisp=r.team;
+  // ── Pre-compute rowspan for 수행팀 & 거래처 ──
+  var vendorSpan=[],teamSpan=[];
+  for(var vi=0;vi<rows.length;){
+    var v=rows[vi].vendor||'';var vc=1;
+    while(vi+vc<rows.length&&(rows[vi+vc].vendor||'')===v)vc++;
+    vendorSpan[vi]=vc;for(var vj=1;vj<vc;vj++)vendorSpan[vi+vj]=0;
+    vi+=vc;
+  }
+  for(var ti=0;ti<rows.length;){
+    var t=rows[ti].team||'';var tc=1;
+    while(ti+tc<rows.length&&(rows[ti+tc].team||'')===t)tc++;
+    teamSpan[ti]=tc;for(var tj=1;tj<tc;tj++)teamSpan[ti+tj]=0;
+    ti+=tc;
+  }
+
+  rows.forEach(function(r,ri){
     var displayTask=r.task?r.task.replace(/^\s+/,''):'';
     var isH=r.isHeader;
     var rowBg=isH?' style="background:var(--bg-thead)"':'';
     h+='<tr'+rowBg+'>';
-    // 수행팀: 중복 시 빈칸 + 경계 제거
-    h+='<td class="sticky-left'+(sameTeam?' team-merge':'')+'" style="font-size:12px;color:var(--text-secondary);font-weight:600'+(isH?';background:var(--bg-thead)':'')+'">'+(sameTeam?'':r.team)+'</td>';
-    // 거래처: 중복 시 빈칸 + 경계 제거 (시각적 병합)
-    if(sameVendor){
-      h+='<td class="vendor-merge"'+(isH?' style="background:var(--bg-thead)"':'')+'></td>';
-    }else{
-      h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+3,r.vendor||'','t','거래처')+'</td>';
+    // 수행팀: rowspan 병합
+    if(teamSpan[ri]>0){
+      h+='<td class="sticky-left" rowspan="'+teamSpan[ri]+'" style="font-size:12px;color:var(--text-secondary);font-weight:600;vertical-align:top;padding-top:14px">'+r.team+'</td>';
     }
-    // 공종: 헤더행은 볼드
+    // 거래처: rowspan 병합
+    if(vendorSpan[ri]>0){
+      h+='<td rowspan="'+vendorSpan[ri]+'" style="vertical-align:top;padding-top:10px" class="sc-edit-cell">'+tpI(r._sheetRow,C+3,r.vendor||'','t','거래처')+'</td>';
+    }
+    // 공종
     h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+5,displayTask,'t',isH?'':'공종명')+'</td>';
     h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+7,r.unit,'t','단위')+'</td>';
     h+='<td class="sc-edit-cell"'+(isH?' style="background:var(--bg-thead)"':'')+'>'+tpI(r._sheetRow,C+8,r.price,'n')+'</td>';
@@ -4208,7 +4218,7 @@ function scRenderOverview(){
     if(totalOutsource>0) h+=`
       <div style="padding:20px 24px;border-right:1px solid var(--border-light)"><div style="font-size:13px;color:var(--text-tertiary);margin-bottom:8px;font-weight:600">외주비</div><div style="font-size:28px;font-weight:800;color:var(--kpi-amber);font-variant-numeric:tabular-nums;letter-spacing:-1px">${scFmtAmt(totalOutsource)}</div></div>`;
     h+=`
-      <div style="padding:20px 24px"><div style="font-size:13px;color:var(--text-tertiary);margin-bottom:8px;font-weight:600">순이익</div><div style="font-size:28px;font-weight:800;color:${npColor};font-variant-numeric:tabular-nums;letter-spacing:-1px">${scFmtAmt(netProfit)}</div></div>
+      <div style="padding:20px 24px"><div style="font-size:13px;color:var(--text-tertiary);margin-bottom:8px;font-weight:600">${netProfit>=0?'순이익':'순손실'}</div><div style="font-size:28px;font-weight:800;color:${npColor};font-variant-numeric:tabular-nums;letter-spacing:-1px">${scFmtAmt(netProfit)}</div></div>
     </div>`;
 
     // ── 2-column: Monthly table (left) + Expense detail (right) ──
@@ -4226,7 +4236,7 @@ function scRenderOverview(){
         h+='<th style="padding:12px 16px;font-size:13px;font-weight:700;color:var(--text-tertiary);text-align:center">수금실적</th>';
         h+='<th style="padding:12px 16px;font-size:13px;font-weight:700;color:var(--text-tertiary);text-align:center">지출경비</th>';
         if(totalOutsource>0)h+='<th style="padding:12px 16px;font-size:13px;font-weight:700;color:var(--text-tertiary);text-align:center">외주비</th>';
-        h+='<th style="padding:12px 16px;font-size:13px;font-weight:700;color:var(--text-tertiary);text-align:center">순이익</th>';
+        h+='<th style="padding:12px 16px;font-size:13px;font-weight:700;color:var(--text-tertiary);text-align:center">'+(netProfit>=0?'순이익':'순손실')+'</th>';
         h+='</tr></thead><tbody>';
         months.forEach(ym=>{
           const md=monthMap[ym];
