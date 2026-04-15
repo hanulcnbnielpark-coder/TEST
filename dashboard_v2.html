@@ -574,6 +574,9 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .sc-edit-input:hover{border-color:var(--border-main);background:var(--bg-card)}
 .sc-edit-input:focus{border-color:var(--sig);background:var(--bg-card);outline:none;box-shadow:0 0 0 2px rgba(58,76,168,0.12)}
 .sc-edit-input.changed{background:rgba(58,76,168,0.06);border-color:var(--sig-light);font-weight:600}
+.sc-edit-input.sc-text{text-align:left;width:auto;min-width:100px}
+.sc-row-del{width:24px;height:24px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;font-size:14px;border-radius:4px;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
+.sc-row-del:hover{background:#FEE2E2;color:#EF4444}
 .sc-save-bar{display:none;position:sticky;bottom:0;left:0;right:0;background:var(--bg-elevated);border-top:2px solid var(--sig);padding:14px 28px;align-items:center;justify-content:space-between;gap:12px;z-index:5}
 .sc-save-bar.show{display:flex}
 .sc-save-btn{padding:10px 28px;border:none;border-radius:8px;background:var(--sig);color:#FFF;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s}
@@ -3201,6 +3204,7 @@ let SC_CURRENT_TAB='overview';
 let SC_LOADED={plan:false,analysis:false,status:false};
 let SC_TARGET_PLAN=[];  // 목표수금(CM포함) 시트 데이터
 let SC_TP_COL_OFF=0, SC_TP_DATA_START=0; // 시트 구조 메타 (저장용)
+let SC_TP_CURRENT_PROJ=''; // 현재 열린 프로젝트명 (새로고침용)
 let SC_FILTER_TEAM='전체';
 let SC_FILTER_STATUS='전체';
 let SC_FILTER_YEAR='전체';
@@ -3399,12 +3403,23 @@ function scOpenProjectPlan(projName){
   if(!rows.length) rows=SC_TARGET_PLAN.filter(r=>normProj(r.project)===pn);
   if(!rows.length) rows=SC_TARGET_PLAN.filter(r=>normProj(r.project).includes(pn)||pn.includes(normProj(r.project)));
   if(!rows.length){scOpenProjectDetail(projName);return}
+  SC_TP_CURRENT_PROJ=projName;
   const modal=document.getElementById('scWideModal');
   const overlay=document.getElementById('scWideOverlay');
   const body=document.getElementById('scWideBody');
   document.getElementById('scWideTitle').textContent=projName;
   const info=rows[0];
   document.getElementById('scWideSub').textContent=[info.client,info.period].filter(Boolean).join(' · ');
+
+  const C=SC_TP_COL_OFF;
+  // ── 인풋 헬퍼: ci=allRows 0-based col, type='n'|'t' ──
+  const tpI=(row,ci,val,type)=>{
+    const isNum=type!=='t';
+    const display=isNum?(val?val.toLocaleString():''):(val||'');
+    const orig=isNum?(val||0):(val||'');
+    const cls='sc-edit-input'+(type==='t'?' sc-text':'');
+    return '<input class="'+cls+'" data-row="'+row+'" data-col="'+(ci+1)+'" data-orig="'+String(orig).replace(/"/g,'&quot;')+'" data-type="'+(isNum?'n':'t')+'" value="'+String(display).replace(/"/g,'&quot;')+'"'+(isNum?' onfocus="scTpFocus(this)" onblur="scTpBlur(this)"':'')+' onchange="scTpEdit(this)">';
+  };
 
   const fRows=rows.filter(r=>!r.isHeader);
   const totalContract=fRows.reduce((s,r)=>s+r.contract,0);
@@ -3416,75 +3431,83 @@ function scOpenProjectPlan(projName){
   const yearPlan=monthTotals.reduce((s,v)=>s+v,0);
 
   let h='<div class="sc-wide-kpi">';
-  h+=`<div><div class="kl">계약금</div><div class="kv">${fmtW(totalContract)}</div></div>`;
-  h+=`<div><div class="kl">기수금 (누계)</div><div class="kv" style="color:var(--sig)">${fmtW(totalCum)}</div></div>`;
-  h+=`<div><div class="kl">기성률</div><div class="kv" style="color:${avgRate>=80?'var(--sig)':'var(--kpi-red)'}">${avgRate.toFixed(1)}%</div></div>`;
-  h+=`<div><div class="kl">잔여 기성</div><div class="kv" style="color:var(--kpi-red)">${fmtW(totalRem)}</div></div>`;
-  h+=`<div><div class="kl">2026 수금 목표</div><div class="kv">${fmtW(yearPlan)}</div></div>`;
+  h+='<div><div class="kl">계약금</div><div class="kv">'+fmtW(totalContract)+'</div></div>';
+  h+='<div><div class="kl">기수금 (누계)</div><div class="kv" style="color:var(--sig)">'+fmtW(totalCum)+'</div></div>';
+  h+='<div><div class="kl">기성률</div><div class="kv" style="color:'+(avgRate>=80?'var(--sig)':'var(--kpi-red)')+'">'+avgRate.toFixed(1)+'%</div></div>';
+  h+='<div><div class="kl">잔여 기성</div><div class="kv" style="color:var(--kpi-red)">'+fmtW(totalRem)+'</div></div>';
+  h+='<div><div class="kl">2026 수금 목표</div><div class="kv">'+fmtW(yearPlan)+'</div></div>';
   h+='</div>';
 
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:10px 14px;background:var(--sig-pale);border-radius:8px;font-size:12px;color:var(--sig);font-weight:600">✏️ 모든 셀을 직접 수정할 수 있습니다. 변경 후 하단 저장 버튼을 눌러주세요.</div>';
+
   const mNames=['3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  const C=SC_TP_COL_OFF;
-  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:10px 14px;background:var(--sig-pale);border-radius:8px;font-size:12px;color:var(--sig);font-weight:600">✏️ 월별 수량/기성금 셀을 클릭하여 직접 수정할 수 있습니다. 변경 후 하단 저장 버튼을 눌러주세요.</div>';
   h+='<div class="sc-plan-tbl-wrap"><table class="sc-plan-tbl"><thead>';
-  h+='<tr><th class="sticky-left" rowspan="2" style="min-width:170px">계약거래처</th>';
-  h+='<th rowspan="2" style="min-width:180px">공종</th>';
+  h+='<tr><th class="sticky-left" rowspan="2" style="min-width:120px">거래처</th>';
+  h+='<th rowspan="2" style="min-width:160px">공종</th>';
   h+='<th rowspan="2">단위</th><th rowspan="2" class="r">단가</th><th rowspan="2" class="r">계약금</th>';
   h+='<th colspan="2" class="grp2">총누계 기성</th>';
   h+='<th colspan="2" class="grp2">잔여</th>';
-  mNames.forEach(m=>h+=`<th colspan="2" class="grp">${m}</th>`);
+  mNames.forEach(function(m){h+='<th colspan="2" class="grp">'+m+'</th>'});
   h+='<th colspan="2" class="grp2">합계</th>';
   h+='<th colspan="2" class="grp2">이월</th>';
+  h+='<th rowspan="2" style="width:36px"></th>';
   h+='</tr><tr>';
   h+='<th class="r">기수금</th><th class="r">기성률</th>';
   h+='<th class="r">수량</th><th class="r">잔금</th>';
-  for(let i=0;i<10;i++) h+='<th class="r">수량</th><th class="r">기성금</th>';
+  for(var i=0;i<10;i++) h+='<th class="r">수량</th><th class="r">기성금</th>';
   h+='<th class="r">수량</th><th class="r">기성금</th>';
   h+='<th class="r">수량</th><th class="r">기성금</th>';
   h+='</tr></thead><tbody>';
 
-  rows.forEach(r=>{
+  var lastVendor='';
+  rows.forEach(function(r){
     if(r.isHeader){
-      h+=`<tr style="background:var(--bg-thead)"><td class="sticky-left" style="font-weight:600;color:var(--text-secondary);background:var(--bg-thead)">${r.vendor||''}</td><td colspan="28" style="font-weight:600;color:var(--text-secondary)">${r.task}</td></tr>`;
+      h+='<tr style="background:var(--bg-thead)"><td class="sticky-left" style="font-weight:600;color:var(--text-secondary);background:var(--bg-thead)">'+(r.vendor||'')+'</td><td colspan="29" style="font-weight:600;color:var(--text-secondary)">'+r.task+'</td></tr>';
+      lastVendor='';
       return;
     }
-    const taskCls=r.task?(r.task.startsWith('    ')?'task-sub':'task'):'name';
-    const displayTask=r.task?r.task.replace(/^\s+/,''):'';
-    h+=`<tr>`;
-    h+=`<td class="sticky-left name">${r.vendor||''}</td>`;
-    h+=`<td class="${taskCls}">${displayTask||'-'}</td>`;
-    h+=`<td class="c">${r.unit||'-'}</td>`;
-    h+=`<td class="r">${r.price?r.price.toLocaleString():'-'}</td>`;
-    h+=`<td class="r" style="font-weight:600">${r.contract?r.contract.toLocaleString():'-'}</td>`;
-    h+=`<td class="r ${r.cumAmt?'amt-pos':'amt-zero'}">${r.cumAmt?r.cumAmt.toLocaleString():'-'}</td>`;
-    h+=`<td class="r">${r.cumRate?(r.cumRate*100).toFixed(0)+'%':'-'}</td>`;
-    h+=`<td class="r">${r.remQty||'-'}</td>`;
-    h+=`<td class="r" style="color:${r.remAmt?'var(--kpi-red)':'var(--text-muted)'}">${r.remAmt?r.remAmt.toLocaleString():'-'}</td>`;
-    // ── 월별 셀: 편집 가능 ──
-    r.months.forEach((m,mi)=>{
-      const qCol=C+16+mi*2+1, aCol=C+16+mi*2+2;
-      h+=`<td class="sc-edit-cell"><input class="sc-edit-input" data-row="${r._sheetRow}" data-col="${qCol}" data-orig="${m.qty||0}" value="${m.qty||''}" onfocus="scTpFocus(this)" onblur="scTpBlur(this)" onchange="scTpEdit(this)"></td>`;
-      h+=`<td class="sc-edit-cell"><input class="sc-edit-input" data-row="${r._sheetRow}" data-col="${aCol}" data-orig="${m.amt||0}" value="${m.amt?m.amt.toLocaleString():''}" onfocus="scTpFocus(this)" onblur="scTpBlur(this)" onchange="scTpEdit(this)"></td>`;
+    var showV=r.vendor!==lastVendor;
+    if(r.vendor)lastVendor=r.vendor;
+    var displayTask=r.task?r.task.replace(/^\s+/,''):'';
+    h+='<tr>';
+    h+='<td class="sticky-left sc-edit-cell">'+tpI(r._sheetRow,C+3,showV?r.vendor:'','t')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+5,displayTask,'t')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+7,r.unit,'t')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+8,r.price,'n')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+10,r.contract,'n')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+12,r.cumAmt,'n')+'</td>';
+    h+='<td class="r">'+(r.cumRate?(r.cumRate*100).toFixed(0)+'%':'-')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+14,r.remQty,'n')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+15,r.remAmt,'n')+'</td>';
+    r.months.forEach(function(m,mi){
+      h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+16+mi*2,m.qty,'n')+'</td>';
+      h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+16+mi*2+1,m.amt,'n')+'</td>';
     });
-    h+=`<td class="r">${r.totQty||'-'}</td>`;
-    h+=`<td class="r" style="font-weight:600">${r.totAmt?r.totAmt.toLocaleString():'-'}</td>`;
-    h+=`<td class="r">${r.carryQty||'-'}</td>`;
-    h+=`<td class="r" style="color:var(--kpi-amber)">${r.carryAmt?r.carryAmt.toLocaleString():'-'}</td>`;
-    h+=`</tr>`;
+    h+='<td class="r">'+(r.totQty||'-')+'</td>';
+    h+='<td class="r" style="font-weight:600">'+(r.totAmt?r.totAmt.toLocaleString():'-')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+39,r.carryQty,'n')+'</td>';
+    h+='<td class="sc-edit-cell">'+tpI(r._sheetRow,C+40,r.carryAmt,'n')+'</td>';
+    h+='<td class="c"><button class="sc-row-del" onclick="scTpDeleteRow('+r._sheetRow+')" title="행 삭제">✕</button></td>';
+    h+='</tr>';
   });
 
   // Footer
   h+='<tr class="foot"><td class="sticky-left">합계</td><td></td><td></td><td></td>';
-  h+=`<td class="r">${totalContract.toLocaleString()}</td>`;
-  h+=`<td class="r">${totalCum.toLocaleString()}</td>`;
-  h+=`<td class="r">${avgRate.toFixed(0)}%</td>`;
-  h+=`<td class="r"></td><td class="r">${totalRem.toLocaleString()}</td>`;
-  monthTotals.forEach(mt=>{h+=`<td class="r"></td><td class="r" style="font-weight:700">${mt?mt.toLocaleString():'-'}</td>`});
-  const tTotAmt=fRows.reduce((s,r)=>s+r.totAmt,0);
-  const tCarryAmt=fRows.reduce((s,r)=>s+r.carryAmt,0);
-  h+=`<td class="r"></td><td class="r">${tTotAmt?tTotAmt.toLocaleString():'-'}</td>`;
-  h+=`<td class="r"></td><td class="r">${tCarryAmt?tCarryAmt.toLocaleString():'-'}</td>`;
-  h+='</tr></tbody></table></div>';
+  h+='<td class="r">'+totalContract.toLocaleString()+'</td>';
+  h+='<td class="r">'+totalCum.toLocaleString()+'</td>';
+  h+='<td class="r">'+avgRate.toFixed(0)+'%</td>';
+  h+='<td class="r"></td><td class="r">'+totalRem.toLocaleString()+'</td>';
+  monthTotals.forEach(function(mt){h+='<td class="r"></td><td class="r" style="font-weight:700">'+(mt?mt.toLocaleString():'-')+'</td>'});
+  var tTotAmt=fRows.reduce(function(s,r){return s+r.totAmt},0);
+  var tCarryAmt=fRows.reduce(function(s,r){return s+r.carryAmt},0);
+  h+='<td class="r"></td><td class="r">'+(tTotAmt?tTotAmt.toLocaleString():'-')+'</td>';
+  h+='<td class="r"></td><td class="r">'+(tCarryAmt?tCarryAmt.toLocaleString():'-')+'</td>';
+  h+='<td></td></tr>';
+  h+='</tbody></table></div>';
+
+  // 행 추가 버튼
+  var lastRow=Math.max.apply(null,rows.map(function(r){return r._sheetRow||0}));
+  h+='<div style="margin-top:12px;text-align:center"><button onclick="scTpAddRow('+lastRow+')" style="padding:10px 28px;border:1px dashed var(--border-main);border-radius:8px;background:var(--bg-card);color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ 새 행 추가</button></div>';
 
   body.innerHTML=h;
   document.getElementById('scTpSaveBar').classList.remove('show');
@@ -3494,61 +3517,90 @@ function scOpenProjectPlan(projName){
 
 // ── 셀 편집 핸들러 ──
 function scTpFocus(el){
-  const cur=parseFloat(el.value.replace(/,/g,''))||0;
+  if(el.dataset.type==='t')return;
+  var cur=parseFloat(el.value.replace(/,/g,''))||0;
   el.value=cur||'';
   el.select();
 }
 function scTpBlur(el){
-  const v=parseFloat(el.value.replace(/,/g,''))||0;
+  if(el.dataset.type==='t')return;
+  var v=parseFloat(el.value.replace(/,/g,''))||0;
   el.value=v?v.toLocaleString():'';
 }
 function scTpEdit(el){
-  const v=parseFloat(el.value.replace(/,/g,''))||0;
-  const orig=parseFloat(el.dataset.orig)||0;
-  el.classList.toggle('changed',v!==orig);
-  const cnt=document.querySelectorAll('#scWideBody .sc-edit-input.changed').length;
+  var isNum=el.dataset.type==='n';
+  var v=isNum?(parseFloat(el.value.replace(/,/g,''))||0):el.value.trim();
+  var orig=isNum?(parseFloat(el.dataset.orig)||0):(el.dataset.orig||'');
+  el.classList.toggle('changed',String(v)!==String(orig));
+  var cnt=document.querySelectorAll('#scWideBody .sc-edit-input.changed').length;
   document.getElementById('scTpSaveBar').classList.toggle('show',cnt>0);
   document.getElementById('scTpChangeCount').textContent=cnt;
 }
 function scTpDiscardAll(){
-  document.querySelectorAll('#scWideBody .sc-edit-input.changed').forEach(el=>{
-    const orig=parseFloat(el.dataset.orig)||0;
-    el.value=orig?orig.toLocaleString():'';
+  document.querySelectorAll('#scWideBody .sc-edit-input.changed').forEach(function(el){
+    var isNum=el.dataset.type==='n';
+    var orig=isNum?(parseFloat(el.dataset.orig)||0):(el.dataset.orig||'');
+    el.value=isNum?(orig?orig.toLocaleString():''):(orig||'');
     el.classList.remove('changed');
   });
   document.getElementById('scTpSaveBar').classList.remove('show');
 }
 async function scSaveTargetEdits(){
-  const changed=document.querySelectorAll('#scWideBody .sc-edit-input.changed');
+  var changed=document.querySelectorAll('#scWideBody .sc-edit-input.changed');
   if(!changed.length){showToast('변경된 셀이 없습니다');return}
-  const btn=document.getElementById('scTpSaveBtn');
+  var btn=document.getElementById('scTpSaveBtn');
   btn.disabled=true;btn.textContent='저장 중...';
-  const cells=[];
-  changed.forEach(el=>{
-    cells.push({r:parseInt(el.dataset.row),c:parseInt(el.dataset.col),v:parseFloat(el.value.replace(/,/g,''))||0});
+  var cells=[];
+  changed.forEach(function(el){
+    var isNum=el.dataset.type==='n';
+    var v=isNum?(parseFloat(el.value.replace(/,/g,''))||0):el.value.trim();
+    cells.push({r:parseInt(el.dataset.row),c:parseInt(el.dataset.col),v:v});
   });
   try{
-    const url=GAS_WEB_URL+'?action=saveTargetPlanCells&token='+GAS_TOKEN+'&cells='+encodeURIComponent(JSON.stringify(cells))+'&_='+Date.now();
-    const resp=await fetch(url);
+    var url=GAS_WEB_URL+'?action=saveTargetPlanCells&token='+GAS_TOKEN+'&cells='+encodeURIComponent(JSON.stringify(cells))+'&_='+Date.now();
+    var resp=await fetch(url);
     if(!resp.ok)throw new Error('HTTP '+resp.status);
-    const json=await resp.json();
+    var json=await resp.json();
     if(!json.ok)throw new Error(json.error||'저장 실패');
-    // 성공 → orig값 업데이트, changed 클래스 제거
-    changed.forEach(el=>{
-      const v=parseFloat(el.value.replace(/,/g,''))||0;
+    changed.forEach(function(el){
+      var isNum=el.dataset.type==='n';
+      var v=isNum?(parseFloat(el.value.replace(/,/g,''))||0):el.value.trim();
       el.dataset.orig=v;
       el.classList.remove('changed');
     });
     document.getElementById('scTpSaveBar').classList.remove('show');
     showToast('✅ '+cells.length+'개 셀 저장 완료');
-    // 백그라운드 데이터 갱신
-    setTimeout(()=>scFetchTargetPlan(),1000);
+    setTimeout(function(){scFetchTargetPlan()},1000);
   }catch(e){
     console.error('saveTargetEdits error:',e);
     showToast('❌ 저장 실패: '+e.message);
   }finally{
     btn.disabled=false;btn.textContent='💾 저장';
   }
+}
+// ── 행 추가/삭제 ──
+async function scTpAddRow(afterRow){
+  showToast('⏳ 행 추가 중...');
+  try{
+    var url=GAS_WEB_URL+'?action=insertTargetPlanRow&token='+GAS_TOKEN+'&row='+afterRow+'&_='+Date.now();
+    var resp=await fetch(url);var json=await resp.json();
+    if(!json.ok)throw new Error(json.error||'추가 실패');
+    showToast('✅ 행 추가 완료');
+    await scFetchTargetPlan();
+    if(SC_TP_CURRENT_PROJ) scOpenProjectPlan(SC_TP_CURRENT_PROJ);
+  }catch(e){showToast('❌ 행 추가 실패: '+e.message)}
+}
+async function scTpDeleteRow(sheetRow){
+  if(!confirm('이 행을 삭제할까요? (시트에서 영구 삭제)'))return;
+  showToast('⏳ 행 삭제 중...');
+  try{
+    var url=GAS_WEB_URL+'?action=deleteTargetPlanRow&token='+GAS_TOKEN+'&row='+sheetRow+'&_='+Date.now();
+    var resp=await fetch(url);var json=await resp.json();
+    if(!json.ok)throw new Error(json.error||'삭제 실패');
+    showToast('✅ 행 삭제 완료');
+    await scFetchTargetPlan();
+    if(SC_TP_CURRENT_PROJ) scOpenProjectPlan(SC_TP_CURRENT_PROJ);
+  }catch(e){showToast('❌ 삭제 실패: '+e.message)}
 }
 function fmtW(v){if(!v)return'0';if(v>=100000000)return(v/100000000).toFixed(1).replace(/\.0$/,'')+'억';if(v>=10000)return(v/10000).toFixed(0)+'만';return v.toLocaleString()}
 function scCloseWide(){
