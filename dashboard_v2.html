@@ -521,11 +521,11 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .sc-edit-overlay.open{opacity:1;pointer-events:auto}
 .sc-edit-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.95);width:92vw;max-width:1100px;height:86vh;max-height:86vh;background:var(--bg-elevated);z-index:910;border-radius:16px;opacity:0;pointer-events:none;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.18)}
 .sc-edit-panel.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
-.sc-edit-head{padding:20px 24px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:12px;flex-shrink:0}
-.sc-edit-head .back{font-size:12px;color:var(--text-tertiary);cursor:pointer;padding:4px 8px;border-radius:6px;transition:background 0.15s}
+.sc-edit-head{padding:22px 28px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:14px;flex-shrink:0}
+.sc-edit-head .back{font-size:14px;color:var(--text-tertiary);cursor:pointer;padding:6px 10px;border-radius:6px;transition:background 0.15s}
 .sc-edit-head .back:hover{background:var(--bg-thead)}
-.sc-edit-head .title{font-size:15px;font-weight:700;color:var(--text-primary);flex:1}
-.sc-edit-body{flex:1;padding:24px;overflow-y:auto}
+.sc-edit-head .title{font-size:19px;font-weight:700;color:var(--text-primary);flex:1}
+.sc-edit-body{flex:1;padding:28px;overflow-y:auto}
 .sc-edit-field{margin-bottom:18px}
 .sc-edit-field label{display:block;font-size:13px;font-weight:600;color:var(--text-tertiary);margin-bottom:6px;letter-spacing:0.3px}
 .sc-edit-field input,.sc-edit-field select{width:100%;padding:12px 14px;border:1px solid var(--border-main);border-radius:10px;font-size:14px;color:var(--text-primary);font-family:inherit;transition:border-color 0.2s;box-sizing:border-box;background:var(--bg-input)}
@@ -5114,27 +5114,27 @@ function scOpenProjectDetail(projName){
 
   let h='';
   // Summary (KPI row — 3 cards evenly spaced)
-  h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:22px">
-    <div style="background:var(--bg-thead);border-radius:12px;padding:18px 20px"><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-weight:600">수금목표</div><div style="font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${scFmtAmt(totalPlan)}</div></div>
-    <div style="background:var(--bg-thead);border-radius:12px;padding:18px 20px"><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-weight:600">수금실적</div><div style="font-size:22px;font-weight:800;color:var(--sig);font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${scFmtAmt(totalActual)}</div></div>
-    <div style="background:var(--bg-thead);border-radius:12px;padding:18px 20px"><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-weight:600">달성률</div><div style="font-size:22px;font-weight:800;color:${rate>=80?'var(--sig)':'var(--kpi-red)'};font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${rate.toFixed(1)}%</div></div>
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:26px">
+    <div style="background:var(--bg-thead);border-radius:12px;padding:22px 24px"><div style="font-size:13px;color:var(--text-tertiary);margin-bottom:8px;font-weight:600">수금목표</div><div style="font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${scFmtAmt(totalPlan)}</div></div>
+    <div style="background:var(--bg-thead);border-radius:12px;padding:22px 24px"><div style="font-size:13px;color:var(--text-tertiary);margin-bottom:8px;font-weight:600">수금실적</div><div style="font-size:28px;font-weight:800;color:var(--sig);font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${scFmtAmt(totalActual)}</div></div>
+    <div style="background:var(--bg-thead);border-radius:12px;padding:22px 24px"><div style="font-size:13px;color:var(--text-tertiary);margin-bottom:8px;font-weight:600">달성률</div><div style="font-size:28px;font-weight:800;color:${rate>=80?'var(--sig)':'var(--kpi-red)'};font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${rate.toFixed(1)}%</div></div>
   </div>`;
 
   // 2-column layout for plans + analyses if both exist
   const twoCol=plans.length>0&&analyses.length>0;
-  if(twoCol) h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start">';
+  if(twoCol) h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">';
 
   // Plan records
   if(plans.length){
-    h+='<div><div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="display:inline-block;width:3px;height:12px;background:var(--sig);border-radius:2px"></span>수금계획 ('+plans.length+'건)</div>';
+    h+='<div><div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="display:inline-block;width:4px;height:15px;background:var(--sig);border-radius:2px"></span>수금계획 ('+plans.length+'건)</div>';
     plans.forEach((r,i)=>{
       const idx=SC_PLAN.indexOf(r);
-      h+=`<div style="background:var(--bg-card-hover);border-radius:10px;padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('plan',${idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${r.item||'항목 없음'}</span>
-          <span style="font-size:15px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}원</span>
+      h+=`<div style="background:var(--bg-card-hover);border-radius:10px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('plan',${idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:15px;font-weight:600;color:var(--text-primary)">${r.item||'항목 없음'}</span>
+          <span style="font-size:17px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}원</span>
         </div>
-        <div style="display:flex;gap:12px;font-size:11px;color:var(--text-tertiary);flex-wrap:wrap">
+        <div style="display:flex;gap:14px;font-size:13px;color:var(--text-tertiary);flex-wrap:wrap">
           <span>담당: ${r.team}</span>
           <span>청구예정: ${scFmtDate(r.invoiceDate)}</span>
           <span>입금예정: ${scFmtDate(r.dueDate)}</span>
@@ -5146,28 +5146,28 @@ function scOpenProjectDetail(projName){
 
   // Analysis records
   if(analyses.length){
-    h+='<div><div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="display:inline-block;width:3px;height:12px;background:var(--kpi-amber);border-radius:2px"></span>전월분석 ('+analyses.length+'건)</div>';
+    h+='<div><div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="display:inline-block;width:4px;height:15px;background:var(--kpi-amber);border-radius:2px"></span>전월분석 ('+analyses.length+'건)</div>';
     analyses.forEach((r,i)=>{
       const idx=SC_ANALYSIS.indexOf(r);
       const gap=r.target-r.actual;
       const sc=r.status==='수금완료'?'var(--kpi-green)':r.status==='부분수금'?'var(--kpi-amber)':r.status==='미수금'?'var(--kpi-red)':'var(--text-tertiary)';
-      h+=`<div style="background:var(--bg-card-hover);border-radius:10px;padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('analysis',${idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      h+=`<div style="background:var(--bg-card-hover);border-radius:10px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('analysis',${idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${scFmtDate(r.date)}</span>
-            ${r.status?`<span style="font-size:10px;font-weight:600;color:${sc};background:${sc}15;padding:2px 8px;border-radius:4px">${r.status}</span>`:''}
+            <span style="font-size:15px;font-weight:600;color:var(--text-primary)">${scFmtDate(r.date)}</span>
+            ${r.status?`<span style="font-size:12px;font-weight:600;color:${sc};background:${sc}15;padding:3px 10px;border-radius:4px">${r.status}</span>`:''}
           </div>
           <div style="text-align:right">
-            <span style="font-size:14px;font-weight:700;color:var(--sig);font-variant-numeric:tabular-nums">${r.actual.toLocaleString()}원</span>
-            <span style="font-size:11px;color:var(--text-muted)"> / ${r.target.toLocaleString()}</span>
+            <span style="font-size:16px;font-weight:700;color:var(--sig);font-variant-numeric:tabular-nums">${r.actual.toLocaleString()}원</span>
+            <span style="font-size:13px;color:var(--text-muted)"> / ${r.target.toLocaleString()}</span>
           </div>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-tertiary)">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-tertiary)">
           <span>담당: ${r.team}</span>
           <span style="color:${gap>0?'var(--kpi-red)':'var(--sig)'}">${gap>0?'미달 '+scFmtAmt(gap):'달성'}</span>
         </div>
-        ${r.reason?'<div style="font-size:11px;color:var(--kpi-red);margin-top:8px;padding:6px 10px;background:var(--card-red-bg);border-radius:6px">사유: '+r.reason+'</div>':''}
-        ${r.note&&!r.reason?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;border-top:1px solid var(--border-light);padding-top:6px">'+r.note+'</div>':''}
+        ${r.reason?'<div style="font-size:13px;color:var(--kpi-red);margin-top:10px;padding:8px 12px;background:var(--card-red-bg);border-radius:6px">사유: '+r.reason+'</div>':''}
+        ${r.note&&!r.reason?'<div style="font-size:13px;color:var(--text-tertiary);margin-top:8px;border-top:1px solid var(--border-light);padding-top:8px">'+r.note+'</div>':''}
       </div>`;
     });
     h+='</div>';
