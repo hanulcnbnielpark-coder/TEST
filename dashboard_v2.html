@@ -519,8 +519,8 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 /* Edit Panel — themed slide */
 .sc-edit-overlay{position:fixed;inset:0;background:var(--overlay);backdrop-filter:blur(2px);z-index:900;opacity:0;pointer-events:none;transition:opacity 0.25s}
 .sc-edit-overlay.open{opacity:1;pointer-events:auto}
-.sc-edit-panel{position:fixed;top:0;right:-480px;width:460px;max-width:92vw;height:100%;background:var(--bg-elevated);z-index:910;transition:right 0.35s cubic-bezier(0.16,1,0.3,1);overflow-y:auto;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,0.1)}
-.sc-edit-panel.open{right:0}
+.sc-edit-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.95);width:92vw;max-width:1100px;height:86vh;max-height:86vh;background:var(--bg-elevated);z-index:910;border-radius:16px;opacity:0;pointer-events:none;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.18)}
+.sc-edit-panel.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
 .sc-edit-head{padding:20px 24px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:12px;flex-shrink:0}
 .sc-edit-head .back{font-size:12px;color:var(--text-tertiary);cursor:pointer;padding:4px 8px;border-radius:6px;transition:background 0.15s}
 .sc-edit-head .back:hover{background:var(--bg-thead)}
@@ -861,7 +861,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
 .ea-nd .mg{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text-secondary)}
 .ea-nd .sb{font-size:12px;line-height:1.6}
 
-@media(max-width:900px){.sc-kpi-row{grid-template-columns:repeat(2,1fr)}.sc-edit-panel{width:100%;right:-100%}.sc-edit-panel.open{right:0!important}.sc-chart-grid2{grid-template-columns:1fr}.sc-section [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}}
+@media(max-width:900px){.sc-kpi-row{grid-template-columns:repeat(2,1fr)}.sc-edit-panel{width:100vw;height:100vh;max-height:100vh;border-radius:0}.sc-chart-grid2{grid-template-columns:1fr}.sc-section [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}}
 @media(max-width:480px){.sc-kpi-row{grid-template-columns:1fr 1fr;gap:8px}.sc-kpi{padding:14px}.sc-kpi-value{font-size:18px}}
 /* ═══ 기성금 입력 사이드바 ═══ */
 .ki-layout{display:flex;gap:16px;align-items:flex-start}
@@ -966,9 +966,8 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
   .detail-overlay{z-index:900!important}
   .detail-overlay.open{display:block!important}
   
-  /* SC edit panel same */
-  .sc-edit-panel{width:100vw!important;max-width:100vw!important;right:-100vw!important}
-  .sc-edit-panel.open{right:0!important}
+  /* SC edit panel — centered modal */
+  .sc-edit-panel{width:100vw!important;max-width:100vw!important;height:100vh!important;max-height:100vh!important;border-radius:0!important}
 
   /* Pipeline table: readable scroll on mobile */
   .tw{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
@@ -1025,8 +1024,7 @@ html[data-theme="dark"] .sc-kpi.indigo-bg{box-shadow:0 4px 20px rgba(58,76,168,0
   .sc-section-title{font-size:15px!important}
   .sc-tbl{font-size:11px}
   .sc-tbl th,.sc-tbl td{padding:8px 6px}
-  .sc-edit-panel{width:100%!important;right:-100%}
-  .sc-edit-panel.open{right:0!important}
+  .sc-edit-panel{width:100%!important;height:100vh!important;border-radius:0!important}
   
   /* 수금 캘린더 월별 */
   #scCalRoot{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -3632,25 +3630,30 @@ async function scSaveTargetEdits(){
 async function scTpAddRow(afterRow){
   showToast('⏳ 행 추가 중...');
   try{
+    // 1. 빈 행 삽입
     var url=GAS_WEB_URL+'?action=insertTargetPlanRow&token='+GAS_TOKEN+'&row='+afterRow+'&_='+Date.now();
     var resp=await fetch(url);var json=await resp.json();
     if(!json.ok)throw new Error(json.error||'추가 실패');
-    // 팀/프로젝트/발주처/거래처 자동입력
+    var newRow=(json.insertedAfter||afterRow)+1;
+    // 2. 팀/프로젝트/발주처/거래처 자동입력
     var projRows=SC_TARGET_PLAN.filter(function(r){return r.project===SC_TP_CURRENT_PROJ&&!r.isHeader});
     if(projRows.length){
-      var ref=projRows[0];var C=SC_TP_COL_OFF;var newRow=afterRow+1;
+      var ref=projRows[0];var C=SC_TP_COL_OFF;
       var autoCells=[
-        {r:newRow,c:C+1,v:ref.team},
-        {r:newRow,c:C+2,v:ref.project},
-        {r:newRow,c:C+3,v:ref.client},
-        {r:newRow,c:C+4,v:ref.vendor}
-      ].filter(function(c){return !!c.v});
+        {r:newRow,c:C+1,v:ref.team||''},
+        {r:newRow,c:C+2,v:ref.project||''},
+        {r:newRow,c:C+3,v:ref.client||''},
+        {r:newRow,c:C+4,v:ref.vendor||''}
+      ].filter(function(c){return c.v!==''});
       if(autoCells.length){
         var sUrl=GAS_WEB_URL+'?action=saveTargetPlanCells&token='+GAS_TOKEN+'&cells='+encodeURIComponent(JSON.stringify(autoCells))+'&_='+Date.now();
-        await fetch(sUrl);
+        var sResp=await fetch(sUrl);
+        var sJson=await sResp.json();
+        if(!sJson.ok) console.warn('자동입력 실패:',sJson.error);
       }
     }
-    showToast('✅ 행 추가 완료');
+    showToast('✅ 행 추가 완료 ('+newRow+'행)');
+    // 3. 데이터 재로드 → 모달 재렌더 (await 체인으로 순서 보장)
     await scFetchTargetPlan();
     if(SC_TP_CURRENT_PROJ) scOpenProjectPlan(SC_TP_CURRENT_PROJ);
   }catch(e){showToast('❌ 행 추가 실패: '+e.message)}
@@ -4617,7 +4620,7 @@ function scRenderOverview(){
         const gapAmt=p.plan-p.actual;
         const pn=p.name.replace(/'/g,"\\'");
         const dueDate=p.planRows[0]?p.planRows[0].dueDate||'':'';
-        h+=`<tr class="clickable" onclick="scOpenProjectPlan('${pn}')">
+        h+=`<tr class="clickable" onclick="scOpenProjectDetail('${pn}')">
           <td class="name">${p.name}</td>
           <td class="sub">${[...p.teams].join(', ')}</td>
           <td class="r" style="font-variant-numeric:tabular-nums">${p.plan.toLocaleString()}</td>
@@ -5110,59 +5113,67 @@ function scOpenProjectDetail(projName){
   const rate=totalTarget>0?(totalActual/totalTarget*100):0;
 
   let h='';
-  // Summary
-  h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">
-    <div style="background:var(--bg-thead);border-radius:10px;padding:14px"><div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px">수금목표</div><div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums">${scFmtAmt(totalPlan)}</div></div>
-    <div style="background:var(--bg-thead);border-radius:10px;padding:14px"><div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px">수금실적</div><div style="font-size:18px;font-weight:700;color:var(--sig);font-variant-numeric:tabular-nums">${scFmtAmt(totalActual)}</div></div>
-    <div style="background:var(--bg-thead);border-radius:10px;padding:14px"><div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px">달성률</div><div style="font-size:18px;font-weight:700;color:${rate>=80?'var(--sig)':'var(--kpi-red)'};font-variant-numeric:tabular-nums">${rate.toFixed(1)}%</div></div>
+  // Summary (KPI row — 3 cards evenly spaced)
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:22px">
+    <div style="background:var(--bg-thead);border-radius:12px;padding:18px 20px"><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-weight:600">수금목표</div><div style="font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${scFmtAmt(totalPlan)}</div></div>
+    <div style="background:var(--bg-thead);border-radius:12px;padding:18px 20px"><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-weight:600">수금실적</div><div style="font-size:22px;font-weight:800;color:var(--sig);font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${scFmtAmt(totalActual)}</div></div>
+    <div style="background:var(--bg-thead);border-radius:12px;padding:18px 20px"><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-weight:600">달성률</div><div style="font-size:22px;font-weight:800;color:${rate>=80?'var(--sig)':'var(--kpi-red)'};font-variant-numeric:tabular-nums;letter-spacing:-0.5px">${rate.toFixed(1)}%</div></div>
   </div>`;
+
+  // 2-column layout for plans + analyses if both exist
+  const twoCol=plans.length>0&&analyses.length>0;
+  if(twoCol) h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start">';
 
   // Plan records
   if(plans.length){
-    h+='<div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:10px">수금계획 ('+plans.length+'건)</div>';
+    h+='<div><div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="display:inline-block;width:3px;height:12px;background:var(--sig);border-radius:2px"></span>수금계획 ('+plans.length+'건)</div>';
     plans.forEach((r,i)=>{
       const idx=SC_PLAN.indexOf(r);
-      h+=`<div style="background:var(--bg-card-hover);border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('plan',${idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
+      h+=`<div style="background:var(--bg-card-hover);border-radius:10px;padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('plan',${idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:12px;font-weight:600;color:var(--text-primary)">${r.item||'항목 없음'}</span>
-          <span style="font-size:14px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}원</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${r.item||'항목 없음'}</span>
+          <span style="font-size:15px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums">${r.amount.toLocaleString()}원</span>
         </div>
-        <div style="display:flex;gap:12px;font-size:10px;color:var(--text-tertiary)">
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--text-tertiary);flex-wrap:wrap">
           <span>담당: ${r.team}</span>
           <span>청구예정: ${scFmtDate(r.invoiceDate)}</span>
           <span>입금예정: ${scFmtDate(r.dueDate)}</span>
         </div>
       </div>`;
     });
+    h+='</div>';
   }
 
   // Analysis records
   if(analyses.length){
-    h+='<div style="font-size:12px;font-weight:700;color:var(--text-primary);margin:16px 0 10px">전월분석 ('+analyses.length+'건)</div>';
+    h+='<div><div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="display:inline-block;width:3px;height:12px;background:var(--kpi-amber);border-radius:2px"></span>전월분석 ('+analyses.length+'건)</div>';
     analyses.forEach((r,i)=>{
       const idx=SC_ANALYSIS.indexOf(r);
       const gap=r.target-r.actual;
       const sc=r.status==='수금완료'?'var(--kpi-green)':r.status==='부분수금'?'var(--kpi-amber)':r.status==='미수금'?'var(--kpi-red)':'var(--text-tertiary)';
-      h+=`<div style="background:var(--bg-card-hover);border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('analysis',${idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
+      h+=`<div style="background:var(--bg-card-hover);border-radius:10px;padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="document.querySelector('.sc-edit-foot').style.display='flex';scOpenEdit('analysis',${idx})" onmouseover="this.style.background='var(--bg-thead)'" onmouseout="this.style.background='var(--bg-card-hover)'">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:12px;font-weight:600;color:var(--text-primary)">${scFmtDate(r.date)}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${scFmtDate(r.date)}</span>
             ${r.status?`<span style="font-size:10px;font-weight:600;color:${sc};background:${sc}15;padding:2px 8px;border-radius:4px">${r.status}</span>`:''}
           </div>
           <div style="text-align:right">
-            <span style="font-size:13px;font-weight:700;color:var(--sig);font-variant-numeric:tabular-nums">${r.actual.toLocaleString()}원</span>
+            <span style="font-size:14px;font-weight:700;color:var(--sig);font-variant-numeric:tabular-nums">${r.actual.toLocaleString()}원</span>
             <span style="font-size:11px;color:var(--text-muted)"> / ${r.target.toLocaleString()}</span>
           </div>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-tertiary)">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-tertiary)">
           <span>담당: ${r.team}</span>
           <span style="color:${gap>0?'var(--kpi-red)':'var(--sig)'}">${gap>0?'미달 '+scFmtAmt(gap):'달성'}</span>
         </div>
-        ${r.reason?'<div style="font-size:10px;color:var(--kpi-red);margin-top:6px;padding:6px 8px;background:var(--card-red-bg);border-radius:6px">사유: '+r.reason+'</div>':''}
-        ${r.note&&!r.reason?'<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;border-top:1px solid var(--border-light);padding-top:4px">'+r.note+'</div>':''}
+        ${r.reason?'<div style="font-size:11px;color:var(--kpi-red);margin-top:8px;padding:6px 10px;background:var(--card-red-bg);border-radius:6px">사유: '+r.reason+'</div>':''}
+        ${r.note&&!r.reason?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;border-top:1px solid var(--border-light);padding-top:6px">'+r.note+'</div>':''}
       </div>`;
     });
+    h+='</div>';
   }
+
+  if(twoCol) h+='</div>';
 
   if(!plans.length&&!analyses.length) h='<div style="text-align:center;padding:40px;color:var(--text-muted)">데이터가 없습니다.</div>';
 
